@@ -2,13 +2,15 @@
   "id": "gms-kaiju-vinculo",
   "title": "GMS // Vínculo Kaiju",
   "description": "Aplicação K-03 própria para gerenciar portadores, Vontade da Fera, Comunhão e Humanidade. Banco interno, tela de players, Editor K-03, carregamento individual e genoma procedural evolutivo por portador.",
-  "version": "2.0.0-dev.2",
+  "version": "2.0.0-dev.3",
   "authors": [
-    { "name": "STR4 DZN" }
+    {
+      "name": "STR4 DZN"
+    }
   ],
   "url": "https://github.com/STR4DZN/gms-kaiju-vinculo",
   "manifest": "https://raw.githubusercontent.com/STR4DZN/gms-kaiju-vinculo/main/module.json",
-  "download": "https://github.com/STR4DZN/gms-kaiju-vinculo/releases/download/v2.0.0-dev.2/gms-kaiju-vinculo-v2.0.0-dev.2.zip",
+  "download": "https://github.com/STR4DZN/gms-kaiju-vinculo/releases/download/v2.0.0-dev.3/gms-kaiju-vinculo-v2.0.0-dev.3.zip",
   "compatibility": {
     "minimum": "13",
     "verified": "13.351"

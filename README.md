@@ -55,3 +55,12 @@ Somente o GM pode abrir:
 ```js
 game.modules.get("gms-kaiju-vinculo").api.openEditor();
 ```
+
+## 2.0.0-dev.3 — DNA Live Array
+
+- O painel genético foi reconstruído para aproximar a composição da referência: DNA central dominante, malha analítica, partículas, leituras compactas e loci inferiores.
+- A hélice agora ocupa a maior parte do painel e muda estruturalmente conforme Vontade, Comunhão, Humanidade e memória genética.
+- Foram adicionados hotspots determinísticos por portador, assimetria local, deformação harmônica, pares anômalos, rupturas, nós, ramificações orgânicas, malhas simbióticas e terceira fita.
+- Animação multicamada: respiração do conjunto, pulsação das fitas, traços de energia, varredura, partículas em deriva, pulsos de nós, malhas, rede molecular e tracers que percorrem as fitas.
+- A coluna lateral foi reduzida para devolver área visual ao DNA; os indicadores secundários agora ficam numa faixa compacta acima da análise.
+- O DNA continua sendo renderizado apenas para o portador aberto.
