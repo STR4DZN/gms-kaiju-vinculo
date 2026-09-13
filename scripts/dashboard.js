@@ -2,6 +2,7 @@ import { MODULE_ID, SETTINGS } from "./constants.js";
 import { openKaijuEditor } from "./editor.js";
 import { canViewCarrier, getOrderedCarriers } from "./storage.js";
 import { renderCarrierDetail } from "./visuals.js";
+import { startGenomeRenderer } from "./genome-renderer.js";
 
 let dashboardInstance = null;
 
@@ -16,6 +17,7 @@ export class KaijuDashboardApplication extends Application {
     super(options);
     this._selectedId = "";
     this._activeTab = "overview";
+    this._genomeRenderer = null;
   }
 
   static get defaultOptions() {
@@ -24,10 +26,10 @@ export class KaijuDashboardApplication extends Application {
       title: "GMS // K-03 — Matriz de Vínculos",
       template: `modules/${MODULE_ID}/templates/dashboard.hbs`,
       classes: ["gms-kaiju-dashboard-window"],
-      width: 1180,
-      height: 780,
-      minWidth: 720,
-      minHeight: 520,
+      width: 1380,
+      height: 820,
+      minWidth: 900,
+      minHeight: 600,
       resizable: true,
       popOut: true
     });
@@ -96,6 +98,27 @@ export class KaijuDashboardApplication extends Application {
     });
 
     root.querySelector("[data-action='editor']")?.addEventListener("click", () => openKaijuEditor());
+    root.querySelector("[data-action='close-dashboard']")?.addEventListener("click", () => this.close());
+
+    const dragBar = root.querySelector(".kj-system-bar");
+    dragBar?.addEventListener("mousedown", (event) => {
+      if (event.button !== 0 || event.target.closest("button, input, select, textarea, a")) return;
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const appBox = this.element?.getBoundingClientRect?.();
+      const startLeft = Number(this.position?.left ?? appBox?.left ?? 0);
+      const startTop = Number(this.position?.top ?? appBox?.top ?? 0);
+      const onMove = (moveEvent) => {
+        this.setPosition({ left: startLeft + (moveEvent.clientX - startX), top: startTop + (moveEvent.clientY - startY) });
+      };
+      const onUp = () => {
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+      event.preventDefault();
+    });
 
     root.querySelector("[data-kj-search]")?.addEventListener("input", (event) => {
       const query = String(event.currentTarget.value || "").trim().toLocaleLowerCase("pt-BR");
@@ -127,15 +150,26 @@ export class KaijuDashboardApplication extends Application {
     if (!detail) return;
     const carrier = this._visibleCarriers().find((entry) => entry.id === this._selectedId);
     if (!carrier) {
+      this._genomeRenderer?.stop?.();
+      this._genomeRenderer = null;
       detail.innerHTML = `<div class="kj-empty-detail"><span class="kj-empty-sigil"><i class="fa-solid fa-dna"></i></span><h2>Nenhum portador selecionado</h2><p>${game.user?.isGM ? "Use o Editor K-03 para adicionar o primeiro registro." : "Nenhum registro está disponível para sua conta."}</p></div>`;
       return;
     }
 
+    this._genomeRenderer?.stop?.();
+    this._genomeRenderer = null;
     detail.innerHTML = renderCarrierDetail(carrier, { isGM: game.user?.isGM ?? false, tab: this._activeTab });
+    this._genomeRenderer = startGenomeRenderer(detail, carrier);
     detail.querySelectorAll("[data-kj-tab]").forEach((button) => button.addEventListener("click", () => {
       this._activeTab = button.dataset.kjTab || "overview";
       this._renderSelected(root);
     }));
+  }
+
+  async close(options = {}) {
+    this._genomeRenderer?.stop?.();
+    this._genomeRenderer = null;
+    return super.close(options);
   }
 
   refreshFromDatabase() {

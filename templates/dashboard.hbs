@@ -1,28 +1,36 @@
 <div class="kj-dashboard" data-kj-dashboard data-sidebar-collapsed="{{collapsed}}">
-  <header class="kj-topbar">
-    <div class="kj-brand"><span class="kj-brand-sigil"><i class="fa-solid fa-dna"></i></span><div><small>GMS XENOBIOLOGICAL ARRAY // K-03</small><h1>Matriz de Vínculos</h1><p>{{carrierCount}} registro(s) acessível(is)</p></div></div>
-    <div class="kj-top-actions">
-      {{#if isGM}}<button type="button" class="kj-editor-open" data-action="editor"><i class="fa-solid fa-pen-ruler"></i><span>Editor K-03</span></button>{{/if}}
+  <div class="kj-dashboard-crt" aria-hidden="true"></div>
+  <div class="kj-dashboard-vignette" aria-hidden="true"></div>
+
+  <header class="kj-system-bar">
+    <div class="kj-system-badge"><span class="kj-system-light"></span><strong>K-03 // XENOBIOLOGICAL ARRAY</strong></div>
+    <div class="kj-system-ticker" aria-hidden="true"><span>GMS-XENO/771</span><i>|</i><span>CARrier_MATRIX</span><i>|</i><span>SEQ 34-083-843152</span><i>|</i><span>{{carrierCount}} NODE(S)</span><i>|</i><span>GENOME LINK ESTABLISHED</span><i>|</i><span>SECURE CHANNEL 03</span></div>
+    <div class="kj-system-actions">
+      {{#if isGM}}<button type="button" class="kj-editor-open" data-action="editor" title="Abrir Editor K-03"><i class="fa-solid fa-pen-ruler"></i><span>EDITOR K-03</span></button>{{/if}}
+      <button type="button" class="kj-system-close" data-action="close-dashboard" title="Fechar K-03"><i class="fa-solid fa-xmark"></i></button>
     </div>
   </header>
 
   <div class="kj-layout">
     <aside class="kj-carrier-sidebar">
-      <div class="kj-sidebar-head"><div class="kj-sidebar-title"><small>REGISTRY INDEX</small><strong>Portadores</strong></div><button type="button" class="kj-sidebar-toggle" data-action="toggle-carriers" title="Recolher/expandir portadores"><i class="fa-solid {{#if collapsed}}fa-angles-right{{else}}fa-angles-left{{/if}}"></i></button></div>
+      <div class="kj-sidebar-head">
+        <div class="kj-sidebar-title"><small>CARRIER MATRIX // INDEX</small><strong>PORTADORES</strong><span>{{carrierCount}} REGISTRO(S)</span></div>
+        <button type="button" class="kj-sidebar-toggle" data-action="toggle-carriers" title="Recolher/expandir portadores"><i class="fa-solid {{#if collapsed}}fa-angles-right{{else}}fa-angles-left{{/if}}"></i></button>
+      </div>
       <div class="kj-sidebar-content">
-        <div class="kj-sidebar-tools"><label class="kj-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" data-kj-search placeholder="Procurar portador..." autocomplete="off"></label><select data-kj-sort title="Ordenar portadores"><option value="manual" {{#if sortManual}}selected{{/if}}>Ordem do mestre</option><option value="name" {{#if sortName}}selected{{/if}}>Nome</option><option value="vontade" {{#if sortVontade}}selected{{/if}}>Maior Vontade</option><option value="comunhao" {{#if sortComunhao}}selected{{/if}}>Maior Comunhão</option><option value="humanidade" {{#if sortHumanidade}}selected{{/if}}>Maior Humanidade</option></select></div>
-        <div class="kj-carrier-table-head"><span>Portador</span><span>V</span><span>C</span><span>H</span></div>
+        <div class="kj-sidebar-tools"><label class="kj-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" data-kj-search placeholder="LOCALIZAR PORTADOR..." autocomplete="off"></label><select data-kj-sort title="Ordenar portadores"><option value="manual" {{#if sortManual}}selected{{/if}}>ORDEM DO MESTRE</option><option value="name" {{#if sortName}}selected{{/if}}>NOME</option><option value="vontade" {{#if sortVontade}}selected{{/if}}>VONTADE ↓</option><option value="comunhao" {{#if sortComunhao}}selected{{/if}}>COMUNHÃO ↓</option><option value="humanidade" {{#if sortHumanidade}}selected{{/if}}>HUMANIDADE ↓</option></select></div>
+        <div class="kj-carrier-table-head"><span>PORTADOR</span><span>V</span><span>C</span><span>H</span></div>
         <div class="kj-carrier-list">
           {{#each carriers}}
           <button type="button" class="kj-carrier-row {{#if isSelected}}is-selected{{/if}}" data-carrier-row="{{id}}" data-search="{{name}} {{designation}}">
-            <span class="kj-carrier-name"><i class="fa-solid fa-fingerprint"></i><span><strong>{{name}}</strong><small>{{#if designation}}{{designation}}{{else}}REGISTRO K-03{{/if}}{{#if isMine}} · MEU VÍNCULO{{/if}}</small></span></span>
+            <span class="kj-carrier-name"><i class="fa-solid fa-fingerprint"></i><span><strong>{{name}}</strong><small>{{#if designation}}{{designation}}{{else}}REGISTRO K-03{{/if}}{{#if isMine}} // LINK PESSOAL{{/if}}</small></span></span>
             <span class="kj-mini-value kj-v">{{vontade}}</span><span class="kj-mini-value kj-c">{{comunhao}}</span><span class="kj-mini-value kj-h">{{humanidade}}</span>
           </button>
           {{/each}}
-          {{#unless hasCarriers}}<div class="kj-list-empty"><i class="fa-solid fa-fingerprint"></i><strong>Nenhum portador</strong><span>{{#if isGM}}Abra o Editor K-03 para criar o primeiro.{{else}}Nenhum registro está disponível.{{/if}}</span></div>{{/unless}}
+          {{#unless hasCarriers}}<div class="kj-list-empty"><i class="fa-solid fa-fingerprint"></i><strong>NENHUM PORTADOR</strong><span>{{#if isGM}}Abra o Editor K-03 para criar o primeiro.{{else}}Nenhum registro está disponível.{{/if}}</span></div>{{/unless}}
         </div>
       </div>
-      <div class="kj-collapsed-mark" aria-hidden="true"><span>P</span><span>O</span><span>R</span><span>T</span><span>A</span><span>D</span><span>O</span><span>R</span><span>E</span><span>S</span></div>
+      <div class="kj-collapsed-rail" aria-hidden="true"><b>K</b><b>0</b><b>3</b><i></i><span>C</span><span>A</span><span>R</span><span>R</span><span>I</span><span>E</span><span>R</span><i></i><small>{{carrierCount}}</small></div>
     </aside>
 
     <main class="kj-detail" data-kj-detail-root></main>
