@@ -1,83 +1,55 @@
-# GMS // Vínculo Kaiju — 2.0.0-dev.4
+# GMS // Vínculo Kaiju — v2.0.0-dev.6
 
-Aplicação K-03 independente de Journal para Foundry VTT v13.351, com banco próprio de portadores e análise xenogenômica procedural.
+Dev.6 recalibra o renderer genético contra o `DnaHudApp` de `STR4DZN/teste-hud`, corrigindo a divergência visual introduzida nas dev.4/dev.5.
 
-## Arquitetura funcional
+## Correções de fidelidade do DNA
 
-- Tela própria para GM e players.
-- Aba de **Portadores retrátil**, com pesquisa, ordenação e carregamento individual.
-- Apenas o portador aberto recebe a renderização pesada do DNA.
-- Editor K-03 exclusivo do GM: criar, editar, apagar, reordenar, vincular usuários e controlar visibilidade.
-- Banco interno em `game.settings` de mundo; nenhum `JournalEntry` é usado.
-- Sincronização entre clientes pelo socket do módulo.
-- Histórico automático para alterações de Vontade, Comunhão e Humanidade.
-- Estado da sidebar e último portador aberto são lembrados por usuário.
+- Base geométrica voltou às proporções do DNA ANALYSIS original:
+  - `centerY = 52%`;
+  - `R = min(94px, 25% da altura)`;
+  - início da hélice em `4.5%` da largura;
+  - fim em `82%` da largura;
+  - fase-base total de `4π` no viewport (a dev.5 usava aproximadamente `8π` e dobrava a frequência visual);
+  - projeção 3D com `scale = 1 + z*0.0008` e deriva de profundidade `z*0.035`;
+  - 120 amostras dos backbones;
+  - 64 pares de bases;
+  - 13 subdivisões por par;
+  - 140 nós no plexo molecular;
+  - `angle = 0`, `laserPhase = 0` e inclinação-base `-0.05 / 0.02`, como no renderer original;
+  - anéis de crista novamente em `abs(sin θ) > 0.52`, satélites em `peak > 0.82` e nós de torção em `abs(sin θ) < 0.22`;
+  - cor, espessura e anéis vesiculares novamente calibrados conforme a profundidade do DNA original;
+  - scanner dourado restaurado às medidas e intensidades originais.
 
-## dev.4 — Xenogenomic Canvas
+## Progressão genética
 
-A `dev.4` abandona o DNA em SVG da `dev.3`. A nova análise usa um renderer procedural em **Canvas 2D com geometria tridimensional projetada**, seguindo a linguagem técnica do console `DNA ANALYSIS` do projeto `STR4DZN/teste-hud`, mas conectado aos dados reais do Vínculo Kaiju.
+Os valores não substituem mais a hélice-base. A evolução atua em loci localizados e usa uma curva não linear por estágio:
 
-### Renderer molecular
+- I–II: assinatura quase íntegra, apenas sinais discretos;
+- III: pequenas expressões localizadas;
+- IV: alteração anatômica visível;
+- V: mudanças estruturais fortes;
+- VI: expressão extrema.
 
-- 128 amostras por backbone, com duas fitas projetadas em 3D.
-- 64 pares de bases.
-- 12 micro-pérolas internas por par de base.
-- Nós volumétricos, anéis vesiculares, anéis satélite e constrições nos cruzamentos.
-- Plexo molecular de fundo com até 140 nós móveis e conexões pré-calculadas.
-- Z-sort para que estruturas traseiras e dianteiras tenham profundidade coerente.
-- Scanner dourado contínuo com halo, núcleo branco e reação local.
-- Faíscas e partículas geradas quando o scanner encontra a molécula.
-- Paralaxe tridimensional sutil ao mover o mouse sobre o DNA.
-- Fidelidade adaptativa: se o cliente sustentar frames lentos, o renderer reduz amostras secundárias sem remover a morfologia principal e volta ao nível máximo quando o desempenho estabiliza.
-- Clique no DNA alterna a velocidade de rotação e dispara uma excitação molecular local.
+Cada eixo agora possui uma família visual própria:
 
-### Evolução visual real
+- **Vontade:** hipertrofia local, ramificações e assimetria predatória;
+- **Comunhão:** malhas, nós simbióticos e terceira fita progressiva;
+- **Humanidade:** travas/estruturas de contenção azuis e maior coerência geométrica;
+- **Perda de humanidade:** cisalhamento, pares anômalos e rupturas localizadas.
 
-A geometria não é fixa. O renderer recebe a seed, os três eixos, a memória genética e as mutações do portador.
+A memória genética continua deixando marcas persistentes sem congelar o estado atual.
 
-- **Vontade:** altera raio local, assimetria, nós, espessura e cria ramificações orgânicas reais.
-- **Comunhão:** cria malhas externas, pontes de ressonância e pode manifestar uma terceira fita parcial/completa.
-- **Humanidade baixa:** aumenta deformações, irregularidade de pares, assimetria e rupturas reais no backbone.
-- **Seed:** define onde hotspots, ramificações, rupturas e estruturas persistentes aparecem; dois portadores com os mesmos valores continuam visualmente diferentes.
-- **Memória genética:** preserva marcas de limiares já atravessados e adiciona anéis/marcas persistentes na estrutura.
+## Outras características preservadas
 
-### Console K-03
+- Portadores em banco próprio do módulo;
+- aba de Portadores retrátil;
+- editor exclusivo do GM;
+- permissões por usuário;
+- histórico, notas e memória genética;
+- lazy rendering: só o portador aberto executa o Canvas;
+- sincronização entre GM e players.
 
-A tela de análise foi refeita como um console xenobiológico completo, não como cards de dashboard:
 
-- header nativo do Foundry ocultado;
-- top bar própria K-03, arrastável;
-- scanlines CRT e vignette;
-- sidebar de portadores integrada à carcaça e retrátil;
-- dials laterais para Fera, Comunhão e Humanidade;
-- retículo molecular animado;
-- telemetria e memória estrutural;
-- réguas laterais no viewport;
-- bloco de ressequenciamento;
-- matriz inferior de códons;
-- leituras técnicas e códigos gerados a partir da seed;
-- abas funcionais para análise ao vivo, memória genética, estágios, histórico e notas.
+## Regra de fidelidade
 
-## Acesso
-
-O botão `K-03 // Vínculo Kaiju` aparece no diretório de Atores.
-
-Também pode ser aberto por API:
-
-```js
-game.modules.get("gms-kaiju-vinculo").api.open();
-```
-
-Editor do GM:
-
-```js
-game.modules.get("gms-kaiju-vinculo").api.openEditor();
-```
-
-## Compatibilidade
-
-- Foundry VTT: mínimo `13.341`
-- Verificado para `13.351`
-- Sem dependências externas obrigatórias
-- Sem Journal
-- Sem imagens pesadas para o DNA; o visual central é procedural
+Em valores até o fim do estágio III, a matemática central da dupla-hélice permanece igual à do DNA ANALYSIS. As mudanças aparecem como expressões localizadas ao redor da molécula. A partir do estágio IV as próprias coordenadas 3D começam a ser deformadas; V e VI elevam essa deformação de forma não linear. Assim, um portador em `43 / 44 / 58` mantém a silhueta-base, enquanto combinações extremas podem alterar fortemente a anatomia sem trocar o DNA por outro desenho arbitrário.

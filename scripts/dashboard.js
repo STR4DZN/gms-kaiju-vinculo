@@ -28,8 +28,8 @@ export class KaijuDashboardApplication extends Application {
       classes: ["gms-kaiju-dashboard-window"],
       width: 1380,
       height: 820,
-      minWidth: 900,
-      minHeight: 600,
+      minWidth: 720,
+      minHeight: 540,
       resizable: true,
       popOut: true
     });
@@ -88,14 +88,31 @@ export class KaijuDashboardApplication extends Application {
     const root = rootOf(html);
     if (!root) return;
 
-    root.querySelector("[data-action='toggle-carriers']")?.addEventListener("click", async () => {
-      const shell = root.querySelector("[data-kj-dashboard]");
-      const collapsed = shell?.dataset.sidebarCollapsed === "true";
-      await game.settings.set(MODULE_ID, SETTINGS.SIDEBAR_COLLAPSED, !collapsed);
-      if (shell) shell.dataset.sidebarCollapsed = String(!collapsed);
-      const button = root.querySelector("[data-action='toggle-carriers'] i");
-      if (button) button.className = `fa-solid ${!collapsed ? "fa-angles-right" : "fa-angles-left"}`;
-    });
+    const shell = root.querySelector("[data-kj-dashboard]");
+    const applySidebarState = (collapsed) => {
+      if (!shell) return;
+      const next = Boolean(collapsed);
+      shell.dataset.sidebarCollapsed = String(next);
+      shell.classList.toggle("is-sidebar-collapsed", next);
+      shell.style.setProperty("--kj-carrier-column", next ? "42px" : "clamp(184px, 23vw, 284px)");
+      const icon = root.querySelector("[data-action='toggle-carriers'] i");
+      if (icon) icon.className = `fa-solid ${next ? "fa-angles-right" : "fa-angles-left"}`;
+      const toggle = root.querySelector("[data-action='toggle-carriers']");
+      if (toggle) toggle.setAttribute("aria-expanded", String(!next));
+    };
+
+    applySidebarState(shell?.dataset.sidebarCollapsed === "true");
+    root.querySelector("[data-action='toggle-carriers']")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const collapsed = shell?.classList.contains("is-sidebar-collapsed") ?? false;
+      const next = !collapsed;
+      applySidebarState(next); // visual primeiro: nunca depende da persistência para recolher
+      Promise.resolve(game.settings.set(MODULE_ID, SETTINGS.SIDEBAR_COLLAPSED, next)).catch((error) => {
+        console.error("K-03 | Falha ao salvar estado da aba de portadores", error);
+      });
+      requestAnimationFrame(() => this._genomeRenderer?._resize?.());
+    }, { capture: true });
 
     root.querySelector("[data-action='editor']")?.addEventListener("click", () => openKaijuEditor());
     root.querySelector("[data-action='close-dashboard']")?.addEventListener("click", () => this.close());
@@ -183,6 +200,15 @@ export class KaijuDashboardApplication extends Application {
 export function openKaijuDashboard() {
   if (!dashboardInstance) dashboardInstance = new KaijuDashboardApplication();
   dashboardInstance.render(true);
+  const viewportWidth = Math.max(760, window.innerWidth || 1380);
+  const viewportHeight = Math.max(560, window.innerHeight || 820);
+  const width = Math.min(1380, Math.max(780, viewportWidth - 12));
+  const height = Math.min(860, Math.max(600, viewportHeight - 12));
+  dashboardInstance.setPosition({
+    width, height,
+    left: Math.max(6, Math.round((viewportWidth - width) / 2)),
+    top: Math.max(6, Math.round((viewportHeight - height) / 2))
+  });
   return dashboardInstance;
 }
 

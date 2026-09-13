@@ -77,11 +77,11 @@ export class KaijuGenomeRenderer {
     this.width = 1;
     this.height = 1;
     this.dpr = 1;
-    this.angle = (this.rng() * Math.PI * 2) % (Math.PI * 2);
-    this.rotSpeed = 0.010 + this.metrics.complexity * 0.000025;
-    this.laserPhase = this.rng() * Math.PI * 2;
-    this.baseTiltX = -0.055;
-    this.baseTiltY = 0.018;
+    this.angle = 0;
+    this.rotSpeed = 0.012;
+    this.laserPhase = 0;
+    this.baseTiltX = -0.05;
+    this.baseTiltY = 0.02;
     this.tiltX = 0;
     this.tiltY = 0;
     this.targetTiltX = 0;
@@ -105,7 +105,7 @@ export class KaijuGenomeRenderer {
     const metrics = this.metrics;
     const complexity = metrics.complexity / 100;
 
-    const nodeCount = 96 + Math.round(complexity * 44);
+    const nodeCount = 140;
     this.meshNodes = Array.from({ length: nodeCount }, (_, index) => ({
       id: index,
       x: (rng() - 0.5) * 1.9,
@@ -148,7 +148,7 @@ export class KaijuGenomeRenderer {
       axis: index % 3 === 0 ? "vontade" : index % 3 === 1 ? "comunhao" : "humanidade"
     }));
 
-    this.branchSlots = chooseSlots(rng, Math.min(12, metrics.branchCount), 0.10, 0.84, 0.055).map((t, index) => ({
+    this.branchSlots = chooseSlots(rng, Math.min(14, metrics.branchCount), 0.10, 0.82, 0.060).map((t, index) => ({
       t,
       strand: rng() > 0.5 ? 1 : 2,
       sign: rng() > 0.5 ? 1 : -1,
@@ -158,17 +158,24 @@ export class KaijuGenomeRenderer {
       persistent: index < Math.min(metrics.genome.mutations.length, metrics.branchCount)
     }));
 
-    this.latticeSlots = chooseSlots(rng, Math.min(12, metrics.latticeCount), 0.08, 0.88, 0.048).map((t) => ({
+    this.latticeSlots = chooseSlots(rng, Math.min(14, metrics.latticeCount), 0.09, 0.86, 0.055).map((t) => ({
       t,
       sign: rng() > 0.5 ? 1 : -1,
       spread: 0.4 + rng() * 0.7,
       phase: rng() * Math.PI * 2
     }));
 
-    this.fractureSlots = chooseSlots(rng, Math.min(7, metrics.fractureCount), 0.12, 0.86, 0.10).map((t) => ({
+    this.fractureSlots = chooseSlots(rng, Math.min(8, metrics.fractureCount), 0.12, 0.84, 0.095).map((t) => ({
       t,
       width: 0.010 + rng() * 0.012,
       phase: rng() * Math.PI * 2
+    }));
+
+    this.humanityLockSlots = chooseSlots(rng, Math.min(14, metrics.humanityLocks || 0), 0.08, 0.88, 0.055).map((t, index) => ({
+      t,
+      phase: rng() * Math.PI * 2,
+      weight: 0.72 + rng() * 0.45,
+      index
     }));
 
     const rungCount = 64;
@@ -243,7 +250,7 @@ export class KaijuGenomeRenderer {
   _onClick(event) {
     const now = performance.now();
     this.lastClick = now;
-    this.rotSpeed = this.rotSpeed > 0.02 ? 0.0045 : this.rotSpeed > 0.007 ? 0.026 : 0.012;
+    this.rotSpeed = this.rotSpeed === 0.012 ? 0.026 : (this.rotSpeed === 0.026 ? 0.004 : 0.012);
     const rect = this.canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
@@ -276,13 +283,13 @@ export class KaijuGenomeRenderer {
       const z1 = -rx * sinTy + rz * cosTy;
       const y2 = ry * cosTx - z1 * sinTx;
       const z2 = ry * sinTx + z1 * cosTx;
-      const scale = 1 + z2 * 0.00085;
+      const scale = 1.0 + z2 * 0.0008;
       return {
-        px: this.width * 0.5 + x1 + z2 * 0.038,
+        px: this.width * 0.5 + x1 + z2 * 0.035,
         py: centerY + y2,
         scale,
         z: z2,
-        normZ: clamp01((z2 + radius * 1.5) / (radius * 3))
+        normZ: clamp01((z2 + radius) / (2 * radius))
       };
     };
   }
@@ -290,7 +297,10 @@ export class KaijuGenomeRenderer {
   _fractureStrength(t) {
     let strength = 0;
     for (const fracture of this.fractureSlots) strength = Math.max(strength, gaussian(t, fracture.t, fracture.width));
-    return strength * this.metrics.identityDeviation;
+    // Rupturas só ficam anatômicas quando a perda identitária realmente avançou.
+    // Nos estágios baixos elas aparecem como telemetria/pares anômalos, preservando
+    // a silhueta do DNA ANALYSIS original.
+    return strength * Math.max(0, (this.metrics.identityLossMorph - 0.18) / 0.82);
   }
 
   _hotspotFields(t) {
@@ -309,31 +319,60 @@ export class KaijuGenomeRenderer {
   _helixWorld(t, strand, centerY, radius, startX, endX) {
     const m = this.metrics;
     const fields = this._hotspotFields(t);
-    const x = startX + t * (endX - startX);
-    const turns = 3.55 + m.complexity * 0.006 + m.predatoryMemory * 0.35;
-    const theta = t * turns * Math.PI * 2 + this.angle + (strand === 2 ? Math.PI : 0);
+    const xBase = startX + t * (endX - startX);
 
-    const predator = m.will * 0.62 + m.predatoryMemory * 0.38;
-    const symbiosis = m.communion * 0.72 + m.symbioticMemory * 0.28;
-    const deviation = m.identityDeviation;
-    const asym = deviation * (0.18 + predator * 0.18);
-    const localPred = fields.will * predator;
-    const localHuman = fields.humanity * deviation;
-    const localComm = fields.communion * symbiosis;
+    // DNA ANALYSIS original: loopWidth=(end-start)/4 e theta=(x/loopWidth)*PI.
+    // Isso equivale a 4*PI ao longo do viewport. A dev.5 usava 8*PI e dobrava
+    // artificialmente a frequência da hélice.
+    const strandPhase = strand === 2 ? Math.PI : 0;
+    const baseTheta = t * Math.PI * 4 + this.angle + strandPhase;
 
-    const harmonic = Math.sin(t * Math.PI * 10 + (this.seed % 103) * 0.013) * deviation * 0.06;
-    const pulse = Math.sin(performance.now() * 0.0012 + t * 15 + (this.seed % 31)) * 0.008 * (0.3 + m.complexity / 100);
-    const radial = 1 + localPred * 0.22 + localHuman * 0.14 + harmonic + pulse;
-    const strandBias = strand === 1 ? 1 : -1;
-    const localShift = radius * (
-      Math.sin(t * Math.PI * 6 + (this.seed % 47)) * asym * 0.26 +
-      localHuman * strandBias * deviation * 0.16 -
-      localComm * strandBias * symbiosis * 0.045
+    const willMorph = m.willMorph || 0;
+    const communionMorph = m.communionMorph || 0;
+    const humanityMorph = m.humanityMorph || 0;
+    const lossMorph = m.identityLossMorph || 0;
+    const sign = strand === 1 ? 1 : -1;
+
+    // Deformações são locais e progressivas. Em 40–59 o DNA ainda permanece muito
+    // próximo da referência; 60+ abre deformações anatômicas e 80–100 permite extremos.
+    const localWill = Math.min(1.35, fields.will) * willMorph;
+    const localComm = Math.min(1.35, fields.communion) * communionMorph;
+    const localLoss = Math.min(1.35, fields.humanity) * lossMorph;
+
+    const seedPhase = (this.seed % 997) * 0.0061;
+    const highWill = Math.max(0, (willMorph - 0.24) / 0.76);
+    const highLoss = Math.max(0, (lossMorph - 0.24) / 0.76);
+    const highComm = Math.max(0, (communionMorph - 0.24) / 0.76);
+
+    // Fase local: quase nula nos estágios baixos, podendo cisalhar as fitas nos altos.
+    const phaseShear = sign * (
+      Math.sin(t * Math.PI * 5.5 + seedPhase) * highLoss * 0.20 +
+      Math.sin(t * Math.PI * 3.0 + seedPhase * 0.7) * highWill * highLoss * 0.12
+    ) * (0.35 + localLoss * 0.65);
+    const theta = baseTheta + phaseShear;
+
+    // Raio preserva o DNA original como base. Predação cria hipertrofia localizada;
+    // perda identitária gera assimetria; Comunhão tende a reconectar/organizar.
+    const radial = 1
+      + localWill * highWill * 0.285
+      + localLoss * highLoss * 0.200
+      - localComm * highComm * 0.038;
+
+    // Deslocamento lateral/vertical só ganha força real após o estágio IV.
+    const warp = radius * sign * (
+      Math.sin(t * Math.PI * 4.7 + seedPhase) * highWill * 0.055 +
+      Math.sin(t * Math.PI * 7.1 + seedPhase * 1.3) * highLoss * 0.070
     );
 
-    const y = centerY + radius * radial * Math.sin(theta) + localShift;
-    const z = radius * (1 + localPred * 0.11 - localComm * 0.035) * Math.cos(theta) + localShift * 0.35;
-    return { x, y, z, theta, fields, radial };
+    // Humanidade alta funciona como contenção geométrica: reduz distorções locais,
+    // mas sua presença visual aparece principalmente nos humanity-locks azuis.
+    const containment = 1 - humanityMorph * 0.20;
+    const y = centerY + radius * radial * Math.sin(theta) + warp * containment;
+    const z = radius * (1 + localWill * highWill * 0.11 + localLoss * highLoss * 0.08) * Math.cos(theta) + warp * 0.30 * containment;
+
+    // Em estados extremos a própria linha axial pode ficar levemente irregular.
+    const x = xBase + Math.sin(t * Math.PI * 9 + seedPhase) * radius * 0.035 * Math.max(highWill, highLoss);
+    return { x, y, z, theta, baseTheta, fields, radial };
   }
 
   _drawBackground(project, centerY, timeSec) {
@@ -342,13 +381,13 @@ export class KaijuGenomeRenderer {
     const height = this.height;
 
     ctx.save();
-    ctx.fillStyle = "rgba(63,244,213,0.085)";
-    for (let gx = 18; gx < width; gx += 38) {
-      for (let gy = 18; gy < height; gy += 38) {
+    ctx.fillStyle = "rgba(63,244,213,0.12)";
+    for (let gx = 20; gx < width; gx += 40) {
+      for (let gy = 20; gy < height; gy += 40) {
         const twinkle = 0.55 + 0.45 * Math.sin(timeSec * 0.75 + gx * 0.02 + gy * 0.017);
         ctx.globalAlpha = twinkle;
         ctx.beginPath();
-        ctx.arc(gx, gy, 0.7, 0, Math.PI * 2);
+        ctx.arc(gx, gy, 0.9, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -402,21 +441,22 @@ export class KaijuGenomeRenderer {
 
   _pushBranchRenderables(renderables, project, centerY, radius, startX, endX) {
     const m = this.metrics;
-    const strength = clamp01((m.will * 0.62 + m.predatoryMemory * 0.55 + m.identityDeviation * 0.28) / 1.25);
-    if (strength < 0.08) return;
+    const strength = clamp01(m.willMorph || 0);
+    if (strength < 0.10 || !this.branchSlots.length) return;
 
     this.branchSlots.forEach((branch, branchIndex) => {
       const source = this._helixWorld(branch.t, branch.strand, centerY, radius, startX, endX);
       const points = [];
-      const steps = 14 + Math.round(branch.length * 8);
-      const maxLen = radius * (0.35 + 0.82 * strength) * branch.length;
+      const high = Math.max(0, (strength - 0.20) / 0.80);
+      const steps = 12 + Math.round(branch.length * (5 + high * 7));
+      const maxLen = radius * (0.12 + strength * 0.78) * branch.length;
       const tangent = source.theta + Math.PI * 0.5;
       for (let step = 0; step < steps; step += 1) {
         const f = step / Math.max(1, steps - 1);
-        const curl = Math.sin(f * Math.PI * (1.2 + branch.length * 0.7) + branch.phase) * radius * 0.16 * strength;
-        const x = source.x + f * maxLen * 0.85;
+        const curl = Math.sin(f * Math.PI * (1.15 + branch.length * 0.75) + branch.phase) * radius * (0.045 + high * 0.16);
+        const x = source.x + f * maxLen * (0.45 + high * 0.48);
         const y = source.y + branch.sign * f * maxLen + curl;
-        const z = source.z + Math.cos(tangent + f * 2.2 + branch.curl) * radius * 0.32 * f;
+        const z = source.z + Math.cos(tangent + f * (1.4 + high * 1.8) + branch.curl) * radius * (0.10 + high * 0.26) * f;
         points.push(project(x, y, z));
       }
       for (let i = 0; i < points.length - 1; i += 1) {
@@ -429,11 +469,11 @@ export class KaijuGenomeRenderer {
           z: (p1.z + p2.z) * 0.5,
           strength,
           persistent: branch.persistent,
-          width: Math.max(0.65, (2.3 + strength * 1.8) * (1 - i / points.length * 0.64))
+          width: Math.max(0.55, (0.9 + strength * 1.4) * (1 - i / points.length * 0.64))
         });
-        if (i % 2 === 0) renderables.push({ type: "branch_bead", p: p1, z: p1.z, strength, persistent: branch.persistent });
+        if (high > 0.16 && i % 3 === 0) renderables.push({ type: "branch_bead", p: p1, z: p1.z, strength, persistent: branch.persistent });
       }
-      if (branchIndex % 3 === 0 && points.at(-1)) {
+      if (high > 0.45 && branchIndex % 3 === 0 && points.at(-1)) {
         renderables.push({ type: "branch_tip", p: points.at(-1), z: points.at(-1).z, strength });
       }
     });
@@ -441,21 +481,35 @@ export class KaijuGenomeRenderer {
 
   _pushLatticeRenderables(renderables, project, centerY, radius, startX, endX) {
     const m = this.metrics;
-    const strength = clamp01(m.communion * 0.72 + m.symbioticMemory * 0.38);
-    if (strength < 0.08) return;
+    const strength = clamp01(m.communionMorph || 0);
+    if (strength < 0.09 || !this.latticeSlots.length) return;
     this.latticeSlots.forEach((slot, index) => {
+      const high = Math.max(0, (strength - 0.18) / 0.82);
       const a = this._helixWorld(slot.t, 1, centerY, radius, startX, endX);
-      const b = this._helixWorld(Math.min(0.96, slot.t + 0.04 + slot.spread * 0.025), 2, centerY, radius, startX, endX);
+      const b = this._helixWorld(Math.min(0.96, slot.t + 0.025 + slot.spread * (0.012 + high * 0.022)), 2, centerY, radius, startX, endX);
       const pA = project(a.x, a.y, a.z);
       const pB = project(b.x, b.y, b.z);
       const outer = project(
-        (a.x + b.x) * 0.5 + radius * 0.22 * Math.sin(slot.phase),
-        centerY + slot.sign * radius * (1.20 + slot.spread * 0.45),
-        (a.z + b.z) * 0.5 + slot.sign * radius * 0.38
+        (a.x + b.x) * 0.5 + radius * (0.06 + high * 0.16) * Math.sin(slot.phase),
+        centerY + slot.sign * radius * (1.02 + slot.spread * (0.10 + high * 0.35)),
+        (a.z + b.z) * 0.5 + slot.sign * radius * (0.08 + high * 0.30)
       );
       renderables.push({ type: "lattice", p1: pA, p2: outer, z: (pA.z + outer.z) * 0.5, strength, phase: slot.phase, index });
       renderables.push({ type: "lattice", p1: outer, p2: pB, z: (outer.z + pB.z) * 0.5, strength, phase: slot.phase, index });
-      renderables.push({ type: "lattice_node", p: outer, z: outer.z, strength });
+      if (high > 0.10) renderables.push({ type: "lattice_node", p: outer, z: outer.z, strength });
+    });
+  }
+
+  _pushHumanityLocks(renderables, project, centerY, radius, startX, endX) {
+    const strength = clamp01(this.metrics.humanityMorph || 0);
+    if (strength < 0.09 || !this.humanityLockSlots?.length) return;
+    this.humanityLockSlots.forEach((slot) => {
+      const w1 = this._helixWorld(slot.t, 1, centerY, radius, startX, endX);
+      const w2 = this._helixWorld(slot.t, 2, centerY, radius, startX, endX);
+      const p1 = project(w1.x, w1.y, w1.z);
+      const p2 = project(w2.x, w2.y, w2.z);
+      const center = project((w1.x + w2.x) * 0.5, centerY, 0);
+      renderables.push({ type: "humanity_lock", p1, p2, p: center, z: center.z + 3, strength, phase: slot.phase, weight: slot.weight });
     });
   }
 
@@ -468,46 +522,48 @@ export class KaijuGenomeRenderer {
   }
 
   _pushTerminalTail(renderables, project, centerY, radius, startX, endX) {
-    const m = this.metrics;
-    const sourceTop = this._helixWorld(0.995, 1, centerY, radius, startX, endX);
-    const sourceBottom = this._helixWorld(0.995, 2, centerY, radius, startX, endX);
-    const energy = clamp01(0.30 + m.predatoryMemory * 0.42 + m.identityDeviation * 0.28 + m.mutationLoad / 260);
-    const reach = radius * (0.72 + energy * 0.78);
-    const makeTail = (source, sign, steps, branchScale, phase, child = false) => {
+    // Mantém a cauda fractal característica do DNA ANALYSIS original em todos os
+    // estados. Vontade/perda identitária apenas ampliam sua agressividade em estágios altos.
+    const will = this.metrics.willMorph || 0;
+    const loss = this.metrics.identityLossMorph || 0;
+    const energy = clamp01(Math.max(will, loss));
+    const unit = Math.max(0.72, Math.min(1.08, this.width / 1000));
+    const extra = Math.max(0, (energy - 0.30) / 0.70);
+
+    const build = (kind, steps, xReach, yFn, zFn, widthFn) => {
       const pts = [];
       for (let step = 0; step < steps; step += 1) {
-        const f = step / Math.max(1, steps - 1);
-        const x = source.x + f * reach * branchScale;
-        const arc = Math.sin(f * Math.PI * (0.65 + branchScale * 0.24)) * radius * 0.28 * sign;
-        const fractal = Math.sin(f * Math.PI * 3.3 + phase) * radius * (0.035 + energy * 0.05) * f;
-        const y = source.y + arc + fractal + sign * Math.pow(f, 1.45) * radius * 0.18;
-        const z = source.z + Math.cos(f * Math.PI * 1.6 + phase) * radius * 0.18 * f;
-        pts.push(project(x, y, z));
+        const frac = step / Math.max(1, steps - 1);
+        const bx = endX + frac * xReach * unit * (1 + extra * 0.22);
+        const by = yFn(frac, extra);
+        const bz = zFn(frac, extra);
+        pts.push(project(bx, by, bz));
       }
-      for (let i = 0; i < pts.length - 1; i += 1) {
-        const p1 = pts[i];
-        const p2 = pts[i + 1];
-        renderables.push({
-          type: "tail",
-          p1, p2,
-          z: (p1.z + p2.z) * 0.5,
-          energy, child,
-          width: Math.max(0.55, (child ? 1.15 : 2.0) * (1 - i / pts.length * 0.72))
-        });
-        if (i % (child ? 3 : 2) === 0) renderables.push({ type: "tail_bead", p: p1, z: p1.z, energy, child });
+      for (let step = 0; step < pts.length - 1; step += 1) {
+        const p1 = pts[step]; const p2 = pts[step + 1];
+        renderables.push({ type: "tail", p1, p2, z: (p1.z + p2.z) * 0.5, energy, child: kind === "child", width: widthFn(step, pts.length) });
+        renderables.push({ type: "tail_bead", p: p1, z: p1.z, energy, child: kind === "child", radius: Math.max(0.75, 2.35 - step * 0.075) });
       }
       return pts;
     };
 
-    const top = makeTail(sourceTop, -1, 27, 1.0, this.seed * 0.0007, false);
-    makeTail(sourceBottom, 1, 22, 0.82, this.seed * 0.0009 + 1.7, false);
-    if (energy > 0.42 && top.length > 8) {
-      const forkPoint = top[Math.floor(top.length * 0.36)];
-      const pseudo = { x: endX + reach * 0.35, y: forkPoint.py, z: forkPoint.z };
-      // A subcauda nasce aproximadamente no terço final do filamento superior.
-      const source = { x: endX + reach * 0.32, y: centerY - radius * (0.55 + energy * 0.18), z: radius * 0.12 };
-      makeTail(source, -1, 16, 0.62, this.seed * 0.0011 + 2.4, true);
-    }
+    build("top", 26, 105,
+      (f,e) => centerY - 28 * unit * Math.sin(f * Math.PI * 0.5) + Math.pow(f, 1.5) * 8 * unit - e * 18 * unit * f,
+      (f,e) => 15 * Math.cos(f * Math.PI + this.angle) + Math.sin(f * 5 + this.seed) * e * 10,
+      (i,n) => Math.max(0.8, 2.0 * (1 - i / Math.max(1,n+2)))
+    );
+
+    build("bottom", 20, 85,
+      (f,e) => centerY + 24 * unit * Math.sin(f * Math.PI * 0.5) - Math.pow(f, 1.5) * 6 * unit + e * 14 * unit * f,
+      (f,e) => -15 * Math.cos(f * Math.PI + this.angle) - Math.sin(f * 4.2 + this.seed) * e * 8,
+      (i,n) => Math.max(0.8, 1.8 * (1 - i / Math.max(1,n+2)))
+    );
+
+    build("child", 16, 68,
+      (f,e) => centerY - 20 * unit - f * (26 + e * 18) * unit,
+      (f,e) => 18 - f * 15 + Math.sin(f * 4 + this.seed) * e * 7,
+      () => 1.15
+    );
   }
 
   _render(now) {
@@ -529,22 +585,28 @@ export class KaijuGenomeRenderer {
     const height = this.height;
     ctx.clearRect(0, 0, width, height);
 
-    this.tiltX += (this.targetTiltX - this.tiltX) * 0.075;
-    this.tiltY += (this.targetTiltY - this.tiltY) * 0.075;
+    this.tiltX += (this.targetTiltX - this.tiltX) * 0.08;
+    this.tiltY += (this.targetTiltY - this.tiltY) * 0.08;
     this.angle += this.rotSpeed * (dt / 16.667);
-    this.laserPhase += (0.015 + this.metrics.mutationLoad * 0.000035) * (dt / 16.667);
+    this.laserPhase += 0.018 * (dt / 16.667);
 
     const centerY = height * 0.52;
-    const radius = Math.min(118, height * (0.235 + this.metrics.complexity * 0.00022));
-    const startX = width * 0.047;
-    const endX = width * 0.825;
+    // Mesmas proporções do DNA ANALYSIS original. Os estágios alteram a anatomia
+    // local, não o enquadramento inteiro da molécula.
+    const baseRadius = Math.min(94, height * 0.25);
+    const globalWill = Math.max(0, ((this.metrics.willMorph || 0) - 0.24) / 0.76);
+    const globalLoss = Math.max(0, ((this.metrics.identityLossMorph || 0) - 0.24) / 0.76);
+    const globalHumanity = Math.max(0, ((this.metrics.humanityMorph || 0) - 0.49) / 0.51);
+    const radius = baseRadius * (1 + globalWill * 0.035 + globalLoss * 0.025 - globalHumanity * 0.012);
+    const startX = width * 0.045;
+    const endX = width * 0.82;
     const project = this._projector(centerY, radius);
 
     this._drawBackground(project, centerY, timeSec);
 
     const laserX = startX + (0.5 + 0.5 * Math.sin(this.laserPhase)) * (endX - startX);
     const renderables = [];
-    const sampleCount = this.quality < 1 ? 104 : 128;
+    const sampleCount = 120;
     const s1 = [];
     const s2 = [];
 
@@ -567,7 +629,7 @@ export class KaijuGenomeRenderer {
       if (frag2 < 0.72) renderables.push({ type: "backbone", p1: a2, p2: b2, z: (a2.z + b2.z) * 0.5, strand: 2, fracture: frag2 });
     }
 
-    const rungCount = this.quality < 1 ? 52 : 64;
+    const rungCount = 64;
     for (let i = 0; i < rungCount; i += 1) {
       const t = i / (rungCount - 1);
       const w1 = this._helixWorld(t, 1, centerY, radius, startX, endX);
@@ -578,13 +640,13 @@ export class KaijuGenomeRenderer {
       const anomalous = this.anomalousRungs.has(i);
       if (fracture < 0.78) renderables.push({ type: "rung", p1, p2, z: (p1.z + p2.z) * 0.5 - 4, anomalous, fracture });
 
-      const beads = this.quality < 1 ? 10 : 13;
+      const beads = 13;
       for (let b = 1; b < beads; b += 1) {
         const u = b / beads;
         let y = w1.y + (w2.y - w1.y) * u;
         let z = w1.z + (w2.z - w1.z) * u;
         if (anomalous) {
-          const bend = Math.sin(u * Math.PI) * radius * 0.10 * this.metrics.identityDeviation;
+          const bend = Math.sin(u * Math.PI) * radius * 0.10 * (this.metrics.identityLossMorph || 0);
           y += bend * Math.sin(i * 0.9 + this.seed);
           z += bend * Math.cos(i * 0.7 + this.seed);
         }
@@ -593,21 +655,21 @@ export class KaijuGenomeRenderer {
       }
 
       const absSin = Math.abs(Math.sin(w1.theta));
-      const crest = absSin > 0.50;
-      const peak = crest ? (absSin - 0.50) / 0.50 : 0;
+      const crest = absSin > 0.52;
+      const peak = crest ? (absSin - 0.52) / 0.48 : 0;
       renderables.push({ type: "strand_node", p: p1, z: p1.z, ring: crest, peak, axis: anomalous ? "vontade" : "neutral" });
       renderables.push({ type: "strand_node", p: p2, z: p2.z, ring: crest, peak, axis: anomalous ? "humanidade" : "neutral" });
       if (peak > 0.82 && i % 2 === 0) {
-        const off = (p1.py < centerY ? -10 : 10) * p1.scale;
+        const off = (p1.py < centerY ? -9 : 9) * p1.scale;
         renderables.push({ type: "satellite", p: { ...p1, py: p1.py + off, z: p1.z + 9 }, z: p1.z + 9 });
       }
-      if (absSin < 0.19) {
-        const cross = project(w1.x, centerY + Math.sin(i + this.seed) * radius * this.metrics.identityDeviation * 0.04, 0);
+      if (absSin < 0.22) {
+        const cross = project(w1.x, centerY + Math.sin(i + this.seed) * radius * (this.metrics.identityLossMorph || 0) * 0.04, 0);
         renderables.push({ type: "twist", p: cross, z: cross.z });
       }
     }
 
-    if (this.metrics.extraStrand > 0.08) {
+    if (this.metrics.extraStrand > 0.04) {
       const thirdAlpha = clamp01(this.metrics.extraStrand);
       let last = null;
       for (let i = 0; i < sampleCount; i += 1) {
@@ -628,6 +690,7 @@ export class KaijuGenomeRenderer {
 
     this._pushBranchRenderables(renderables, project, centerY, radius, startX, endX);
     this._pushLatticeRenderables(renderables, project, centerY, radius, startX, endX);
+    this._pushHumanityLocks(renderables, project, centerY, radius, startX, endX);
     this._pushPersistentMarks(renderables, project, centerY, radius, startX, endX);
     this._pushTerminalTail(renderables, project, centerY, radius, startX, endX);
 
@@ -636,7 +699,8 @@ export class KaijuGenomeRenderer {
 
     this._drawSparks(dt);
     this._drawScanner(laserX);
-    this._drawReticleOverlay(now, centerY, startX, endX);
+    // O DNA ANALYSIS original não desenha um retículo adicional por cima da molécula;
+    // o retículo pertence à instrumentação lateral. Mantemos o viewport molecular limpo.
 
     this.frameId = requestAnimationFrame((next) => this._render(next));
   }
@@ -660,20 +724,23 @@ export class KaijuGenomeRenderer {
       ctx.moveTo(item.p1.px, item.p1.py);
       ctx.lineTo(item.p2.px, item.p2.py);
       if (hit.hit) {
-        ctx.strokeStyle = rgba(COLORS.gold, 0.62 + hit.intensity * 0.38);
-        ctx.lineWidth = 1.8 + z * 2.1;
+        ctx.strokeStyle = rgba("#ffebaa", 0.55 + hit.intensity * 0.45);
+        ctx.lineWidth = z > 0.5 ? 2.2 : 1.4;
         ctx.shadowColor = COLORS.gold;
-        ctx.shadowBlur = 7 + hit.intensity * 11;
+        ctx.shadowBlur = 8;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
       } else {
-        const base = item.strand === 1 ? COLORS.cyanBright : COLORS.cyan;
-        ctx.strokeStyle = rgba(base, 0.24 + z * 0.70);
-        ctx.lineWidth = 1.1 + z * (2.2 + this.metrics.complexity * 0.012);
-        ctx.shadowColor = COLORS.cyan;
-        ctx.shadowBlur = z > 0.55 ? 4 + z * 4 : 0;
+        if (z > 0.5) {
+          ctx.strokeStyle = rgba(COLORS.cyan, 0.35 + z * 0.45);
+          ctx.lineWidth = 1.8;
+        } else {
+          ctx.strokeStyle = rgba("#147378", 0.15 + z * 0.25);
+          ctx.lineWidth = 1.0;
+        }
+        ctx.stroke();
       }
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-      if (hit.hit && Math.random() < 0.05 + hit.intensity * 0.08) this._sparkAt((item.p1.px + item.p2.px) / 2, (item.p1.py + item.p2.py) / 2, hit.intensity);
+      if (hit.hit && Math.random() < 0.035 + hit.intensity * 0.06) this._sparkAt((item.p1.px + item.p2.px) / 2, (item.p1.py + item.p2.py) / 2, hit.intensity);
       return;
     }
 
@@ -681,27 +748,36 @@ export class KaijuGenomeRenderer {
       ctx.beginPath();
       ctx.moveTo(item.p1.px, item.p1.py);
       ctx.lineTo(item.p2.px, item.p2.py);
-      const base = item.anomalous ? COLORS.will : COLORS.cyan;
-      ctx.strokeStyle = hit.hit ? rgba(COLORS.gold, 0.5 + hit.intensity * 0.5) : rgba(base, item.anomalous ? 0.38 : 0.18 + z * 0.16);
-      ctx.lineWidth = hit.hit ? 1.35 : item.anomalous ? 1.05 : 0.72;
+      if (hit.hit) {
+        ctx.strokeStyle = rgba("#ffe6a0", 0.45 + hit.intensity * 0.55);
+        ctx.lineWidth = 1.4;
+        ctx.shadowColor = COLORS.gold;
+        ctx.shadowBlur = 6;
+      } else {
+        ctx.strokeStyle = item.anomalous ? rgba(COLORS.will, 0.34) : rgba(COLORS.cyan, 0.22);
+        ctx.lineWidth = item.anomalous ? 1.0 : 0.8;
+      }
       if (item.anomalous) ctx.setLineDash([2, 3]);
       ctx.stroke();
       ctx.setLineDash([]);
+      ctx.shadowBlur = 0;
       return;
     }
 
     if (item.type === "bead") {
-      const r = (0.95 + z * 1.45) * item.p.scale;
+      const r = (1.1 + z * 1.5) * item.p.scale;
       ctx.beginPath();
       ctx.arc(item.p.px, item.p.py, r, 0, Math.PI * 2);
       if (hit.hit) {
         ctx.fillStyle = COLORS.white;
         ctx.shadowColor = COLORS.gold;
-        ctx.shadowBlur = 8 + hit.intensity * 8;
+        ctx.shadowBlur = 10;
+      } else if (item.anomalous) {
+        ctx.fillStyle = rgba(COLORS.will, 0.62 + z * 0.25);
+      } else if (z > 0.45) {
+        ctx.fillStyle = rgba(COLORS.cyan, 0.55 + z * 0.45);
       } else {
-        const base = item.anomalous ? COLORS.will : COLORS.cyan;
-        ctx.fillStyle = rgba(base, item.anomalous ? 0.72 : 0.26 + z * 0.68);
-        ctx.shadowBlur = 0;
+        ctx.fillStyle = rgba("#106e73", 0.20 + z * 0.35);
       }
       ctx.fill();
       ctx.shadowBlur = 0;
@@ -709,45 +785,75 @@ export class KaijuGenomeRenderer {
     }
 
     if (item.type === "strand_node") {
-      const color = item.axis === "vontade" ? COLORS.will : item.axis === "humanidade" ? COLORS.humanity : COLORS.cyan;
-      if (item.ring && z > 0.14) {
-        const ring = (4.1 + item.peak * 4.2) * item.p.scale;
+      const accent = item.axis === "vontade" ? COLORS.will : item.axis === "humanidade" ? COLORS.humanity : COLORS.cyan;
+      if (item.ring && z > 0.20) {
+        const ring = (5.0 + (item.peak || 0.5) * 3.5) * item.p.scale;
         ctx.beginPath();
         ctx.arc(item.p.px, item.p.py, ring, 0, Math.PI * 2);
-        ctx.strokeStyle = hit.hit ? COLORS.white : rgba(color, 0.55 + z * 0.42);
-        ctx.lineWidth = 1.5 + z * 1.1;
-        ctx.shadowColor = hit.hit ? COLORS.gold : color;
-        ctx.shadowBlur = hit.hit ? 13 : 3 + z * 5;
-        ctx.stroke();
-        ctx.shadowBlur = 0;
+        if (hit.hit) {
+          ctx.strokeStyle = COLORS.white;
+          ctx.lineWidth = 2.4;
+          ctx.shadowColor = COLORS.gold;
+          ctx.shadowBlur = 14;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+          ctx.beginPath();
+          ctx.arc(item.p.px, item.p.py, 1.8 * item.p.scale, 0, Math.PI * 2);
+          ctx.fillStyle = COLORS.white;
+          ctx.fill();
+        } else {
+          ctx.strokeStyle = rgba(accent, 0.70 + z * 0.30);
+          ctx.lineWidth = 2.4;
+          if (z > 0.4) {
+            ctx.shadowColor = rgba(accent, 0.75);
+            ctx.shadowBlur = 8 * z;
+          }
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+          ctx.beginPath();
+          ctx.arc(item.p.px, item.p.py, ring * 0.45, 0, Math.PI * 2);
+          ctx.strokeStyle = rgba(COLORS.cyanBright, 0.40 + z * 0.40);
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(item.p.px, item.p.py, 1.4 * item.p.scale, 0, Math.PI * 2);
+          ctx.fillStyle = z > 0.5 ? COLORS.white : rgba(accent, 0.75);
+          ctx.fill();
+        }
+      } else {
+        const dotR = (1.6 + z * 2.0) * item.p.scale;
         ctx.beginPath();
-        ctx.arc(item.p.px, item.p.py, ring * 0.46, 0, Math.PI * 2);
-        ctx.strokeStyle = hit.hit ? rgba(COLORS.gold, 0.9) : rgba(COLORS.cyanBright, 0.36 + z * 0.34);
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
+        ctx.arc(item.p.px, item.p.py, dotR, 0, Math.PI * 2);
+        if (hit.hit) {
+          ctx.fillStyle = COLORS.white;
+          ctx.shadowColor = COLORS.gold;
+          ctx.shadowBlur = 10;
+        } else if (z > 0.45) {
+          ctx.fillStyle = rgba(accent, 0.50 + z * 0.50);
+        } else {
+          ctx.fillStyle = rgba("#106e73", 0.20 + z * 0.35);
+        }
+        ctx.fill();
+        ctx.shadowBlur = 0;
       }
-      ctx.beginPath();
-      ctx.arc(item.p.px, item.p.py, (1.25 + z * 1.8) * item.p.scale, 0, Math.PI * 2);
-      ctx.fillStyle = hit.hit ? COLORS.white : rgba(COLORS.cyanBright, 0.38 + z * 0.58);
-      ctx.fill();
       return;
     }
 
     if (item.type === "satellite") {
-      const r = 3.3 * item.p.scale;
+      const r = 3.5 * item.p.scale;
       ctx.beginPath();
       ctx.arc(item.p.px, item.p.py, r, 0, Math.PI * 2);
-      ctx.strokeStyle = hit.hit ? COLORS.gold : rgba(COLORS.cyan, 0.78);
-      ctx.lineWidth = 1.3;
+      ctx.strokeStyle = hit.hit ? COLORS.gold : rgba(COLORS.cyan, 0.85);
+      ctx.lineWidth = 1.6;
       ctx.stroke();
       return;
     }
 
     if (item.type === "twist") {
       ctx.beginPath();
-      ctx.arc(item.p.px, item.p.py, 4.0 * item.p.scale, 0, Math.PI * 2);
-      ctx.strokeStyle = hit.hit ? COLORS.white : rgba(COLORS.cyanBright, 0.74);
-      ctx.lineWidth = 1.2;
+      ctx.arc(item.p.px, item.p.py, 4.5 * item.p.scale, 0, Math.PI * 2);
+      ctx.strokeStyle = hit.hit ? COLORS.white : rgba(COLORS.cyanBright, 0.90);
+      ctx.lineWidth = 1.6;
       ctx.stroke();
       return;
     }
@@ -820,7 +926,7 @@ export class KaijuGenomeRenderer {
       ctx.beginPath();
       ctx.moveTo(item.p1.px, item.p1.py);
       ctx.lineTo(item.p2.px, item.p2.py);
-      const tailColor = this.metrics.predatoryMemory > 0.68 ? COLORS.will : COLORS.cyan;
+      const tailColor = (this.metrics.willMorph || 0) > 0.72 ? COLORS.will : COLORS.cyan;
       ctx.strokeStyle = hit.hit ? rgba(COLORS.gold, 0.94) : rgba(tailColor, (item.child ? 0.45 : 0.66) + item.energy * 0.20);
       ctx.lineWidth = item.width * (0.76 + z * 0.48);
       ctx.shadowColor = tailColor;
@@ -831,11 +937,34 @@ export class KaijuGenomeRenderer {
     }
 
     if (item.type === "tail_bead") {
-      const tailColor = this.metrics.predatoryMemory > 0.68 ? COLORS.will : COLORS.cyanBright;
+      const tailColor = (this.metrics.willMorph || 0) > 0.72 ? COLORS.will : COLORS.cyanBright;
       ctx.beginPath();
       ctx.arc(item.p.px, item.p.py, (item.child ? 1.15 : 1.65) * item.p.scale, 0, Math.PI * 2);
       ctx.fillStyle = hit.hit ? COLORS.white : rgba(tailColor, 0.72 + z * 0.22);
       ctx.fill();
+      return;
+    }
+
+    if (item.type === "humanity_lock") {
+      const strength = item.strength || 0;
+      const pulse = 1 + Math.sin(now * 0.0018 + item.phase) * (0.03 + strength * 0.08);
+      // Travessa de contenção entre as duas fitas.
+      ctx.beginPath();
+      ctx.moveTo(item.p1.px, item.p1.py);
+      ctx.lineTo(item.p2.px, item.p2.py);
+      ctx.strokeStyle = hit.hit ? rgba(COLORS.gold, 0.86) : rgba(COLORS.humanity, 0.10 + strength * 0.38);
+      ctx.lineWidth = 0.55 + strength * 0.75;
+      ctx.stroke();
+      // Anel técnico central, pequeno nos estágios médios e mais evidente nos altos.
+      const r = (2.6 + strength * 5.2) * pulse * (item.weight || 1);
+      ctx.beginPath();
+      ctx.arc(item.p.px, item.p.py, r, 0, Math.PI * 2);
+      ctx.strokeStyle = hit.hit ? COLORS.gold : rgba(COLORS.humanity, 0.24 + strength * 0.58);
+      ctx.lineWidth = 0.8 + strength * 0.9;
+      ctx.shadowColor = COLORS.humanity;
+      ctx.shadowBlur = strength > 0.45 ? 3 + strength * 5 : 0;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
       return;
     }
 
@@ -894,31 +1023,26 @@ export class KaijuGenomeRenderer {
 
   _drawScanner(laserX) {
     const ctx = this.ctx;
-    const top = this.height * 0.12;
-    const bottom = this.height * 0.90;
+    const top = this.height * 0.18;
+    const bottom = this.height * 0.88;
 
-    ctx.strokeStyle = rgba(COLORS.goldSoft, 0.12);
-    ctx.lineWidth = 14;
+    // DNA ANALYSIS original: halo amplo + feixe dourado + núcleo branco.
+    ctx.strokeStyle = "rgba(255,190,60,0.18)";
+    ctx.lineWidth = 10;
     ctx.beginPath();
     ctx.moveTo(laserX, top);
     ctx.lineTo(laserX, bottom);
     ctx.stroke();
 
-    ctx.strokeStyle = rgba(COLORS.gold, 0.28);
-    ctx.lineWidth = 7;
-    ctx.beginPath();
-    ctx.moveTo(laserX, top);
-    ctx.lineTo(laserX, bottom);
-    ctx.stroke();
+    const gradient = ctx.createLinearGradient(0, top, 0, bottom);
+    gradient.addColorStop(0, "rgba(255,209,92,0)");
+    gradient.addColorStop(0.15, "rgba(255,209,92,0.75)");
+    gradient.addColorStop(0.5, "rgba(255,255,255,0.95)");
+    gradient.addColorStop(0.85, "rgba(255,209,92,0.75)");
+    gradient.addColorStop(1, "rgba(255,209,92,0)");
 
-    const grad = ctx.createLinearGradient(0, top, 0, bottom);
-    grad.addColorStop(0, rgba(COLORS.gold, 0));
-    grad.addColorStop(0.12, rgba(COLORS.gold, 0.78));
-    grad.addColorStop(0.50, rgba(COLORS.white, 0.98));
-    grad.addColorStop(0.88, rgba(COLORS.gold, 0.78));
-    grad.addColorStop(1, rgba(COLORS.gold, 0));
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = 2.2;
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 2.4;
     ctx.shadowColor = COLORS.gold;
     ctx.shadowBlur = 14;
     ctx.beginPath();
@@ -927,20 +1051,20 @@ export class KaijuGenomeRenderer {
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    ctx.strokeStyle = rgba(COLORS.white, 0.95);
-    ctx.lineWidth = 0.8;
+    ctx.strokeStyle = "rgba(255,255,255,0.95)";
+    ctx.lineWidth = 1.0;
     ctx.beginPath();
     ctx.moveTo(laserX, top + 10);
     ctx.lineTo(laserX, bottom - 10);
     ctx.stroke();
 
     ctx.strokeStyle = COLORS.gold;
-    ctx.lineWidth = 1.1;
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.moveTo(laserX - 7, top);
-    ctx.lineTo(laserX + 7, top);
-    ctx.moveTo(laserX - 7, bottom);
-    ctx.lineTo(laserX + 7, bottom);
+    ctx.moveTo(laserX - 6, top);
+    ctx.lineTo(laserX + 6, top);
+    ctx.moveTo(laserX - 6, bottom);
+    ctx.lineTo(laserX + 6, bottom);
     ctx.stroke();
   }
 

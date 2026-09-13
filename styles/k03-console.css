@@ -84,3 +84,92 @@
 .kj-tab-body:has(>.kj-dna-console:not(.is-detailed)){overflow:hidden}
 .kj-tab-body>.kj-dna-console:not(.is-detailed){height:calc(100% - 32px);min-height:500px}
 .kj-tab-body>.kj-dna-console.is-detailed{height:560px;min-height:560px}
+
+/* ========================================================================== 
+   DEV.5 — READABILITY / PROPORTION PASS
+   Never compress the DNA console to fit a short window. The detail pane scrolls;
+   the molecular viewport keeps a readable physical size. Sidebar collapse uses
+   an explicit class in addition to the persisted data attribute.
+   ========================================================================== */
+
+.kj-layout{
+  grid-template-columns:var(--kj-carrier-column,clamp(184px,23vw,284px)) minmax(0,1fr)!important;
+}
+.kj-dashboard.is-sidebar-collapsed .kj-layout,
+.kj-dashboard[data-sidebar-collapsed="true"] .kj-layout{
+  grid-template-columns:42px minmax(0,1fr)!important;
+}
+.kj-dashboard.is-sidebar-collapsed .kj-sidebar-content,
+.kj-dashboard.is-sidebar-collapsed .kj-sidebar-title{
+  opacity:0!important;pointer-events:none!important;visibility:hidden!important;
+}
+.kj-dashboard.is-sidebar-collapsed .kj-sidebar-head{justify-content:center!important;padding:6px!important}
+.kj-dashboard.is-sidebar-collapsed .kj-sidebar-toggle{position:absolute!important;top:13px!important;left:7px!important;z-index:8!important}
+.kj-dashboard.is-sidebar-collapsed .kj-collapsed-rail{display:flex!important}
+
+/* The current screenshot was physically ~848x641. Keep the UI readable there. */
+.kj-system-bar{height:34px!important;flex-basis:34px!important;padding:4px 8px!important}
+.kj-system-badge{height:24px!important;font-size:8.5px!important}
+.kj-system-ticker{font-size:7.4px!important}.kj-system-actions button{height:24px!important;font-size:7.5px!important}
+
+.kj-sidebar-head{height:62px!important;min-height:62px!important}.kj-sidebar-content{height:calc(100% - 62px)!important;padding:8px!important}
+.kj-sidebar-title small{font-size:7px!important}.kj-sidebar-title strong{font-size:16px!important}.kj-sidebar-title span{font-size:7px!important}
+.kj-search{height:34px!important}.kj-search input{height:32px!important;font-size:8.5px!important}.kj-sidebar-tools select{height:31px!important;font-size:7.5px!important}
+.kj-carrier-table-head{font-size:6.7px!important;padding:5px!important}.kj-carrier-row{height:52px!important}.kj-carrier-name strong{font-size:10px!important}.kj-carrier-name small{font-size:6.7px!important}.kj-mini-value{height:26px!important;font-size:8.8px!important}
+
+.kj-detail{overflow:hidden!important}.kj-detail-shell{overflow:hidden!important}
+.kj-record-head{min-height:68px!important;padding:8px 11px!important;gap:10px!important}.kj-record-mark{width:42px!important;height:42px!important;flex-basis:42px!important}
+.kj-record-ident small{font-size:7.4px!important}.kj-record-ident h2{font-size:21px!important}.kj-record-ident p{font-size:8px!important}
+.kj-record-vector>span{min-width:46px!important;height:34px!important}.kj-record-vector small{font-size:6.8px!important}.kj-record-vector b{font-size:11px!important}.kj-record-link small{font-size:6.5px!important}.kj-record-link strong{font-size:7.5px!important}
+.kj-description{max-height:34px!important;padding:6px 10px!important;font-size:7.8px!important}
+.kj-tabs{height:36px!important;flex-basis:36px!important;overflow-x:auto!important;overflow-y:hidden!important}.kj-tabs button{height:35px!important;min-width:108px!important;font-size:7.4px!important}.kj-tabs button i{font-size:9px!important}
+.kj-tab-body{overflow:auto!important;padding:8px!important}.kj-tab-body:has(>.kj-dna-console){overflow:auto!important}
+.kj-tab-body>.kj-dna-console:not(.is-detailed){height:640px!important;min-height:640px!important}.kj-tab-body>.kj-dna-console.is-detailed{height:680px!important;min-height:680px!important}
+
+.kj-dna-console{min-height:640px!important}.kj-dna-statusbar{height:30px!important;flex-basis:30px!important;padding:3px 8px!important}.kj-dna-badge{font-size:7px!important}.kj-dna-ticker,.kj-dna-coords{font-size:6.7px!important}
+.kj-dna-main-frame{grid-template-columns:154px minmax(0,1fr)!important;gap:8px!important;padding:7px 8px!important}
+.kj-dna-left-col{gap:6px!important}.kj-dna-block{padding:6px 7px!important}.kj-dna-dials-panel>header{font-size:7.5px!important;padding-bottom:4px!important;margin-bottom:5px!important}
+.kj-dna-dials{gap:5px!important}.kj-dna-dial{grid-template-columns:40px minmax(0,1fr)!important;height:48px!important;padding:3px 5px!important;gap:7px!important}.kj-dna-dial svg{width:40px!important;height:40px!important}.kj-dna-dial small{font-size:6px!important}.kj-dna-dial strong{font-size:8px!important}.kj-dna-dial b{font-size:10px!important}
+.kj-dna-telem{font-size:6px!important;line-height:1.35!important}.kj-dna-pill{min-height:25px!important;font-size:6.2px!important}
+.kj-dna-reticle{min-height:112px!important}.kj-reticle-viewport{width:72px!important;height:72px!important}.kj-reticle-data b{font-size:8.5px!important}.kj-reticle-data span,.kj-reticle-data small{font-size:5.8px!important}
+.kj-dna-memory header{font-size:6.2px!important}.kj-dna-memory span{font-size:5.8px!important}.kj-dna-memory b{font-size:7px!important}
+
+.kj-dna-viewport-head{height:48px!important;flex-basis:48px!important;grid-template-columns:minmax(0,1fr) minmax(150px,220px) 12px!important}.kj-dna-viewport-head small{font-size:6px!important}.kj-dna-viewport-head strong{font-size:10px!important}.kj-dna-viewport-head b{font-size:6px!important}.kj-dna-monitor{height:34px!important}.kj-dna-monitor span{font-size:5.7px!important}
+.kj-dna-metric-ribbon{height:50px!important;flex-basis:50px!important;gap:4px!important;padding:4px 0!important}.kj-dna-stat{padding:5px 6px!important}.kj-dna-stat small{font-size:5.8px!important}.kj-dna-stat strong{font-size:12px!important}.kj-dna-stat span{font-size:5.4px!important}
+.kj-dna-canvas-container,.kj-dna-helix-canvas{min-height:382px!important}.kj-dna-canvas-container{border-color:#0b5057!important;box-shadow:inset 0 0 48px rgba(0,0,0,.58),0 0 0 1px rgba(63,244,213,.025)!important}
+.kj-dna-y-scale{font-size:5.4px!important;top:28px!important;bottom:32px!important}.kj-dna-resequence{width:194px!important;padding:5px 6px!important}.kj-dna-resequence header{font-size:5.8px!important}.kj-dna-resequence>div:not(.kj-dna-reseq-bar){font-size:5.3px!important}.kj-dna-floating{font-size:5.7px!important}.kj-dna-floating b{font-size:17px!important}.kj-dna-locus-labels{font-size:5.6px!important}
+.kj-dna-sequence{height:28px!important;flex-basis:28px!important;padding:3px 6px!important}.kj-dna-sequence b{font-size:6px!important}.kj-dna-sequence code{font-size:5.8px!important}.kj-dna-sequence span{font-size:5.5px!important}
+.kj-dna-bottom-panel{height:104px!important;flex-basis:104px!important;grid-template-columns:118px minmax(0,1fr) 72px!important;padding:6px 8px!important}.kj-dna-bottom-id b{font-size:7.5px!important}.kj-dna-bottom-id span{font-size:6px!important}.kj-dna-bottom-id small{font-size:5.5px!important}.kj-dna-codon header{font-size:5.8px!important}.kj-dna-codon>div{font-size:5.1px!important}.kj-dna-bottom-count strong{font-size:21px!important}.kj-dna-bottom-count span,.kj-dna-bottom-count small{font-size:5.2px!important}
+.kj-live-diagnosis{height:38px!important;margin-top:7px!important;padding:5px 8px!important}.kj-live-diagnosis small{font-size:6px!important}.kj-live-diagnosis strong{font-size:7.2px!important}.kj-live-diagnosis-data b{font-size:5.8px!important}
+
+/* Do not crush the console just because the Foundry viewport is narrow/short. */
+@media (max-width:1120px){
+  .kj-layout{grid-template-columns:var(--kj-carrier-column,clamp(184px,23vw,240px)) minmax(0,1fr)!important}
+  .kj-dna-main-frame{grid-template-columns:146px minmax(0,1fr)!important}
+  .kj-record-head{grid-template-columns:minmax(210px,1fr) auto!important}.kj-record-link{display:none!important}
+  .kj-dna-bottom-panel{grid-template-columns:105px minmax(0,1fr) 64px!important}
+  .kj-tabs button{min-width:100px!important}
+}
+@media (max-width:920px){
+  .kj-layout{grid-template-columns:var(--kj-carrier-column,clamp(176px,24vw,205px)) minmax(0,1fr)!important}
+  .kj-dashboard.is-sidebar-collapsed .kj-layout,.kj-dashboard[data-sidebar-collapsed="true"] .kj-layout{grid-template-columns:42px minmax(0,1fr)!important}
+  .kj-dna-main-frame{grid-template-columns:138px minmax(0,1fr)!important}
+  .kj-dna-dial{grid-template-columns:36px minmax(0,1fr)!important;height:45px!important}.kj-dna-dial svg{width:36px!important;height:36px!important}
+  .kj-dna-reticle{display:flex!important;min-height:98px!important}.kj-reticle-viewport{width:62px!important;height:62px!important}
+  .kj-dna-bottom-id{display:flex!important}.kj-dna-bottom-panel{grid-template-columns:94px minmax(0,1fr) 58px!important}
+  .kj-dna-codon-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}.kj-dna-codon:nth-child(n+5){display:block!important}
+  .kj-system-ticker span:nth-of-type(n+4){display:none}
+}
+@media (max-width:760px){
+  .kj-layout{grid-template-columns:168px minmax(0,1fr)!important}
+  .kj-dna-main-frame{grid-template-columns:126px minmax(0,1fr)!important}
+  .kj-dna-reticle{display:none!important}.kj-dna-bottom-id{display:none!important}.kj-dna-bottom-panel{grid-template-columns:minmax(0,1fr) 54px!important}
+  .kj-dna-codon-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.kj-dna-codon:nth-child(n+5){display:none!important}
+  .kj-record-vector>span{min-width:39px!important;padding:0 4px!important}
+}
+@media (max-height:690px){
+  .kj-tab-body>.kj-dna-console:not(.is-detailed){height:640px!important;min-height:640px!important}.kj-tab-body>.kj-dna-console.is-detailed{height:680px!important;min-height:680px!important}
+  .kj-dna-canvas-container,.kj-dna-helix-canvas{min-height:382px!important}
+  .kj-dna-bottom-panel{height:104px!important;flex-basis:104px!important}
+  .kj-dna-main-frame{grid-template-columns:138px minmax(0,1fr)!important}
+}

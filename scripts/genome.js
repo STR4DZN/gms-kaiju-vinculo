@@ -185,6 +185,31 @@ export function getGenomeMetrics(carrier) {
   const antagonism = Math.abs(current.vontade - current.humanidade) / 100;
   const alienSynergy = predatoryMemory * symbioticMemory * (0.45 + identityDeviation * 0.55);
 
+  /*
+   * Curva visual de progressão por estágio.
+   *
+   * O DNA-base precisa continuar parecendo o DNA ANALYSIS original. Os estágios I–III
+   * acrescentam sinais e pequenas alterações; IV começa a alterar a anatomia; V e VI
+   * permitem mudanças grandes. Isso evita o erro da dev.5, onde valores medianos já
+   * deformavam toda a hélice e destruíam a silhueta de referência.
+   */
+  const stageMorph = (value) => {
+    const v = clamp(value);
+    if (v <= 0) return 0;
+    if (v < 20) return (v / 20) * 0.045;
+    if (v < 40) return 0.045 + ((v - 20) / 20) * 0.075;
+    if (v < 60) return 0.12 + ((v - 40) / 20) * 0.12;
+    if (v < 80) return 0.24 + ((v - 60) / 20) * 0.25;
+    if (v < 100) return 0.49 + ((v - 80) / 20) * 0.39;
+    return 1;
+  };
+
+  const willMorph = dormant ? 0 : stageMorph(current.vontade);
+  const communionMorph = dormant ? 0 : stageMorph(current.comunhao);
+  const humanityMorph = dormant ? 0 : stageMorph(current.humanidade);
+  const identityLossMorph = dormant ? 0 : stageMorph(100 - current.humanidade);
+  const currentAlienSynergy = willMorph * communionMorph * (0.35 + identityLossMorph * 0.65);
+
   const mutationLoad = dormant ? 0 : clamp(
     predatoryMemory * 34 +
     identityDeviation * 31 +
@@ -204,12 +229,27 @@ export function getGenomeMetrics(carrier) {
     humanity * 50 + communion * 38 + (1 - will) * 12 - antagonism * 8
   );
 
-  const branchCount = dormant ? 0 : Math.round(predatoryMemory ** 1.45 * 8 + identityDeviation ** 1.7 * 5);
-  const latticeCount = dormant ? 0 : Math.round(symbioticMemory ** 1.35 * 8 + alienSynergy * 4);
-  const fractureCount = dormant ? 0 : Math.round(identityDeviation * 4 + predatoryMemory * (1 - symbioticMemory) * 3);
-  const nodeCount = dormant ? 0 : Math.round(predatoryMemory * 3 + identityDeviation * 3 + alienSynergy * 2);
-  const anomalousPairs = dormant ? 0 : Math.round((predatoryMemory * 3 + identityDeviation * 5 + symbioticMemory * 2));
-  const extraStrand = dormant ? 0 : Math.max(0, Math.min(1, (communion - 0.58) * 1.7 + (predatoryMemory - 0.58) * 0.8 + identityDeviation * 0.32));
+  // Famílias morfológicas atuais. Os números crescem por estágio, mas o renderer
+  // usa esses elementos como mutações localizadas — não para substituir a hélice-base.
+  const branchCount = dormant ? 0 : Math.round(
+    Math.max(0, willMorph - 0.08) * 11 + Math.max(0, identityLossMorph - 0.42) * 3
+  );
+  const latticeCount = dormant ? 0 : Math.round(
+    Math.max(0, communionMorph - 0.07) * 12 + currentAlienSynergy * 4
+  );
+  const fractureCount = dormant ? 0 : Math.round(
+    Math.max(0, identityLossMorph - 0.22) * 6 + Math.max(0, willMorph - 0.55) * Math.max(0, 0.65 - communionMorph) * 4
+  );
+  const nodeCount = dormant ? 0 : Math.round(
+    willMorph * 5 + communionMorph * 5 + humanityMorph * 5 + currentAlienSynergy * 4
+  );
+  const anomalousPairs = dormant ? 0 : Math.round(
+    Math.max(0, identityLossMorph - 0.10) * 10 + willMorph * 3 + currentAlienSynergy * 4
+  );
+  const extraStrand = dormant ? 0 : Math.max(0, Math.min(1,
+    (communionMorph - 0.31) / 0.69 + currentAlienSynergy * 0.20
+  ));
+  const humanityLocks = dormant ? 0 : Math.round(Math.max(0, humanityMorph - 0.08) * 12);
 
   return {
     genome,
@@ -226,12 +266,18 @@ export function getGenomeMetrics(carrier) {
     nodeCount,
     anomalousPairs,
     extraStrand,
+    humanityLocks,
     predatoryMemory,
     symbioticMemory,
     identityDeviation,
     will,
     communion,
     humanity,
+    willMorph,
+    communionMorph,
+    humanityMorph,
+    identityLossMorph,
+    currentAlienSynergy,
     alienSynergy,
     antagonism
   };
@@ -318,7 +364,7 @@ export function renderGenomePanel(carrier, { detailed = false } = {}) {
           <canvas class="kj-dna-helix-canvas" data-kj-genome-canvas title="DNA procedural K-03 — mova o mouse para inclinar; clique para alterar a rotação"></canvas>
           <div class="kj-dna-y-scale right">${["572924","24214","121245","73292","823","56564","394205"].map(v=>`<span><i>—</i>${v}</span>`).join("")}</div>
           <div class="kj-dna-resequence"><header>CÓDIGO DE RESSEQUENCIAMENTO</header>${resequenceRows(metrics)}<div class="kj-dna-reseq-bar"><i style="width:${Math.max(8,metrics.coherence)}%"></i></div></div>
-          <div class="kj-dna-floating"><span>RND ${String(metrics.branchCount).padStart(2,"0")} ${String(metrics.latticeCount).padStart(2,"0")}</span><span>MUT Δ ${String(metrics.divergence).padStart(3,"0")}</span><b>${String(metrics.genome.seed % 10000).padStart(4,"0")}</b><small>WAVEFORM_DATA ${metrics.alienSynergy.toFixed(3)}</small></div>
+          <div class="kj-dna-floating"><span>RND ${String(metrics.branchCount).padStart(2,"0")} ${String(metrics.latticeCount).padStart(2,"0")}</span><span>MUT Δ ${String(metrics.divergence).padStart(3,"0")}</span><b>${String(metrics.genome.seed % 10000).padStart(4,"0")}</b><small>WAVEFORM_DATA ${metrics.currentAlienSynergy.toFixed(3)}</small></div>
           <div class="kj-dna-locus-labels"><span>L-01</span><span>L-17</span><span>L-34</span><span>L-52</span><span>L-71</span><span>L-93</span></div>
         </div>
         <div class="kj-dna-sequence"><b>SEQ</b><code>${escapeHTML(sequence.match(/.{1,4}/g)?.join(" ") || sequence)}</code><span>BR:${String(metrics.branchCount).padStart(2,"0")} LT:${String(metrics.latticeCount).padStart(2,"0")} FR:${String(metrics.fractureCount).padStart(2,"0")} ΔP:${String(metrics.anomalousPairs).padStart(2,"0")}</span></div>
