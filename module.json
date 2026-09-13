@@ -1,0 +1,24 @@
+﻿{
+  "id": "gms-kaiju-vinculo",
+  "title": "GMS // Vínculo Kaiju",
+  "description": "Gerenciador K-03 de Vontade da Fera, Comunhão e Humanidade, com telemetria xenobiológica e integração com páginas de Journal.",
+  "version": "1.0.0",
+  "authors": [
+    {
+      "name": "STR4 DZN"
+    }
+  ],
+  "url": "https://github.com/STR4DZN/gms-kaiju-vinculo",
+  "manifest": "https://raw.githubusercontent.com/STR4DZN/gms-kaiju-vinculo/main/module.json",
+  "download": "https://github.com/STR4DZN/gms-kaiju-vinculo/releases/download/gms-kaiju-vinculo-v1.0.0/gms-kaiju-vinculo-v1.0.0.zip",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13.351"
+  },
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "styles": [
+    "styles/module.css"
+  ]
+}
