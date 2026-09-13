@@ -1,46 +1,36 @@
-# GMS // Vínculo Kaiju
+# GMS // Vínculo Kaiju — 2.0.0-dev.1
 
-Módulo para Foundry VTT v13.351 convertido a partir da macro **VÍNCULO KAIJU — Gerenciador de Vontade, Comunhão e Humanidade**.
+Primeira versão da nova arquitetura independente de Journal.
 
-## Instalação manual
+## O que já existe
 
-1. Extraia a pasta `gms-kaiju-vinculo` em `FoundryVTT/Data/modules/`.
-2. Reinicie o Foundry.
-3. Ative **GMS // Vínculo Kaiju** em Gerenciar Módulos.
-4. Em Configurações do Módulo, confirme o UUID do Diário principal.
+- Matriz K-03 própria para GM e players.
+- Lista de portadores leve e retrátil.
+- Carregamento visual de apenas um portador por vez.
+- Pesquisa e ordenação da lista.
+- Lembra por usuário o último portador aberto e o estado recolhido/expandido da aba.
+- Ficha detalhada com radar, Vontade, Comunhão, Humanidade, leitura e estágios.
+- Abas de Visão Geral, Estágios, Histórico e Notas.
+- Editor K-03 separado e exclusivo do GM.
+- Criar, editar, apagar e reordenar portadores.
+- Vincular usuários do Foundry a cada portador.
+- Visibilidade para todos ou somente usuários vinculados.
+- Histórico automático quando os três valores são alterados.
+- Banco próprio via world setting; nenhum JournalEntry é usado.
+- Sincronização entre clientes pelo socket do módulo.
 
-O UUID padrão preservado da macro é:
+## Acesso
 
-`JournalEntry.wVaD3Qgcpv8Cbldq`
+O módulo adiciona o botão `K-03 // Vínculo Kaiju` ao diretório de Atores para todos os usuários.
 
-## Como abrir
-
-- Como GM, abra o diretório de Diários e use **K-03 // Vínculo Kaiju**.
-- Ou execute no console/macro:
+Também pode ser aberto via console/API:
 
 ```js
-game.modules.get("gms-kaiju-vinculo").api.openManager();
+game.modules.get("gms-kaiju-vinculo").api.open();
 ```
 
-Também existe o alias global:
+Somente o GM pode abrir:
 
 ```js
-GMSKaijuVinculo.openManager();
+game.modules.get("gms-kaiju-vinculo").api.openEditor();
 ```
-
-## Compatibilidade com os registros existentes
-
-A versão 1.0.0 preserva a lógica original da macro: os valores ainda podem ser lidos do card HTML existente e a página continua sendo atualizada com a skin completa. Isso permite instalar o módulo sem migrar previamente os Journals atuais.
-
-## Estrutura
-
-- `module.json` — manifesto do Foundry.
-- `scripts/main.js` — inicialização, API e integração com o diretório de Journals.
-- `scripts/settings.js` — configurações do mundo/cliente.
-- `scripts/constants.js` — IDs e versão.
-- `scripts/manager.js` — núcleo K-03 preservado da macro original.
-- `styles/module.css` — estilo dos controles adicionados pelo módulo.
-
-## Próxima refatoração recomendada
-
-Depois de validar esta versão dentro do seu mundo, o passo seguinte é mover os dados de Vontade/Comunhão/Humanidade para `flags.gms-kaiju-vinculo` nas páginas e separar `manager.js` em serviços de dados, renderizadores, UI e telemetria. O parser de HTML pode continuar como fallback de migração.
