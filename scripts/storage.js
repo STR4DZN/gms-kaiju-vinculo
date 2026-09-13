@@ -1,5 +1,6 @@
 import { MODULE_ID, SETTINGS } from "./constants.js";
 import { normalizeDatabase } from "./settings.js";
+import { evolveGenomeState, normalizeGenomeState } from "./genome.js";
 
 const clone = (value) => foundry.utils.deepClone(value);
 
@@ -47,16 +48,28 @@ export async function upsertCarrier(carrier, { previous = null } = {}) {
     }
   }
 
+  const nextValues = {
+    vontade: clamp(carrier.values?.vontade),
+    comunhao: clamp(carrier.values?.comunhao),
+    humanidade: clamp(carrier.values?.humanidade)
+  };
+  const genome = existing
+    ? evolveGenomeState(existing.genome, {
+        carrierId: id,
+        previousValues: existing.values,
+        nextValues,
+        now,
+        userId: game.user.id
+      })
+    : normalizeGenomeState(carrier.genome, id, nextValues);
+
   const record = {
     id,
     name: String(carrier.name || "Sem nome").trim() || "Sem nome",
     designation: String(carrier.designation || "").trim(),
     description: String(carrier.description || "").trim(),
-    values: {
-      vontade: clamp(carrier.values?.vontade),
-      comunhao: clamp(carrier.values?.comunhao),
-      humanidade: clamp(carrier.values?.humanidade)
-    },
+    values: nextValues,
+    genome,
     ownerUserIds: Array.isArray(carrier.ownerUserIds) ? [...new Set(carrier.ownerUserIds.filter(Boolean))] : [],
     visibility: carrier.visibility === "owners" ? "owners" : "all",
     publicNotes: String(carrier.publicNotes || ""),
@@ -89,6 +102,22 @@ export async function moveCarrier(id, direction) {
   if (next < 0 || next >= db.order.length) return false;
   [db.order[index], db.order[next]] = [db.order[next], db.order[index]];
   await saveDatabase(db);
+  return true;
+}
+
+export async function migrateGenomeDatabase() {
+  if (!game.user?.isGM) return false;
+  const db = getDatabase();
+  let changed = false;
+  for (const [id, carrier] of Object.entries(db.carriers)) {
+    const normalized = normalizeGenomeState(carrier.genome, id, carrier.values);
+    if (!carrier.genome || JSON.stringify(carrier.genome) !== JSON.stringify(normalized)) {
+      carrier.genome = normalized;
+      changed = true;
+    }
+  }
+  if (!changed) return false;
+  await saveDatabase(db, { emit: false });
   return true;
 }
 

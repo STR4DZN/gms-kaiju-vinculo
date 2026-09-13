@@ -1,7 +1,7 @@
 import { MODULE_ID, MODULE_TITLE, MODULE_VERSION } from "./constants.js";
 import { openKaijuDashboard, refreshKaijuDashboard } from "./dashboard.js";
 import { openKaijuEditor, refreshKaijuEditor } from "./editor.js";
-import { getCarrier, getDatabase, getOrderedCarriers } from "./storage.js";
+import { getCarrier, getDatabase, getOrderedCarriers, migrateGenomeDatabase } from "./storage.js";
 import { registerSettings } from "./settings.js";
 
 function getRoot(html) {
@@ -47,11 +47,19 @@ Hooks.on(`${MODULE_ID}.databaseUpdated`, () => {
   refreshKaijuEditor();
 });
 
-Hooks.once("ready", () => {
+Hooks.once("ready", async () => {
   game.socket?.on(`module.${MODULE_ID}`, (payload) => {
     if (payload?.type !== "database-updated") return;
     Hooks.callAll(`${MODULE_ID}.databaseUpdated`, { ...payload, local: false });
   });
+
+  if (game.user?.isGM) {
+    try {
+      await migrateGenomeDatabase();
+    } catch (error) {
+      console.error(`${MODULE_TITLE} | Falha ao normalizar memória genética K-03.`, error);
+    }
+  }
 
   const API = Object.freeze({
     open: openKaijuDashboard,

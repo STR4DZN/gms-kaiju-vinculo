@@ -1,4 +1,5 @@
 import { clamp } from "./storage.js";
+import { renderGenomeDetail, renderGenomePanel } from "./genome.js";
 
 export const STAGE_ROMAN = ["I", "II", "III", "IV", "V", "VI"];
 export const STAGE_LIMITS = [0, 20, 40, 60, 80, 100];
@@ -129,7 +130,7 @@ function metricHTML(key, value) {
 }
 
 function overviewHTML(carrier, profile) {
-  return `<section class="kj-overview-grid">
+  return `${renderGenomePanel(carrier)}<section class="kj-overview-grid kj-overview-secondary">
     <div class="kj-radar-card">${radarSVG(carrier.values, profile)}<div class="kj-radar-meta"><small>DOMINÂNCIA</small><strong>${escapeHTML(profile.dominant)}</strong><span>Convergência ${profile.balance}% · Média ${profile.average}%</span></div></div>
     <div class="kj-metrics-grid">${metricHTML("vontade", carrier.values.vontade)}${metricHTML("comunhao", carrier.values.comunhao)}${metricHTML("humanidade", carrier.values.humanidade)}</div>
   </section><section class="kj-diagnosis"><div><i class="fa-solid fa-microscope"></i><span><small>LEITURA DO VÍNCULO</small><strong>${escapeHTML(getReading(carrier.values))}</strong></span></div></section>`;
@@ -162,12 +163,12 @@ function notesHTML(carrier, isGM) {
 export function renderCarrierDetail(carrier, { isGM = false, tab = "overview" } = {}) {
   const profile = getProfile(carrier.values);
   const owners = (carrier.ownerUserIds || []).map((id) => game.users?.get(id)?.name).filter(Boolean);
-  const body = tab === "stages" ? stagesHTML(carrier) : tab === "history" ? historyHTML(carrier) : tab === "notes" ? notesHTML(carrier, isGM) : overviewHTML(carrier, profile);
+  const body = tab === "genome" ? renderGenomeDetail(carrier) : tab === "stages" ? stagesHTML(carrier) : tab === "history" ? historyHTML(carrier) : tab === "notes" ? notesHTML(carrier, isGM) : overviewHTML(carrier, profile);
   return `<div class="kj-detail-shell" data-carrier-id="${carrier.id}">
     <header class="kj-detail-head"><div class="kj-detail-ident"><span class="kj-detail-sigil"><i class="fa-solid fa-fingerprint"></i></span><div><small>GMS XENOBIOLOGICAL ARRAY // INDIVIDUAL RECORD</small><h2>${escapeHTML(carrier.name)}</h2><p>${escapeHTML(carrier.designation || "REGISTRO DE PORTADOR")}</p></div></div><div class="kj-detail-facts"><span><small>VÍNCULO</small><strong>${profile.average}%</strong></span><span><small>CONVERGÊNCIA</small><strong>${profile.balance}%</strong></span></div></header>
     ${carrier.description ? `<div class="kj-description">${escapeHTML(carrier.description)}</div>` : ""}
     ${owners.length ? `<div class="kj-owner-strip"><i class="fa-solid fa-user-group"></i><span>Vinculado a <strong>${owners.map(escapeHTML).join(", ")}</strong></span></div>` : ""}
-    <nav class="kj-tabs" aria-label="Seções do registro"><button data-kj-tab="overview" class="${tab==="overview"?"active":""}"><i class="fa-solid fa-chart-line"></i> Visão geral</button><button data-kj-tab="stages" class="${tab==="stages"?"active":""}"><i class="fa-solid fa-bars-staggered"></i> Estágios</button><button data-kj-tab="history" class="${tab==="history"?"active":""}"><i class="fa-solid fa-clock-rotate-left"></i> Histórico</button><button data-kj-tab="notes" class="${tab==="notes"?"active":""}"><i class="fa-solid fa-note-sticky"></i> Notas</button></nav>
+    <nav class="kj-tabs" aria-label="Seções do registro"><button data-kj-tab="overview" class="${tab==="overview"?"active":""}"><i class="fa-solid fa-chart-line"></i> Visão geral</button><button data-kj-tab="genome" class="${tab==="genome"?"active":""}"><i class="fa-solid fa-dna"></i> Genoma</button><button data-kj-tab="stages" class="${tab==="stages"?"active":""}"><i class="fa-solid fa-bars-staggered"></i> Estágios</button><button data-kj-tab="history" class="${tab==="history"?"active":""}"><i class="fa-solid fa-clock-rotate-left"></i> Histórico</button><button data-kj-tab="notes" class="${tab==="notes"?"active":""}"><i class="fa-solid fa-note-sticky"></i> Notas</button></nav>
     <div class="kj-tab-body">${body}</div>
   </div>`;
 }

@@ -49,7 +49,7 @@ export function normalizeDatabase(database) {
   }
 
   return {
-    schemaVersion: Number(source.schemaVersion) || DATABASE_VERSION,
+    schemaVersion: DATABASE_VERSION,
     order,
     carriers
   };
