@@ -308,14 +308,14 @@ function getAxisStage(axis, value) {
 
 function axisDial(label, value, color, code, stageText) {
   const safe = clamp(value);
-  const circumference = 138.23;
+  const circumference = 163.36;
   const dash = (circumference * safe / 100).toFixed(1);
   const rest = (circumference - Number(dash)).toFixed(1);
   return `<div class="kj-dna-vital-card" style="--vital:${color}">
     <div class="kj-vital-gauge">
-      <svg viewBox="0 0 52 52" aria-hidden="true">
-        <circle cx="26" cy="26" r="21" class="dial-bg"/>
-        <circle cx="26" cy="26" r="21" class="dial-arc" stroke-dasharray="${dash} ${rest}"/>
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="32" r="26" class="dial-bg"/>
+        <circle cx="32" cy="32" r="26" class="dial-arc" stroke-dasharray="${dash} ${rest}"/>
       </svg>
       <div class="kj-vital-val">${safe}<span>%</span></div>
     </div>
