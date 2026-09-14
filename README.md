@@ -1,6 +1,6 @@
-# GMS // Vínculo Kaiju — v2.0.0-dev.6
+# GMS // Vínculo Kaiju — v2.0.1
 
-Dev.6 recalibra o renderer genético contra o `DnaHudApp` de `STR4DZN/teste-hud`, corrigindo a divergência visual introduzida nas dev.4/dev.5.
+Versão 2.0.1 com HUD de biodiagnóstico médico futurista de alta visibilidade, limpeza profunda de ruído visual, ampliação dramática de mostradores vitais e renderizador biomolecular 3D de alta precisão clínica (B-DNA Watson-Crick).
 
 ## Correções de fidelidade do DNA
 
