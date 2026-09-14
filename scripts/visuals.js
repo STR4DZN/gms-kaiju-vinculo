@@ -1,5 +1,5 @@
 import { clamp } from "./storage.js";
-import { renderGenomeDetail, renderGenomePanel } from "./genome.js";
+import { getGenomeMetrics, renderGenomeDetail, renderGenomePanel } from "./genome.js";
 
 export const STAGE_ROMAN = ["I", "II", "III", "IV", "V", "VI"];
 export const STAGE_LIMITS = [0, 20, 40, 60, 80, 100];
@@ -108,7 +108,7 @@ export function buildChatCardHTML(carrier) {
   const c = clamp(carrier.values.comunhao);
   const h = clamp(carrier.values.humanidade);
   const idCode = String(carrier.id || "K03").slice(0, 8).toUpperCase();
-  const mutationsCount = carrier.genome?.mutations?.length ?? 0;
+  const metrics = getGenomeMetrics(carrier);
 
   return `<div class="kj-chat-card" style="--kj-v:#e85d48;--kj-c:#4ac8b7;--kj-h:#78abe1;">
     <header class="kj-chat-header">
@@ -131,7 +131,7 @@ export function buildChatCardHTML(carrier) {
     <div class="kj-chat-meta">
       <span>DOMINANTE: <b>${escapeHTML(profile.dominant)}</b></span>
       <span>TENSÃO: <b>${profile.tension}%</b></span>
-      <span>MUTAÇÕES: <b>${mutationsCount}</b></span>
+      <span>CARGA MUTAGÊNICA: <b>${metrics.mutationLoad}%</b></span>
     </div>
     ${carrier.description ? `<p class="kj-chat-desc">${escapeHTML(carrier.description)}</p>` : ""}
   </div>`;
@@ -201,7 +201,7 @@ export function renderCarrierDetail(carrier, { isGM = false, tab = "overview" } 
       <button type="button" class="kj-record-chat-btn" data-action="post-chat" title="Transmitir telemetria deste portador para o Chat"><i class="fa-solid fa-tower-broadcast"></i><span>CHAT</span></button>
     </header>
     ${carrier.description ? `<div class="kj-description">${escapeHTML(carrier.description)}</div>` : ""}
-    <nav class="kj-tabs" aria-label="Seções do registro"><button data-kj-tab="overview" class="${tab==="overview"?"active":""}"><i class="fa-solid fa-dna"></i><span>ANÁLISE AO VIVO</span></button><button data-kj-tab="genome" class="${tab==="genome"?"active":""}"><i class="fa-solid fa-microscope"></i><span>MEMÓRIA GENÉTICA</span></button><button data-kj-tab="stages" class="${tab==="stages"?"active":""}"><i class="fa-solid fa-bars-staggered"></i><span>ESTÁGIOS</span></button><button data-kj-tab="history" class="${tab==="history"?"active":""}"><i class="fa-solid fa-clock-rotate-left"></i><span>HISTÓRICO</span></button><button data-kj-tab="notes" class="${tab==="notes"?"active":""}"><i class="fa-solid fa-note-sticky"></i><span>NOTAS</span></button></nav>
+    <nav class="kj-tabs" aria-label="Seções do registro"><button data-kj-tab="overview" class="${tab==="overview"?"active":""}"><i class="fa-solid fa-dna"></i><span>ANÁLISE AO VIVO</span></button><button data-kj-tab="genome" class="${tab==="genome"?"active":""}"><i class="fa-solid fa-microscope"></i><span>PERFIL GENÔMICO</span></button><button data-kj-tab="stages" class="${tab==="stages"?"active":""}"><i class="fa-solid fa-bars-staggered"></i><span>ESTÁGIOS</span></button><button data-kj-tab="history" class="${tab==="history"?"active":""}"><i class="fa-solid fa-clock-rotate-left"></i><span>HISTÓRICO</span></button><button data-kj-tab="notes" class="${tab==="notes"?"active":""}"><i class="fa-solid fa-note-sticky"></i><span>NOTAS</span></button></nav>
     <div class="kj-tab-body">${body}</div>
   </div>`;
 }

@@ -969,7 +969,7 @@
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: 268px minmax(0, 1fr);
+  grid-template-columns: 104px minmax(0, 1fr);
   gap: 8px;
   flex: 1;
   min-height: 0;
@@ -983,6 +983,7 @@
   flex-direction: column;
   gap: 6px;
   min-height: 0;
+  width: 104px;
 }
 
 .kj-dna-block {
@@ -1011,9 +1012,43 @@
   color: #4a807f;
 }
 
+.kj-vitals-header.vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(13, 83, 91, 0.6);
+  color: #72b2af;
+  font: 700 9.5px/1.2 var(--k03-mono);
+  letter-spacing: 0.08em;
+}
+
+.kj-vitals-header.vertical small {
+  font-size: 8px;
+  color: #4a807f;
+  margin-top: 2px;
+}
+
+.kj-dna-vitals-panel.vertical {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 6px 4px;
+}
+
 .kj-dna-vitals-list {
   display: flex;
   flex-direction: column;
+  gap: 6px;
+}
+
+.kj-dna-vitals-list.vertical {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
   gap: 6px;
 }
 
@@ -1027,6 +1062,116 @@
   border: 1px solid color-mix(in srgb, var(--vital, var(--dial, var(--k03-cyan))) 35%, #0d4a52);
   background: linear-gradient(90deg, color-mix(in srgb, var(--vital, var(--dial, var(--k03-cyan))) 10%, transparent), rgba(3, 23, 27, 0.92));
   box-sizing: border-box;
+}
+
+.kj-dna-vital-card.vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  height: auto;
+  padding: 6px 3px;
+  border: 1px solid color-mix(in srgb, var(--vital, var(--dial, var(--k03-cyan))) 35%, #0d4a52);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--vital, var(--dial, var(--k03-cyan))) 12%, transparent), rgba(3, 23, 27, 0.94));
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  justify-content: center;
+}
+
+.kj-vital-header-mini {
+  margin-bottom: 2px;
+}
+
+.kj-vital-code-tag {
+  display: inline-block;
+  font: 800 10.5px/1 var(--k03-mono);
+  letter-spacing: 0.08em;
+  color: var(--vital, var(--dial, var(--k03-cyan)));
+  text-transform: uppercase;
+}
+
+.kj-dna-vital-card.vertical .kj-vital-gauge {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  margin: 2px auto;
+}
+
+.kj-dna-vital-card.vertical .kj-vital-gauge svg {
+  width: 50px;
+  height: 50px;
+  transform: rotate(-90deg);
+}
+
+.kj-dna-vital-card.vertical .kj-vital-val {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--k03-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 0 6px rgba(0, 240, 208, 0.4);
+}
+
+.kj-dna-vital-card.vertical .kj-vital-val span {
+  font-size: 9px;
+  opacity: 0.8;
+  margin-left: 1px;
+}
+
+.kj-vital-vbar {
+  width: 100%;
+  max-width: 62px;
+  height: 3.5px;
+  background: rgba(9, 46, 51, 0.8);
+  border: 1px solid rgba(13, 74, 82, 0.6);
+  border-radius: 1px;
+  margin: 3px 0 2px 0;
+  overflow: hidden;
+}
+
+.kj-vital-vbar-fill {
+  height: 100%;
+  background: var(--vital, var(--dial, var(--k03-cyan)));
+  box-shadow: 0 0 5px var(--vital, var(--dial, var(--k03-cyan)));
+  transition: width 0.3s ease;
+}
+
+.kj-vital-meta-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  max-width: 96px;
+  overflow: hidden;
+}
+
+.kj-vital-sub {
+  font: 600 8.5px/1 var(--k03-mono);
+  color: #629c99;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
+
+.kj-vital-stage-tag {
+  display: block;
+  margin-top: 1px;
+  font: 700 8px/1 var(--k03-mono);
+  letter-spacing: 0.04em;
+  color: #92cac6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
 }
 
 .kj-vital-gauge {

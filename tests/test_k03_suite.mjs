@@ -62,7 +62,7 @@ import { getCarrier, duplicateCarrier, resetCarrierGenome, exportDatabaseJSON, i
 
 console.log("=== SUITE COMPLETA DE VERIFICAÇÃO PROFUNDA K-03 ===");
 
-// 1. GENOME LOGIC & THRESHOLD CROSSING
+// 1. GENOME DYNAMIC EVOLUTION (NO PERSISTENT MUTATION COUNT)
 const dorm = normalizeGenomeState(null, "c1", { vontade: 0, comunhao: 0, humanidade: 0 });
 console.assert(dorm.activated === false, "Dormancy must be false");
 
@@ -72,22 +72,22 @@ const act = evolveGenomeState(dorm, {
   nextValues: { vontade: 43, comunhao: 44, humanidade: 58 }
 });
 console.assert(act.activated === true, "Activation must be true");
-console.assert(act.mutations.length === 0, "No false mutations on baseline activation");
 
-const mut1 = evolveGenomeState(act, {
-  carrierId: "c1",
-  previousValues: { vontade: 43, comunhao: 44, humanidade: 58 },
-  nextValues: { vontade: 85, comunhao: 44, humanidade: 15 }
-});
-console.assert(mut1.mutations.length >= 4, "Expected >=4 mutations on high shift");
+const metricsHigh = getGenomeMetrics({ id: "c1", values: { vontade: 85, comunhao: 44, humanidade: 15 } });
+console.assert(metricsHigh.mutationLoad > 50, "Expected high mutationLoad on high kaiju shift");
+console.assert(metricsHigh.branchCount >= 5, "Expected dynamic branchCount >= 5 on high shift");
+console.assert(metricsHigh.divergence > 60, "Expected high divergence on high shift");
 
-const reg = evolveGenomeState(mut1, {
-  carrierId: "c1",
-  previousValues: { vontade: 85, comunhao: 44, humanidade: 15 },
-  nextValues: { vontade: 20, comunhao: 44, humanidade: 90 }
-});
-console.assert(reg.memory.maxVontade === 85 && reg.memory.minHumanidade === 15, "Biological memory preserved");
-console.assert(reg.mutations.length === mut1.mutations.length, "Mutations count unchanged on regression");
+const metricsReg = getGenomeMetrics({ id: "c1", values: { vontade: 10, comunhao: 20, humanidade: 90 } });
+console.assert(metricsReg.mutationLoad < metricsHigh.mutationLoad, "Mutations must decrease on regression (not persistent)");
+console.assert(metricsReg.branchCount < metricsHigh.branchCount, "Branches must decrease on regression");
+console.assert(metricsReg.stability > metricsHigh.stability, "Stability recovers dynamically on regression");
+
+const metricsPure = getGenomeMetrics({ id: "c1", values: { vontade: 0, comunhao: 0, humanidade: 100 } });
+console.assert(metricsPure.mutationLoad === 0, "Pure human must have 0 mutation load");
+console.assert(metricsPure.branchCount === 0, "Pure human must have 0 branches");
+console.assert(metricsPure.divergence === 0, "Pure human must have 0 divergence");
+console.assert(metricsPure.stability === 100, "Pure human must have 100% stability");
 
 // 2. MATHEMATICAL INTEGRITY (NO NaNs or Infinities)
 let hasNaN = false;
@@ -131,7 +131,7 @@ const testCarriers = [
 
 let rendererMathOk = true;
 for (const tc of testCarriers) {
-  const carrier = { id: "tc-id", name: tc.name, values: tc.values, genome: mut1 };
+  const carrier = { id: "tc-id", name: tc.name, values: tc.values, genome: act };
   const renderer = new KaijuGenomeRenderer(mockCanvas, carrier);
   renderer.width = 1000; renderer.height = 600;
   const centerY = renderer.height * 0.50;
@@ -189,11 +189,14 @@ async function runQoL() {
   console.assert(chatHTML.includes("FERA") || chatHTML.includes("VONTADE"), "Chat card vector");
 
   const panelHTML = renderGenomePanel(carrierAlpha);
-  console.assert(panelHTML.includes("kj-dna-vital-card"), "Vital cards in DNA panel");
+  console.assert(panelHTML.includes("kj-dna-vital-card vertical"), "Vital cards vertical in DNA panel");
   console.assert(panelHTML.includes("kj-dna-metric-ribbon"), "Metric ribbon in DNA panel");
   console.assert(panelHTML.includes("DESVIO GENÔMICO"), "Metric label check");
   console.assert(panelHTML.includes("SINCRONIA VINCULAR"), "Metric label check");
   console.assert(panelHTML.includes("BIO-ESTABILIDADE"), "Metric label check");
+  console.assert(panelHTML.includes("CARGA MUTAGÊNICA"), "Carga mutagênica dinâmica presente");
+  console.assert(!panelHTML.includes("CONTROLE DA AMOSTRA"), "Controle da amostra completamente removido");
+  console.assert(!panelHTML.includes("MEMÓRIA BIOLÓGICA"), "Memória biológica completamente removida");
 
   const detailHTML = renderCarrierDetail(carrierAlpha, { isGM: true, tab: "overview" });
   console.assert(detailHTML.includes("kj-header-vital-badge"), "Header vital badges present");

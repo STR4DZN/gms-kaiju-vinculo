@@ -181,17 +181,65 @@ export class KaijuGenomeRenderer {
       this.anomalousRungs.add(2 + Math.floor(rng() * (rungCount - 4)));
     }
 
-    this.persistentMarks = (metrics.genome.mutations || []).slice(0, 10).map((mutation, index) => {
-      const mrng = mulberry32(this.seed ^ hashString(mutation.id || `${index}`));
-      return {
-        t: 0.10 + mrng() * 0.78,
-        axis: mutation.axis || (index % 3 === 0 ? "vontade" : index % 3 === 1 ? "comunhao" : "humanidade"),
-        name: mutation.name || mutation.family?.replaceAll("-", " ") || `MUT-${String(index + 1).padStart(2, "0")}`,
-        threshold: mutation.threshold || 20,
-        ring: 7 + mrng() * 3,
-        phase: mrng() * Math.PI * 2
-      };
-    });
+    // Mutações 100% dinâmicas baseadas na telemetria atual das 3 categorias (Fera, Comunhão, Humano)
+    this.dynamicLoci = [];
+    const mrng = mulberry32(this.seed ^ 0xC0DE99);
+    const willLociCount = metrics.willMorph > 0.15 ? Math.min(5, Math.round(metrics.willMorph * 5)) : 0;
+    const commLociCount = metrics.communionMorph > 0.15 ? Math.min(5, Math.round(metrics.communionMorph * 5)) : 0;
+    const lossLociCount = metrics.identityLossMorph > 0.15 ? Math.min(4, Math.round(metrics.identityLossMorph * 4)) : 0;
+    const totalLoci = willLociCount + commLociCount + lossLociCount;
+
+    if (totalLoci > 0) {
+      const slots = chooseSlots(mrng, totalLoci, 0.10, 0.88, 0.055);
+      let sIdx = 0;
+      for (let i = 0; i < willLociCount && sIdx < slots.length; i += 1) {
+        this.dynamicLoci.push({
+          t: slots[sIdx++],
+          axis: "vontade",
+          name: ["Espícula Predatória", "Nó Invasivo", "Assimetria Kaiju", "Marca Predatória"][i % 4],
+          threshold: Math.round(metrics.current.vontade),
+          ring: 6 + mrng() * 3,
+          phase: mrng() * Math.PI * 2
+        });
+      }
+      for (let i = 0; i < commLociCount && sIdx < slots.length; i += 1) {
+        this.dynamicLoci.push({
+          t: slots[sIdx++],
+          axis: "comunhao",
+          name: ["Ponte Ressonante", "Malha Simbiótica", "Harmônico Quântico", "Convergência"][i % 4],
+          threshold: Math.round(metrics.current.comunhao),
+          ring: 6 + mrng() * 3,
+          phase: mrng() * Math.PI * 2
+        });
+      }
+      for (let i = 0; i < lossLociCount && sIdx < slots.length; i += 1) {
+        this.dynamicLoci.push({
+          t: slots[sIdx++],
+          axis: "humanidade",
+          name: ["Desvio Identitário", "Ruptura de Locus", "Base Anômala", "Perda de Simetria"][i % 4],
+          threshold: Math.round(100 - metrics.current.humanidade),
+          ring: 6 + mrng() * 3,
+          phase: mrng() * Math.PI * 2
+        });
+      }
+    }
+    this.persistentMarks = this.dynamicLoci;
+
+    // Partículas ambientais de plexus/constelação (Estilo Behance 001/005)
+    this.plexusParticles = [];
+    const prng = mulberry32(this.seed ^ 0x992211);
+    for (let i = 0; i < 28; i += 1) {
+      this.plexusParticles.push({
+        t: prng(),
+        strand: prng() > 0.5 ? 1 : 2,
+        radialOffset: (prng() - 0.5) * 54,
+        yDrift: (prng() - 0.5) * 36,
+        phase: prng() * Math.PI * 2,
+        speed: 0.3 + prng() * 0.7,
+        size: 0.9 + prng() * 1.3,
+        hue: prng() > 0.7 ? COLORS.goldSoft : (prng() > 0.4 ? COLORS.cyanBright : COLORS.humanity)
+      });
+    }
   }
 
   start() {
@@ -452,18 +500,20 @@ export class KaijuGenomeRenderer {
   }
 
   _pushPersistentMarks(project, centerY, radius, startX, endX) {
-    this.persistentMarks.forEach((mark, index) => {
-      const world = this._helixWorld(mark.t, 1, centerY, radius, startX, endX);
+    const loci = this.dynamicLoci || this.persistentMarks || [];
+    loci.forEach((mark, index) => {
+      const strand = mark.axis === "vontade" ? 1 : (mark.axis === "comunhao" ? 2 : 1);
+      const world = this._helixWorld(mark.t, strand, centerY, radius, startX, endX);
       const p = project(world.x, world.y, world.z);
       this._pushRenderable({
         type: "mutation_cyst",
         p,
         z: p.z + 8,
         axis: mark.axis,
-        ring: Math.max(7, mark.ring),
+        ring: Math.max(6, mark.ring),
         phase: mark.phase,
         t: mark.t,
-        name: mark.name || `MUT-${String(index + 1).padStart(2, "0")}`,
+        name: mark.name || `LOCUS-${String(index + 1).padStart(2, "0")}`,
         threshold: mark.threshold,
         index
       });
@@ -547,7 +597,7 @@ export class KaijuGenomeRenderer {
       this._pushRenderable({ type: "backbone", p1: a2, p2: b2, z: (a2.z + b2.z) * 0.5, strand: 2, t: a2.t, sampleIndex: i });
     }
 
-    // Pares de bases Watson-Crick regulares (34 pares)
+    // Pares de bases Watson-Crick regulares (34 pares) e nós moleculares do esqueleto
     const rungCount = 34;
     for (let i = 0; i < rungCount; i += 1) {
       const t = i / (rungCount - 1);
@@ -555,6 +605,10 @@ export class KaijuGenomeRenderer {
       const p1 = this._s1[sampleIdx];
       const p2 = this._s2[sampleIdx];
       if (!p1 || !p2) continue;
+
+      // Nós moleculares holográficos em cada fita (estilo pérola Behance 001)
+      this._pushRenderable({ type: "backbone_node", p: p1, z: p1.z + 1.5, strand: 1, t, index: i });
+      this._pushRenderable({ type: "backbone_node", p: p2, z: p2.z + 1.5, strand: 2, t, index: i });
 
       const anomalous = this.anomalousRungs.has(i);
       const bpIndex = Math.abs(Math.floor(Math.sin(i * 12.9898 + (this.seed % 100)) * 43758.5453)) % 4;
@@ -600,6 +654,7 @@ export class KaijuGenomeRenderer {
       this._drawRenderable(active[i], laserX, now);
     }
 
+    this._drawPlexus(timeSec, startX, endX, centerY, radius);
     this._drawScientificHUD(startX, endX, centerY, radius);
     this._drawSparks(dt);
     this._drawScanner(laserX);
@@ -650,6 +705,45 @@ export class KaijuGenomeRenderer {
         }
       }
       ctx.stroke();
+      ctx.restore();
+      return;
+    }
+
+    // Nós esféricos moleculares (Efeito pérola holográfica Behance 001)
+    if (item.type === "backbone_node") {
+      const isFront = z > 0.46;
+      const scale = item.p.scale || 1;
+      const baseR = isFront ? (3.0 + z * 1.5) : (1.6 + z * 1.0);
+      const r = baseR * scale;
+      const isStrand1 = item.strand === 1;
+      const nodeColor = isStrand1
+        ? (willMorph > 0.25 ? COLORS.will : COLORS.cyanBright)
+        : COLORS.humanity;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(item.p.px, item.p.py, r, 0, Math.PI * 2);
+
+      if (hit.hit) {
+        ctx.fillStyle = COLORS.white;
+        ctx.shadowColor = COLORS.gold;
+        ctx.shadowBlur = 10;
+      } else {
+        ctx.fillStyle = isFront ? rgba(nodeColor, 0.92) : rgba(nodeColor, 0.40);
+        if (isFront) {
+          ctx.shadowColor = nodeColor;
+          ctx.shadowBlur = isStrand1 && willMorph > 0.3 ? 7 : 4;
+        }
+      }
+      ctx.fill();
+
+      // Ponto de brilho especular / núcleo vítreo nos nós frontais
+      if (isFront) {
+        ctx.beginPath();
+        ctx.arc(item.p.px - r * 0.28, item.p.py - r * 0.28, r * 0.38, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+        ctx.fill();
+      }
       ctx.restore();
       return;
     }
@@ -786,23 +880,13 @@ export class KaijuGenomeRenderer {
       ctx.lineWidth = 1.0;
       ctx.stroke();
 
-      // Badge médico flutuante de alta visibilidade
-      const badgeText = `${item.name.toUpperCase()}`;
-      ctx.font = "bold 10px monospace";
-      const textW = ctx.measureText(badgeText).width;
-      const badgeY = item.p.py - r - 12;
-
-      ctx.fillStyle = "rgba(2, 18, 22, 0.94)";
-      ctx.strokeStyle = rgba(axisColor, 0.75);
-      ctx.lineWidth = 1.0;
-      ctx.fillRect(item.p.px - textW / 2 - 5, badgeY - 10, textW + 10, 14);
-      ctx.strokeRect(item.p.px - textW / 2 - 5, badgeY - 10, textW + 10, 14);
-
+      // Ponto óptico central sutil
+      ctx.beginPath();
+      ctx.arc(item.p.px, item.p.py, 2.0 * scale, 0, Math.PI * 2);
       ctx.fillStyle = hit.hit ? COLORS.white : rgba(axisColor, 0.95);
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(badgeText, item.p.px, badgeY - 3);
+      ctx.fill();
 
+      // Sem caixas ou textos flutuantes cobrindo a hélice (detalhes exibidos exclusivamente no HUD de hover)
       ctx.restore();
       return;
     }
@@ -850,6 +934,46 @@ export class KaijuGenomeRenderer {
       ctx.restore();
       return;
     }
+  }
+
+  _drawPlexus(timeSec, startX, endX, centerY, radius) {
+    if (!this.plexusParticles?.length || !this._s1?.length || !this._s2?.length) return;
+    const ctx = this.ctx;
+    const sampleCount = this._s1.length;
+
+    ctx.save();
+    for (let i = 0; i < this.plexusParticles.length; i += 1) {
+      const pt = this.plexusParticles[i];
+      const t = (pt.t + timeSec * 0.015 * pt.speed) % 1.0;
+      const sIdx = Math.min(sampleCount - 1, Math.max(0, Math.floor(t * sampleCount)));
+      const refNode = pt.strand === 1 ? this._s1[sIdx] : this._s2[sIdx];
+      if (!refNode) continue;
+
+      const ox = Math.cos(timeSec * 0.7 + pt.phase) * pt.radialOffset;
+      const oy = Math.sin(timeSec * 0.5 + pt.phase) * 14 + pt.yDrift;
+      const px = refNode.px + ox;
+      const py = refNode.py + oy;
+
+      ctx.beginPath();
+      ctx.arc(px, py, pt.size, 0, Math.PI * 2);
+      ctx.fillStyle = rgba(pt.hue, 0.40);
+      ctx.shadowColor = pt.hue;
+      ctx.shadowBlur = 4;
+      ctx.fill();
+
+      const dist = Math.hypot(ox, oy);
+      if (dist < 42) {
+        const lineAlpha = (1 - dist / 42) * 0.12;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(refNode.px, refNode.py);
+        ctx.strokeStyle = rgba(pt.hue, lineAlpha);
+        ctx.lineWidth = 0.6;
+        ctx.shadowBlur = 0;
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
   }
 
   _drawScientificHUD(startX, endX, centerY, radius) {

@@ -61,51 +61,25 @@ function isDormant(values) {
 }
 
 /**
- * Memória genética não é o estado atual. Ela conserva os extremos históricos
- * que já chegaram a se expressar estruturalmente no portador.
+ * Estado genômico dinâmico K-03.
+ * As mutações e variações estruturais não são persistentes: alteram-se 100% em tempo real
+ * de acordo com a porcentagem ativa das três categorias (Fera, Comunhão, Humano).
  */
 export function normalizeGenomeState(genome, carrierId, values = {}) {
   const current = normalizeValues(values);
   const source = genome && typeof genome === "object" ? genome : {};
   const activated = typeof source.activated === "boolean" ? source.activated : !isDormant(current);
-  const memory = source.memory && typeof source.memory === "object" ? source.memory : {};
-  const initialHumanFloor = activated ? current.humanidade : 100;
 
   return {
-    version: 1,
+    version: 2,
     seed: safeSeed(source.seed, carrierId || JSON.stringify(current)),
     activated,
-    memory: {
-      maxVontade: clamp(memory.maxVontade ?? current.vontade),
-      maxComunhao: clamp(memory.maxComunhao ?? current.comunhao),
-      minHumanidade: clamp(memory.minHumanidade ?? initialHumanFloor)
-    },
-    mutations: Array.isArray(source.mutations) ? source.mutations.slice(0, 120).map((entry) => ({
-      id: String(entry?.id || `${hashString(JSON.stringify(entry))}`),
-      axis: AXIS_KEYS.includes(entry?.axis) ? entry.axis : "vontade",
-      threshold: clamp(entry?.threshold),
-      direction: entry?.direction === "loss" ? "loss" : "gain",
-      family: String(entry?.family || "structural"),
-      timestamp: Number(entry?.timestamp) || 0,
-      userId: String(entry?.userId || "")
-    })) : []
+    mutations: []
   };
 }
 
-function mutationFamily(axis, threshold, seed) {
-  const rng = mulberry32((seed ^ hashString(`${axis}:${threshold}`)) >>> 0);
-  if (axis === "vontade") {
-    return ["ramificação-predatória", "nó-invasivo", "espícula-cortical", "assimetria-dominante"][Math.floor(rng() * 4)];
-  }
-  if (axis === "comunhao") {
-    return ["ponte-simbiótica", "malha-ressonante", "filamento-paralelo", "convergência-lateral"][Math.floor(rng() * 4)];
-  }
-  return ["desvio-identitário", "ruptura-de-locus", "base-anômala", "perda-de-simetria"][Math.floor(rng() * 4)];
-}
-
 /**
- * Atualiza apenas a memória genética permanente. Alterações visuais de estado
- * continuam sendo calculadas em tempo real pelos valores atuais.
+ * Atualização dinâmica do estado genômico: não acumula contagens persistentes de mutações.
  */
 export function evolveGenomeState(existingGenome, {
   carrierId,
@@ -114,90 +88,26 @@ export function evolveGenomeState(existingGenome, {
   now = Date.now(),
   userId = ""
 } = {}) {
-  const before = normalizeValues(previousValues);
   const after = normalizeValues(nextValues);
-  const genome = normalizeGenomeState(existingGenome, carrierId, before);
-
-  // Um registro criado em 0/0/0 é tratado como não inicializado. A primeira
-  // leitura real estabelece a linha de base sem fingir mutações anteriores.
-  if (!genome.activated && !isDormant(after)) {
-    genome.activated = true;
-    genome.memory.maxVontade = after.vontade;
-    genome.memory.maxComunhao = after.comunhao;
-    genome.memory.minHumanidade = after.humanidade;
-    return genome;
-  }
-
-  if (!genome.activated) return genome;
-
-  const oldMemory = { ...genome.memory };
-  genome.memory.maxVontade = Math.max(oldMemory.maxVontade, after.vontade);
-  genome.memory.maxComunhao = Math.max(oldMemory.maxComunhao, after.comunhao);
-  genome.memory.minHumanidade = Math.min(oldMemory.minHumanidade, after.humanidade);
-
-  const newEvents = [];
-  for (const threshold of THRESHOLDS) {
-    if (oldMemory.maxVontade < threshold && genome.memory.maxVontade >= threshold) {
-      newEvents.push({ axis: "vontade", threshold, direction: "gain" });
-    }
-    if (oldMemory.maxComunhao < threshold && genome.memory.maxComunhao >= threshold) {
-      newEvents.push({ axis: "comunhao", threshold, direction: "gain" });
-    }
-  }
-
-  // Para Humanidade, a memória relevante é a menor integridade já atingida.
-  // Cruzar 80 -> 79, por exemplo, abre uma família de desvio que não some
-  // automaticamente quando a Humanidade volta a subir.
-  for (const threshold of [80, 60, 40, 20, 0]) {
-    if (oldMemory.minHumanidade > threshold && genome.memory.minHumanidade <= threshold) {
-      newEvents.push({ axis: "humanidade", threshold, direction: "loss" });
-    }
-  }
-
-  for (const event of newEvents) {
-    const family = mutationFamily(event.axis, event.threshold, genome.seed);
-    genome.mutations.unshift({
-      id: `${event.axis}-${event.threshold}-${now}-${hashString(`${carrierId}:${family}:${now}`)}`,
-      axis: event.axis,
-      threshold: event.threshold,
-      direction: event.direction,
-      family,
-      timestamp: now,
-      userId
-    });
-  }
-  genome.mutations.splice(120);
+  const genome = normalizeGenomeState(existingGenome, carrierId, after);
+  genome.activated = !isDormant(after);
   return genome;
 }
 
 export function getGenomeMetrics(carrier) {
   const current = normalizeValues(carrier?.values || {});
   const genome = normalizeGenomeState(carrier?.genome, carrier?.id || carrier?.name, current);
-  const memory = genome.memory;
   const dormant = !genome.activated && isDormant(current);
 
-  const predatoryMemory = memory.maxVontade / 100;
-  const symbioticMemory = memory.maxComunhao / 100;
-  const identityDeviation = (100 - memory.minHumanidade) / 100;
   const will = current.vontade / 100;
   const communion = current.comunhao / 100;
   const humanity = current.humanidade / 100;
+  const identityLoss = (100 - current.humanidade) / 100;
   const antagonism = Math.abs(current.vontade - current.humanidade) / 100;
-  const alienSynergy = predatoryMemory * symbioticMemory * (0.45 + identityDeviation * 0.55);
 
-  /*
-   * Curva visual de progressão por estágio.
-   *
-   * O DNA-base precisa continuar parecendo o DNA ANALYSIS original. Os estágios I–III
-   * acrescentam sinais e pequenas alterações; IV começa a alterar a anatomia; V e VI
-   * permitem mudanças grandes. Isso evita o erro da dev.5, onde valores medianos já
-   * deformavam toda a hélice e destruíam a silhueta de referência.
-   */
   const stageMorph = (value) => {
     const v = clamp(value);
     if (v <= 0) return 0;
-    // Curva morfológica progressiva contínua: alterações biológicas reais perceptíveis a partir de 20%,
-    // escalando para aberrações estruturais dramáticas nos estágios médios e extremos.
     return Math.pow(v / 100, 1.25);
   };
 
@@ -208,42 +118,39 @@ export function getGenomeMetrics(carrier) {
   const currentAlienSynergy = willMorph * communionMorph * (0.35 + identityLossMorph * 0.65);
 
   const mutationLoad = dormant ? 0 : clamp(
-    predatoryMemory * 34 +
-    identityDeviation * 31 +
-    symbioticMemory * 17 +
-    alienSynergy * 18
+    willMorph * 45 + identityLossMorph * 40 + currentAlienSynergy * 20
   );
   const divergence = dormant ? 0 : clamp(
-    predatoryMemory * 43 + identityDeviation * 44 + alienSynergy * 23 - symbioticMemory * 8
+    willMorph * 52 + identityLossMorph * 46 + currentAlienSynergy * 22 - communionMorph * 15
   );
-  const coherence = dormant ? 0 : clamp(
-    22 + communion * 46 + humanity * 38 - will * 18 - antagonism * 12
+  const coherence = dormant ? 100 : clamp(
+    20 + communion * 50 + humanity * 35 - will * 15 - antagonism * 10
   );
   const complexity = dormant ? 8 : clamp(
-    18 + predatoryMemory * 28 + symbioticMemory * 34 + identityDeviation * 25 + alienSynergy * 22
+    14 + willMorph * 32 + communionMorph * 34 + identityLossMorph * 20
   );
-  const stability = dormant ? 0 : clamp(
-    humanity * 50 + communion * 38 + (1 - will) * 12 - antagonism * 8
+  const hybridAntagonism = will * humanity;
+  const stability = dormant ? 100 : clamp(
+    humanity * 60 + communion * 30 + (1 - will) * 20 - hybridAntagonism * 20 + (will === 0 ? humanity * 20 : 0)
   );
 
-  // Famílias morfológicas ativas: geram espigões, membranas, rupturas e mutações genuínas
   const branchCount = dormant ? 0 : Math.round(
-    willMorph * 14 + identityLossMorph * 4
+    willMorph * 12 + currentAlienSynergy * 4
   );
   const latticeCount = dormant ? 0 : Math.round(
-    communionMorph * 14 + currentAlienSynergy * 5
+    communionMorph * 12 + currentAlienSynergy * 4
   );
   const fractureCount = dormant ? 0 : Math.round(
-    identityLossMorph * 7 + (willMorph * Math.max(0, 0.75 - communionMorph)) * 4
+    identityLossMorph * 6 + (willMorph * Math.max(0, 0.75 - communionMorph)) * 3
   );
   const nodeCount = dormant ? 0 : Math.round(
-    willMorph * 7 + communionMorph * 7 + humanityMorph * 5 + currentAlienSynergy * 4
+    willMorph * 6 + communionMorph * 6 + humanityMorph * 6
   );
   const anomalousPairs = dormant ? 0 : Math.round(
-    identityLossMorph * 14 + willMorph * 6 + currentAlienSynergy * 5
+    identityLossMorph * 12 + willMorph * 6
   );
   const extraStrand = dormant ? 0 : Math.max(0, Math.min(1,
-    (communionMorph - 0.15) / 0.85 + currentAlienSynergy * 0.22
+    (communionMorph - 0.20) / 0.80 + currentAlienSynergy * 0.25
   ));
   const humanityLocks = dormant ? 0 : Math.round(humanityMorph * 12);
 
@@ -263,9 +170,9 @@ export function getGenomeMetrics(carrier) {
     anomalousPairs,
     extraStrand,
     humanityLocks,
-    predatoryMemory,
-    symbioticMemory,
-    identityDeviation,
+    predatoryMemory: will,
+    symbioticMemory: communion,
+    identityDeviation: identityLoss,
     will,
     communion,
     humanity,
@@ -274,7 +181,7 @@ export function getGenomeMetrics(carrier) {
     humanityMorph,
     identityLossMorph,
     currentAlienSynergy,
-    alienSynergy,
+    alienSynergy: currentAlienSynergy,
     antagonism
   };
 }
@@ -308,21 +215,26 @@ function getAxisStage(axis, value) {
 
 function axisDial(label, value, color, code, stageText) {
   const safe = clamp(value);
-  const circumference = 163.36;
+  const circumference = 138.23;
   const dash = (circumference * safe / 100).toFixed(1);
   const rest = (circumference - Number(dash)).toFixed(1);
-  return `<div class="kj-dna-vital-card" style="--vital:${color}">
+  return `<div class="kj-dna-vital-card vertical" style="--vital:${color}">
+    <div class="kj-vital-header-mini">
+      <span class="kj-vital-code-tag">${escapeHTML(label)}</span>
+    </div>
     <div class="kj-vital-gauge">
-      <svg viewBox="0 0 64 64" aria-hidden="true">
-        <circle cx="32" cy="32" r="26" class="dial-bg"/>
-        <circle cx="32" cy="32" r="26" class="dial-arc" stroke-dasharray="${dash} ${rest}"/>
+      <svg viewBox="0 0 54 54" aria-hidden="true">
+        <circle cx="27" cy="27" r="22" class="dial-bg"/>
+        <circle cx="27" cy="27" r="22" class="dial-arc" stroke-dasharray="${dash} ${rest}"/>
       </svg>
       <div class="kj-vital-val">${safe}<span>%</span></div>
     </div>
-    <div class="kj-vital-meta">
-      <small>${escapeHTML(code)}</small>
-      <strong>${escapeHTML(label)}</strong>
-      <span class="kj-vital-stage">${escapeHTML(stageText)}</span>
+    <div class="kj-vital-vbar">
+      <div class="kj-vital-vbar-fill" style="width:${safe}%;"></div>
+    </div>
+    <div class="kj-vital-meta-mini">
+      <small class="kj-vital-sub">${escapeHTML(code)}</small>
+      <span class="kj-vital-stage-tag">${escapeHTML(stageText)}</span>
     </div>
   </div>`;
 }
@@ -343,8 +255,6 @@ function metricCell(label, value, color = "#3ff4d5", hint = "", pct = null) {
 export function renderGenomePanel(carrier, { detailed = false, reading = "", profile = null } = {}) {
   const metrics = getGenomeMetrics(carrier);
   const seed = metrics.genome.seed;
-  const memory = metrics.genome.memory;
-  const mutationCount = metrics.genome.mutations.length;
   const signature = genomeCode(seed);
 
   const vStage = getAxisStage("vontade", metrics.current.vontade);
@@ -373,33 +283,15 @@ export function renderGenomePanel(carrier, { detailed = false, reading = "", pro
 
     <div class="kj-dna-main-frame">
       <aside class="kj-dna-left-col">
-        <div class="kj-dna-block kj-dna-vitals-panel">
-          <header class="kj-vitals-header">
-            <span>SINAIS VITAIS PRINCIPAIS</span>
-            <small>K-03 BIO-TELEMETRIA</small>
+        <div class="kj-dna-block kj-dna-vitals-panel vertical">
+          <header class="kj-vitals-header vertical">
+            <span>SINAIS VITAIS</span>
+            <small>K-03 TELEMETRIA</small>
           </header>
-          <div class="kj-dna-vitals-list">
+          <div class="kj-dna-vitals-list vertical">
             ${axisDial("FERA", metrics.current.vontade, PALETTE.vontade, "VONTADE DA FERA", vStage)}
             ${axisDial("COMUNHÃO", metrics.current.comunhao, PALETTE.comunhao, "RESSONÂNCIA", cStage)}
             ${axisDial("HUMANO", metrics.current.humanidade, PALETTE.humanidade, "IDENTIDADE", hStage)}
-          </div>
-        </div>
-
-        <div class="kj-dna-block kj-dna-sample-ctrl">
-          <header class="kj-block-title">CONTROLE DA AMOSTRA</header>
-          <button type="button" class="kj-dna-pill is-filled" title="Clique para alternar pausa do sequenciamento">
-            <i class="fa-solid fa-circle-pause"></i>
-            <span>${metrics.dormant ? "SEM AMOSTRA ATIVA" : "SEQUENCIAMENTO ATIVO"}</span>
-          </button>
-        </div>
-
-        <div class="kj-dna-block kj-dna-memory">
-          <header class="kj-block-title">MEMÓRIA BIOLÓGICA (EXTREMOS)</header>
-          <div class="kj-memory-grid">
-            <div class="kj-memory-item"><small>PICO FERA</small><b>${memory.maxVontade}%</b></div>
-            <div class="kj-memory-item"><small>PICO COMUNHÃO</small><b>${memory.maxComunhao}%</b></div>
-            <div class="kj-memory-item"><small>PISO HUMANO</small><b>${memory.minHumanidade}%</b></div>
-            <div class="kj-memory-item"><small>MUTAÇÕES</small><b>${mutationCount}</b></div>
           </div>
         </div>
       </aside>
@@ -424,7 +316,7 @@ export function renderGenomePanel(carrier, { detailed = false, reading = "", pro
           ${metricCell("SINCRONIA VINCULAR", `${metrics.coherence}%`, PALETTE.comunhao, "RESSONÂNCIA", metrics.coherence)}
           ${metricCell("ARQUITETURA", `${metrics.complexity}%`, PALETTE.amber, "COMPLEXIDADE", metrics.complexity)}
           ${metricCell("BIO-ESTABILIDADE", `${metrics.stability}%`, PALETTE.humanidade, "HOMEOSTASE", metrics.stability)}
-          ${metricCell("MUTAÇÕES ATIVAS", String(mutationCount), "#d9ffff", "PERSISTENTES", Math.min(100, mutationCount * 12))}
+          ${metricCell("CARGA MUTAGÊNICA", `${metrics.mutationLoad}%`, PALETTE.vontade, "DINÂMICA", metrics.mutationLoad)}
         </div>
 
         <div class="kj-dna-canvas-container">
@@ -440,22 +332,11 @@ export function renderGenomePanel(carrier, { detailed = false, reading = "", pro
   </section>`;
 }
 
-function mutationLabel(entry) {
-  if (entry.axis === "vontade") return `Vontade atingiu ${entry.threshold}%`;
-  if (entry.axis === "comunhao") return `Comunhão atingiu ${entry.threshold}%`;
-  return `Humanidade caiu até ${entry.threshold}%`;
-}
-
 export function renderGenomeDetail(carrier) {
   const metrics = getGenomeMetrics(carrier);
-  const mutations = metrics.genome.mutations;
-  const registry = mutations.length
-    ? `<div class="kj-genome-mutation-list">${mutations.slice(0, 24).map((entry, index) => {
-        const color = PALETTE[entry.axis] || PALETTE.neutral;
-        const date = entry.timestamp ? new Date(entry.timestamp).toLocaleString("pt-BR") : "Registro legado";
-        return `<article style="--kj-genome-event:${color}"><span class="kj-genome-event-code">M-${String(mutations.length - index).padStart(3, "0")}</span><div><small>${escapeHTML(entry.family.replaceAll("-", " "))}</small><strong>${escapeHTML(mutationLabel(entry))}</strong><span>${escapeHTML(date)}</span></div></article>`;
-      }).join("")}</div>`
-    : `<div class="kj-genome-no-events"><i class="fa-solid fa-dna"></i><strong>Nenhum marco permanente registrado</strong><span>A assinatura ainda não cruzou um limiar genético depois de sua linha de base.</span></div>`;
+  const statusMsg = metrics.mutationLoad === 0
+    ? `<div class="kj-genome-no-events"><i class="fa-solid fa-dna"></i><strong>Genoma Estável // Sem Anomalias</strong><span>A assinatura biológica permanece íntegra e estabilizada pela identidade humana.</span></div>`
+    : `<div class="kj-genome-no-events" style="border-color:${metrics.mutationLoad > 50 ? PALETTE.vontade : PALETTE.comunhao};"><i class="fa-solid fa-biohazard" style="color:${metrics.mutationLoad > 50 ? PALETTE.vontade : PALETTE.comunhao};"></i><strong style="color:#ffffff;">Instabilidade Ativa: ${metrics.mutationLoad}%</strong><span>Estruturas mutagênicas e variações morfológicas derivadas dinamicamente em tempo real.</span></div>`;
 
-  return `${renderGenomePanel(carrier, { detailed: true })}<section class="kj-genome-analysis-grid"><article class="kj-genome-analysis-card"><header><i class="fa-solid fa-code-branch"></i><div><small>MORFOLOGIA</small><strong>Estruturas derivadas</strong></div></header><div class="kj-genome-derived-grid">${metricCell("Ramificações", String(metrics.branchCount), PALETTE.vontade)}${metricCell("Malhas", String(metrics.latticeCount), PALETTE.comunhao)}${metricCell("Rupturas", String(metrics.fractureCount), PALETTE.vontade)}${metricCell("Nós", String(metrics.nodeCount), PALETTE.amber)}${metricCell("Pares Δ", String(metrics.anomalousPairs), PALETTE.amber)}${metricCell("Fita extra", `${Math.round(metrics.extraStrand * 100)}%`, PALETTE.comunhao)}</div></article><article class="kj-genome-analysis-card"><header><i class="fa-solid fa-timeline"></i><div><small>GENETIC MEMORY</small><strong>Registro de mutações</strong></div></header>${registry}</article></section>`;
+  return `${renderGenomePanel(carrier, { detailed: true })}<section class="kj-genome-analysis-grid"><article class="kj-genome-analysis-card"><header><i class="fa-solid fa-code-branch"></i><div><small>MORFOLOGIA</small><strong>Estruturas derivadas em tempo real</strong></div></header><div class="kj-genome-derived-grid">${metricCell("Ramificações", String(metrics.branchCount), PALETTE.vontade)}${metricCell("Malhas", String(metrics.latticeCount), PALETTE.comunhao)}${metricCell("Rupturas", String(metrics.fractureCount), PALETTE.vontade)}${metricCell("Nós", String(metrics.nodeCount), PALETTE.amber)}${metricCell("Pares Δ", String(metrics.anomalousPairs), PALETTE.amber)}${metricCell("Fita extra", `${Math.round(metrics.extraStrand * 100)}%`, PALETTE.comunhao)}</div></article><article class="kj-genome-analysis-card"><header><i class="fa-solid fa-wave-square"></i><div><small>ESTADO DINÂMICO</small><strong>Telemetria Morfológica</strong></div></header>${statusMsg}</article></section>`;
 }

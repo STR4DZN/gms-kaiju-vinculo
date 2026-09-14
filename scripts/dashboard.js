@@ -192,14 +192,18 @@ export class KaijuDashboardApplication extends Application {
       ui.notifications.info(`K-03: telemetria de “${carrier.name}” transmitida ao chat.`);
     });
 
-    const pausePill = detail.querySelector(".kj-dna-pill.is-filled");
-    pausePill?.addEventListener("click", (event) => {
+    const pauseBtn = detail.querySelector(".kj-monitor-status, .kj-dna-pill.is-filled");
+    pauseBtn?.addEventListener("click", (event) => {
       event.preventDefault();
       if (!this._genomeRenderer) return;
       const isPaused = this._genomeRenderer.togglePause();
-      const span = pausePill.querySelector("span");
-      if (span) span.textContent = isPaused ? "SEQUENCING PAUSED" : "SEQUENCING ACTIVE";
-      pausePill.classList.toggle("is-paused", isPaused);
+      if (pauseBtn.classList.contains("kj-monitor-status")) {
+        pauseBtn.innerHTML = `<i class="kj-pulse-dot"></i>${isPaused ? "SEQUENCIAMENTO PAUSADO" : "AMOSTRA BIO-ESTABILIZADA"}`;
+      } else {
+        const span = pauseBtn.querySelector("span");
+        if (span) span.textContent = isPaused ? "SEQUENCING PAUSED" : "SEQUENCING ACTIVE";
+        pauseBtn.classList.toggle("is-paused", isPaused);
+      }
     });
 
     detail.querySelectorAll("[data-kj-tab]").forEach((button) => button.addEventListener("click", () => {
