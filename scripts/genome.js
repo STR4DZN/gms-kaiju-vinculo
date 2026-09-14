@@ -293,80 +293,150 @@ function locusSequence(seed, length = 72) {
   return output;
 }
 
-function techNumbers(seed, count = 12) {
-  const rng = mulberry32(seed ^ 0x71EC0DE);
-  return Array.from({ length: count }, () => String(Math.floor(10000 + rng() * 899999)).padStart(6, "0"));
-}
+const STAGE_LABELS = {
+  vontade: ["Adormecida", "Sussurro", "Influência", "Predomínio", "Domínio", "Domínio Absoluto"],
+  comunhao: ["Ruptura", "Contato Instável", "Ressonância", "Sintonia", "União Profunda", "Equilíbrio Perfeito"],
+  humanidade: ["Fronteiras Desfeitas", "Vestígios", "Identidade Resistente", "Vontade Humana", "Rejeição Profunda", "Negação Absoluta"]
+};
+const STAGE_ROMANS = ["I", "II", "III", "IV", "V", "VI"];
 
-function axisDial(label, value, color, code) {
+function getAxisStage(axis, value) {
   const safe = clamp(value);
-  const circumference = 94.25;
-  const dash = (circumference * safe / 100).toFixed(2);
-  const rest = (circumference - Number(dash)).toFixed(2);
-  return `<div class="kj-dna-dial" style="--dial:${color}"><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="15" class="dial-bg"/><circle cx="22" cy="22" r="15" class="dial-arc" stroke-dasharray="${dash} ${rest}"/><circle cx="22" cy="22" r="10" class="dial-inner"/></svg><div><small>${escapeHTML(code)}</small><strong>${escapeHTML(label)}</strong><b>${safe.toString().padStart(2,"0")}.0</b></div></div>`;
+  const idx = safe === 100 ? 5 : Math.floor(safe / 20);
+  return `Est. ${STAGE_ROMANS[idx]} · ${STAGE_LABELS[axis]?.[idx] || ""}`;
 }
 
-function metricCell(label, value, color = "#3ff4d5", hint = "") {
-  return `<div class="kj-dna-stat" style="--stat:${color}"><small>${escapeHTML(label)}</small><strong>${escapeHTML(value)}</strong>${hint ? `<span>${escapeHTML(hint)}</span>` : ""}</div>`;
+function axisDial(label, value, color, code, stageText) {
+  const safe = clamp(value);
+  const circumference = 138.23;
+  const dash = (circumference * safe / 100).toFixed(1);
+  const rest = (circumference - Number(dash)).toFixed(1);
+  return `<div class="kj-dna-vital-card" style="--vital:${color}">
+    <div class="kj-vital-gauge">
+      <svg viewBox="0 0 52 52" aria-hidden="true">
+        <circle cx="26" cy="26" r="21" class="dial-bg"/>
+        <circle cx="26" cy="26" r="21" class="dial-arc" stroke-dasharray="${dash} ${rest}"/>
+      </svg>
+      <div class="kj-vital-val">${safe}<span>%</span></div>
+    </div>
+    <div class="kj-vital-meta">
+      <small>${escapeHTML(code)}</small>
+      <strong>${escapeHTML(label)}</strong>
+      <span class="kj-vital-stage">${escapeHTML(stageText)}</span>
+    </div>
+  </div>`;
 }
 
-function codonTables(metrics) {
-  const seed = metrics.genome.seed;
-  const rng = mulberry32(seed ^ 0xC0D0F00D);
-  const labels = ["JS_05_6", "GT_AC_8", "PX_71_K", "MUT_03", "HUM_12", "COM_44", "FER_91", "K03_CORE"];
-  return `<div class="kj-dna-codon-grid">${labels.map((label, index) => {
-    const values = Array.from({ length: 9 }, () => String(Math.floor(rng() * 99)).padStart(2, "0"));
-    const accent = index % 3 === 0 ? PALETTE.vontade : index % 3 === 1 ? PALETTE.comunhao : PALETTE.humanidade;
-    return `<div class="kj-dna-codon" style="--codon:${accent}"><header>${label}</header><div><span>${values[0]}-${values[1]}</span><span>${values[2]}-${values[3]}</span><span>${values[4]}-${values[5]}</span></div><div><span>${values[6]}-${values[7]}</span><span>${values[8]}-${String(metrics.mutationLoad).padStart(2,"0")}</span><span>${String(metrics.divergence).padStart(2,"0")}</span></div></div>`;
-  }).join("")}</div>`;
+function metricCell(label, value, color = "#3ff4d5", hint = "", pct = null) {
+  const numeric = typeof value === "number" ? value : (parseInt(value, 10) || 0);
+  const barWidth = pct != null ? Math.min(100, Math.max(0, pct)) : Math.min(100, Math.max(0, numeric));
+  return `<div class="kj-dna-stat" style="--stat:${color}">
+    <div class="kj-stat-head">
+      <small>${escapeHTML(label)}</small>
+      ${hint ? `<span>${escapeHTML(hint)}</span>` : ""}
+    </div>
+    <strong class="kj-stat-val">${escapeHTML(value)}</strong>
+    <div class="kj-stat-bar"><i style="width:${barWidth}%"></i></div>
+  </div>`;
 }
 
-function resequenceRows(metrics) {
-  const seq = locusSequence(metrics.genome.seed, 45);
-  return seq.match(/.{1,5}/g).slice(0, 4).map((block, index) => `<div><span>${String((metrics.genome.seed >>> (index * 3)) % 999999).padStart(6,"0")}</span><b>${block}</b><span>${String((metrics.complexity * (index + 3) + metrics.divergence * 7) % 99999).padStart(5,"0")}</span></div>`).join("");
-}
-
-export function renderGenomePanel(carrier, { detailed = false } = {}) {
+export function renderGenomePanel(carrier, { detailed = false, reading = "", profile = null } = {}) {
   const metrics = getGenomeMetrics(carrier);
   const seed = metrics.genome.seed;
-  const codes = techNumbers(seed, 18);
-  const sequence = locusSequence(seed, detailed ? 104 : 76);
   const memory = metrics.genome.memory;
   const mutationCount = metrics.genome.mutations.length;
   const signature = genomeCode(seed);
 
+  const vStage = getAxisStage("vontade", metrics.current.vontade);
+  const cStage = getAxisStage("comunhao", metrics.current.comunhao);
+  const hStage = getAxisStage("humanidade", metrics.current.humanidade);
+
+  const stabilityStatus = metrics.stability >= 75 ? "ESTÁVEL" : metrics.stability >= 45 ? "COMPENSADA" : "CRÍTICA";
+  const stabilityColor = metrics.stability >= 75 ? PALETTE.humanidade : metrics.stability >= 45 ? PALETTE.amber : PALETTE.vontade;
+
   return `<section class="kj-dna-console ${detailed ? "is-detailed" : ""}" data-kj-genome-console data-genome-seed="${seed}">
     <div class="kj-dna-crt" aria-hidden="true"></div><div class="kj-dna-vignette" aria-hidden="true"></div>
-    <header class="kj-dna-statusbar"><span class="kj-dna-badge"><i></i>K03_XENO_${signature}</span><div class="kj-dna-ticker"><span>${codes[0]}</span><em>|</em><span>${codes[1]}</span><em>|</em><span>${codes[2]}-${codes[3]}</span><em>|</em><span>SEQ_${sequence.slice(0,16)}</span><em>|</em><span>${codes[4]}</span><em>|</em><span>LIVE GENOME ARRAY</span></div><div class="kj-dna-coords"><span>X:${String(metrics.current.vontade).padStart(3,"0")}</span><span>Y:${String(metrics.current.comunhao).padStart(3,"0")}</span><span>Z:${String(metrics.current.humanidade).padStart(3,"0")}</span></div></header>
+
+    <header class="kj-dna-statusbar">
+      <div class="kj-dna-badge"><i class="kj-pulse-dot"></i><span>ASSINATURA: <b>${signature}</b></span></div>
+      <div class="kj-dna-ticker">
+        <span>MONITOR XENOBIOLÓGICO</span><em>//</em>
+        <span>HOMEOSTASE: <b style="color:${stabilityColor}">${stabilityStatus} (${metrics.stability}%)</b></span><em>//</em>
+        <span>AMOSTRA: <b>${metrics.dormant ? "DORMENTE" : "EM TEMPO REAL"}</b></span>
+      </div>
+      <div class="kj-dna-coords">
+        <span class="kj-coord-v">FERA <b>${metrics.current.vontade}%</b></span>
+        <span class="kj-coord-c">COM <b>${metrics.current.comunhao}%</b></span>
+        <span class="kj-coord-h">HUM <b>${metrics.current.humanidade}%</b></span>
+      </div>
+    </header>
 
     <div class="kj-dna-main-frame">
       <aside class="kj-dna-left-col">
-        <div class="kj-dna-block kj-dna-dials-panel"><header><span>08_X:K03</span><b>${(metrics.complexity / 10).toFixed(3)}</b></header><div class="kj-dna-dials">
-          ${axisDial("FERA", metrics.current.vontade, PALETTE.vontade, "WILL")}
-          ${axisDial("COMUNHÃO", metrics.current.comunhao, PALETTE.comunhao, "SYNC")}
-          ${axisDial("HUMANO", metrics.current.humanidade, PALETTE.humanidade, "SELF")}
-        </div></div>
-        <div class="kj-dna-block kj-dna-telem"><div>${codes.slice(5,14).map((code, i)=>`<span>${code}</span>${i%3===2?"<br>":""}`).join(" ")}</div><button type="button" class="kj-dna-pill"><span>GENOME ${signature}</span></button><button type="button" class="kj-dna-pill is-filled"><span>${metrics.dormant ? "NO ACTIVE SAMPLE" : "SEQUENCING ACTIVE"}</span></button></div>
-        <div class="kj-dna-block kj-dna-reticle"><div class="kj-reticle-viewport"><i class="r-outer"></i><i class="r-mid"></i><i class="r-inner"></i><i class="r-center"></i></div><div class="kj-reticle-data"><b>${String(metrics.mutationLoad).padStart(3,"0")}//${String(metrics.divergence).padStart(3,"0")}</b><span>MUTATION VECTOR</span><small>${codes[14]} ${codes[15]}</small></div></div>
-        <div class="kj-dna-block kj-dna-memory"><header>MEMÓRIA ESTRUTURAL</header><div><span>V-PEAK <b>${memory.maxVontade}</b></span><span>C-PEAK <b>${memory.maxComunhao}</b></span><span>H-FLOOR <b>${memory.minHumanidade}</b></span><span>MUT <b>${mutationCount}</b></span></div></div>
+        <div class="kj-dna-block kj-dna-vitals-panel">
+          <header class="kj-vitals-header">
+            <span>SINAIS VITAIS PRINCIPAIS</span>
+            <small>K-03 BIO-TELEMETRIA</small>
+          </header>
+          <div class="kj-dna-vitals-list">
+            ${axisDial("FERA", metrics.current.vontade, PALETTE.vontade, "VONTADE DA FERA", vStage)}
+            ${axisDial("COMUNHÃO", metrics.current.comunhao, PALETTE.comunhao, "RESSONÂNCIA", cStage)}
+            ${axisDial("HUMANO", metrics.current.humanidade, PALETTE.humanidade, "IDENTIDADE", hStage)}
+          </div>
+        </div>
+
+        <div class="kj-dna-block kj-dna-sample-ctrl">
+          <header class="kj-block-title">CONTROLE DA AMOSTRA</header>
+          <button type="button" class="kj-dna-pill is-filled" title="Clique para alternar pausa do sequenciamento">
+            <i class="fa-solid fa-circle-pause"></i>
+            <span>${metrics.dormant ? "SEM AMOSTRA ATIVA" : "SEQUENCIAMENTO ATIVO"}</span>
+          </button>
+        </div>
+
+        <div class="kj-dna-block kj-dna-memory">
+          <header class="kj-block-title">MEMÓRIA BIOLÓGICA (EXTREMOS)</header>
+          <div class="kj-memory-grid">
+            <div class="kj-memory-item"><small>PICO FERA</small><b>${memory.maxVontade}%</b></div>
+            <div class="kj-memory-item"><small>PICO COMUNHÃO</small><b>${memory.maxComunhao}%</b></div>
+            <div class="kj-memory-item"><small>PISO HUMANO</small><b>${memory.minHumanidade}%</b></div>
+            <div class="kj-memory-item"><small>MUTAÇÕES</small><b>${mutationCount}</b></div>
+          </div>
+        </div>
       </aside>
 
       <main class="kj-dna-center-col">
-        <div class="kj-dna-viewport-head"><div><span class="bracket">┌</span><small>${codes[16]} // ${codes[17]}</small><strong>ANÁLISE XENOGENÔMICA <em>// KAIJU DNA ANALYSIS</em></strong><b>${signature}</b></div><div class="kj-dna-monitor"><span><i></i>${metrics.dormant ? "AGUARDANDO AMOSTRA" : "SEQUENCIAMENTO MOLECULAR CONTÍNUO"}</span><div>${Array.from({length:12},(_,i)=>`<i style="--h:${4+(i%5)*2}px"></i>`).join("")}</div></div><span class="bracket right">┐</span></div>
-        <div class="kj-dna-metric-ribbon">${metricCell("DIVERGÊNCIA", `${metrics.divergence}%`, PALETTE.vontade, "DESVIO")}${metricCell("COERÊNCIA", `${metrics.coherence}%`, PALETTE.comunhao, "SINCRONIA")}${metricCell("COMPLEXIDADE", `${metrics.complexity}%`, PALETTE.amber, "ARQUITETURA")}${metricCell("INTEGRIDADE", `${metrics.stability}%`, PALETTE.humanidade, "ESTABILIDADE")}${metricCell("MUTAÇÕES", String(mutationCount), "#d9ffff", "PERSISTENTES")}</div>
-        <div class="kj-dna-canvas-container">
-          <div class="kj-dna-corner tl"></div><div class="kj-dna-corner tr"></div><div class="kj-dna-corner bl"></div><div class="kj-dna-corner br"></div>
-          <div class="kj-dna-y-scale left">${["572924","24214","121245","73292","823","56564","394205"].map(v=>`<span>${v}<i>—</i></span>`).join("")}</div>
-          <canvas class="kj-dna-helix-canvas" data-kj-genome-canvas title="DNA procedural K-03 — mova o mouse para inclinar; clique para alterar a rotação"></canvas>
-          <div class="kj-dna-y-scale right">${["572924","24214","121245","73292","823","56564","394205"].map(v=>`<span><i>—</i>${v}</span>`).join("")}</div>
-          <div class="kj-dna-resequence"><header>CÓDIGO DE RESSEQUENCIAMENTO</header>${resequenceRows(metrics)}<div class="kj-dna-reseq-bar"><i style="width:${Math.max(8,metrics.coherence)}%"></i></div></div>
-          <div class="kj-dna-floating"><span>RND ${String(metrics.branchCount).padStart(2,"0")} ${String(metrics.latticeCount).padStart(2,"0")}</span><span>MUT Δ ${String(metrics.divergence).padStart(3,"0")}</span><b>${String(metrics.genome.seed % 10000).padStart(4,"0")}</b><small>WAVEFORM_DATA ${metrics.currentAlienSynergy.toFixed(3)}</small></div>
-          <div class="kj-dna-locus-labels"><span>L-01</span><span>L-17</span><span>L-34</span><span>L-52</span><span>L-71</span><span>L-93</span></div>
+        <div class="kj-dna-viewport-head">
+          <div class="kj-viewport-title">
+            <i class="fa-solid fa-dna"></i>
+            <div>
+              <strong>ANÁLISE XENOGENÔMICA // DNA KAIJU</strong>
+              <small>MAPEAMENTO MOLECULAR 3D EM TEMPO REAL · B-DNA HÍBRIDO</small>
+            </div>
+          </div>
+          <div class="kj-dna-monitor">
+            <span class="kj-monitor-status"><i class="kj-pulse-dot"></i>${metrics.dormant ? "AMOSTRA INATIVA" : "AMOSTRA BIO-ESTABILIZADA"}</span>
+            <div class="kj-monitor-eq">${Array.from({length:10},(_,i)=>`<i style="--h:${6+((i*3)%8)*2}px"></i>`).join("")}</div>
+          </div>
         </div>
-        <div class="kj-dna-sequence"><b>SEQ</b><code>${escapeHTML(sequence.match(/.{1,4}/g)?.join(" ") || sequence)}</code><span>BR:${String(metrics.branchCount).padStart(2,"0")} LT:${String(metrics.latticeCount).padStart(2,"0")} FR:${String(metrics.fractureCount).padStart(2,"0")} ΔP:${String(metrics.anomalousPairs).padStart(2,"0")}</span></div>
+
+        <div class="kj-dna-metric-ribbon">
+          ${metricCell("DESVIO GENÔMICO", `${metrics.divergence}%`, PALETTE.vontade, "DISTORÇÃO", metrics.divergence)}
+          ${metricCell("SINCRONIA VINCULAR", `${metrics.coherence}%`, PALETTE.comunhao, "RESSONÂNCIA", metrics.coherence)}
+          ${metricCell("ARQUITETURA", `${metrics.complexity}%`, PALETTE.amber, "COMPLEXIDADE", metrics.complexity)}
+          ${metricCell("BIO-ESTABILIDADE", `${metrics.stability}%`, PALETTE.humanidade, "HOMEOSTASE", metrics.stability)}
+          ${metricCell("MUTAÇÕES ATIVAS", String(mutationCount), "#d9ffff", "PERSISTENTES", Math.min(100, mutationCount * 12))}
+        </div>
+
+        <div class="kj-dna-canvas-container">
+          <canvas class="kj-dna-helix-canvas" data-kj-genome-canvas title="DNA procedural K-03 — mova o mouse para inclinar; clique para alterar a rotação"></canvas>
+          <div class="kj-dna-canvas-badges">
+            <span class="kj-dna-legend-strand s1"><i class="legend-dot"></i> FITA 1 (α / FERA)</span>
+            <span class="kj-dna-legend-strand s2"><i class="legend-dot"></i> FITA 2 (β / HUMANO)</span>
+            ${metrics.extraStrand > 0.08 ? `<span class="kj-dna-legend-strand s3"><i class="legend-dot"></i> FITA 3 (γ / ALIEN)</span>` : ""}
+          </div>
+        </div>
       </main>
     </div>
-    <footer class="kj-dna-bottom-panel"><div class="kj-dna-bottom-id"><b>K-03 // ${signature}</b><span>GENOME TELEMETRY</span><small>${codes[0]}-${codes[1]}</small></div>${codonTables(metrics)}<div class="kj-dna-bottom-count"><strong>${String(metrics.mutationLoad).padStart(3,"0")}</strong><span>LOAD</span><b>${String(Math.round(metrics.extraStrand*100)).padStart(2,"0")}%</b><small>EXTRA STRAND</small></div></footer>
   </section>`;
 }
 

@@ -141,41 +141,6 @@ export class KaijuGenomeRenderer {
   _buildStaticGenome() {
     const rng = mulberry32(this.seed ^ 0xA11E1101);
     const metrics = this.metrics;
-    const complexity = metrics.complexity / 100;
-
-    const nodeCount = 140;
-    this.meshNodes = Array.from({ length: nodeCount }, (_, index) => ({
-      id: index,
-      x: (rng() - 0.5) * 1.9,
-      y: (rng() - 0.5) * 1.55,
-      z: (rng() - 0.5) * 220,
-      vx: (rng() - 0.5) * 0.00055,
-      vy: (rng() - 0.5) * 0.00045,
-      vz: (rng() - 0.5) * 0.10,
-      phase: rng() * Math.PI * 2,
-      weight: 0.45 + rng() * 0.9
-    }));
-
-    // Conexões pré-computadas para não fazer O(n²) completo a cada frame.
-    const edges = new Set();
-    for (let i = 0; i < this.meshNodes.length; i += 1) {
-      const a = this.meshNodes[i];
-      const nearest = [];
-      for (let j = 0; j < this.meshNodes.length; j += 1) {
-        if (i === j) continue;
-        const b = this.meshNodes[j];
-        const d = (a.x - b.x) ** 2 + (a.y - b.y) ** 2 + ((a.z - b.z) / 260) ** 2;
-        nearest.push([d, j]);
-      }
-      nearest.sort((x, y) => x[0] - y[0]);
-      const links = 2 + Math.round(complexity * 2);
-      for (const [, j] of nearest.slice(0, links)) {
-        const lo = Math.min(i, j);
-        const hi = Math.max(i, j);
-        edges.add(`${lo}:${hi}`);
-      }
-    }
-    this.meshEdges = [...edges].map((pair) => pair.split(":").map(Number));
 
     const hotspotCount = 7 + Math.round(metrics.mutationLoad / 25);
     this.hotspots = chooseSlots(rng, hotspotCount, 0.07, 0.89, 0.065).map((t, index) => ({
@@ -427,61 +392,41 @@ export class KaijuGenomeRenderer {
     const height = this.height;
 
     ctx.save();
-    ctx.fillStyle = "rgba(63,244,213,0.12)";
-    for (let gx = 20; gx < width; gx += 40) {
-      for (let gy = 20; gy < height; gy += 40) {
-        const twinkle = 0.55 + 0.45 * Math.sin(timeSec * 0.75 + gx * 0.02 + gy * 0.017);
-        ctx.globalAlpha = twinkle;
-        ctx.beginPath();
-        ctx.arc(gx, gy, 0.9, 0, Math.PI * 2);
-        ctx.fill();
+    // Holographic Medical Bio-Grid
+    ctx.strokeStyle = "rgba(63, 244, 213, 0.04)";
+    ctx.lineWidth = 1.0;
+    const step = 44;
+    ctx.beginPath();
+    for (let x = 0; x < width; x += step) {
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+    }
+    for (let y = 0; y < height; y += step) {
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+    }
+    ctx.stroke();
+
+    // Precision medical crosshair markers at intervals
+    ctx.strokeStyle = "rgba(63, 244, 213, 0.16)";
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    for (let x = step * 2; x < width - step; x += step * 3) {
+      for (let y = step * 2; y < height - step; y += step * 3) {
+        ctx.moveTo(x - 3, y); ctx.lineTo(x + 3, y);
+        ctx.moveTo(x, y - 3); ctx.lineTo(x, y + 3);
       }
     }
-    ctx.restore();
+    ctx.stroke();
 
-    for (const node of this.meshNodes) {
-      node.x += node.vx;
-      node.y += node.vy;
-      node.z += node.vz;
-      if (Math.abs(node.x) > 0.98) node.vx *= -1;
-      if (Math.abs(node.y) > 0.80) node.vy *= -1;
-      if (Math.abs(node.z) > 110) node.vz *= -1;
-    }
+    // Subtle bio-luminescent vignette focused behind the helix
+    const glow = ctx.createRadialGradient(width * 0.46, centerY, 20, width * 0.46, centerY, width * 0.45);
+    glow.addColorStop(0, "rgba(63, 244, 213, 0.038)");
+    glow.addColorStop(0.5, "rgba(2, 20, 24, 0.02)");
+    glow.addColorStop(1, "rgba(1, 14, 17, 0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, width, height);
 
-    const projected = this.meshNodes.map((node) => project(
-      width * 0.5 + node.x * width * 0.52,
-      centerY + node.y * height * 0.48,
-      node.z
-    ));
-
-    ctx.save();
-    ctx.lineWidth = 0.55;
-    for (let edgeIndex = 0; edgeIndex < this.meshEdges.length; edgeIndex += this.quality < 1 ? 2 : 1) {
-      const [aIndex, bIndex] = this.meshEdges[edgeIndex];
-      const a = projected[aIndex];
-      const b = projected[bIndex];
-      if (!a || !b) continue;
-      const dx = a.px - b.px;
-      const dy = a.py - b.py;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const maxDist = Math.max(62, width * 0.075);
-      if (dist > maxDist) continue;
-      const alpha = (1 - dist / maxDist) * (0.10 + this.metrics.complexity * 0.0012);
-      ctx.strokeStyle = rgba(COLORS.cyan, alpha);
-      ctx.beginPath();
-      ctx.moveTo(a.px, a.py);
-      ctx.lineTo(b.px, b.py);
-      ctx.stroke();
-    }
-    projected.forEach((point, index) => {
-      if (this.quality < 1 && index % 2 === 1) return;
-      const node = this.meshNodes[index];
-      const alpha = 0.15 + point.normZ * 0.30;
-      ctx.fillStyle = rgba(index % 11 === 0 ? COLORS.gold : COLORS.cyan, alpha);
-      ctx.beginPath();
-      ctx.arc(point.px, point.py, (0.65 + node.weight * 0.55) * point.scale, 0, Math.PI * 2);
-      ctx.fill();
-    });
     ctx.restore();
   }
 
@@ -740,7 +685,7 @@ export class KaijuGenomeRenderer {
       }
     }
 
-    const rungCount = 64;
+    const rungCount = 38;
     const instability = Math.max(0, (100 - (this.metrics.stability || 100)) / 100);
     const willMorph = this.metrics.willMorph || 0;
     const communionMorph = this.metrics.communionMorph || 0;
@@ -759,7 +704,7 @@ export class KaijuGenomeRenderer {
       const bpIndex = Math.abs(Math.floor(Math.sin(i * 12.9898 + (this.seed % 100)) * 43758.5453)) % 4;
       const bp = BASE_PAIRS[bpIndex];
 
-      if (fracture < 0.82) {
+      if (fracture < 0.85) {
         if (anomalous && (willMorph > 0.25 || lossMorph > 0.22)) {
           this._pushRenderable({ type: "torn_rung", p1, p2, z: (p1.z + p2.z) * 0.5 - 4, anomalous: true, fracture, t, i, bp });
         } else if (communionMorph > 0.28 && i % 3 === 0) {
@@ -769,37 +714,9 @@ export class KaijuGenomeRenderer {
         }
       }
 
-      const beads = 13;
-      for (let b = 1; b < beads; b += 1) {
-        const u = b / beads;
-        let y = w1.y + (w2.y - w1.y) * u;
-        let z = w1.z + (w2.z - w1.z) * u;
-        if (anomalous) {
-          const bend = Math.sin(u * Math.PI) * radius * 0.16 * (lossMorph + willMorph * 0.6);
-          y += bend * Math.sin(i * 0.9 + this.seed);
-          z += bend * Math.cos(i * 0.7 + this.seed);
-        }
-        if (instability > 0.12) {
-          const jitter = Math.sin(now * 0.008 + b * 1.7 + i * 2.3) * (instability * 3.2);
-          y += jitter;
-        }
-        const p = project(w1.x, y, z);
-        this._pushRenderable({ type: "bead", p, z: p.z, anomalous, index: b, rungIndex: i, t });
-      }
-
-      const absSin = Math.abs(Math.sin(w1.theta));
-      const crest = absSin > 0.52;
-      const peak = crest ? (absSin - 0.52) / 0.48 : 0;
-      this._pushRenderable({ type: "strand_node", p: p1, z: p1.z, ring: crest, peak, axis: anomalous ? "vontade" : "neutral", strand: 1, t });
-      this._pushRenderable({ type: "strand_node", p: p2, z: p2.z, ring: crest, peak, axis: anomalous ? "humanidade" : "neutral", strand: 2, t });
-      if (peak > 0.82 && i % 2 === 0) {
-        const off = (p1.py < centerY ? -9 : 9) * p1.scale;
-        this._pushRenderable({ type: "satellite", p: { ...p1, py: p1.py + off, z: p1.z + 9 }, z: p1.z + 9 });
-      }
-      if (absSin < 0.22) {
-        const cross = project(w1.x, centerY + Math.sin(i + this.seed) * radius * (this.metrics.identityLossMorph || 0) * 0.04, 0);
-        this._pushRenderable({ type: "twist", p: cross, z: cross.z });
-      }
+      // Nódulos de conexão limpos na fita (sem círculos e satélites caóticos)
+      this._pushRenderable({ type: "strand_node", p: p1, z: p1.z, axis: anomalous ? "vontade" : "neutral", strand: 1, t });
+      this._pushRenderable({ type: "strand_node", p: p2, z: p2.z, axis: anomalous ? "humanidade" : "neutral", strand: 2, t });
     }
 
     if (this.metrics.extraStrand > 0.04) {
@@ -1592,64 +1509,52 @@ export class KaijuGenomeRenderer {
 
     if (item.type === "mutation_ring" || item.type === "mutation_cyst") {
       const axisColor = item.axis === "vontade" ? COLORS.will : item.axis === "comunhao" ? COLORS.communion : COLORS.humanity;
-      const pulse = 1 + Math.sin(now * 0.003 + item.phase) * 0.18;
-      const baseR = item.ring * pulse * item.p.scale;
+      const pulse = 1 + Math.sin(now * 0.003 + item.phase) * 0.15;
+      const baseR = (item.ring || 8) * pulse * (item.p.scale || 1);
 
       ctx.save();
-      // Anel bio-luminescente externo pontilhado
+      // Holographic reticle target ring around mutated locus
       ctx.beginPath();
       ctx.arc(item.p.px, item.p.py, baseR, 0, Math.PI * 2);
-      ctx.strokeStyle = hit.hit ? COLORS.gold : rgba(axisColor, 0.88);
-      ctx.lineWidth = 1.6;
-      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = hit.hit ? COLORS.white : rgba(axisColor, 0.90);
+      ctx.lineWidth = hit.hit ? 2.0 : 1.4;
       ctx.shadowColor = axisColor;
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = hit.hit ? 12 : 6;
       ctx.stroke();
-      ctx.setLineDash([]);
 
-      // Esfera 3D densa com gradiente esférico (ponto de luz especular)
-      const grad = ctx.createRadialGradient(
-        item.p.px - baseR * 0.25, item.p.py - baseR * 0.25, baseR * 0.1,
-        item.p.px, item.p.py, baseR * 0.55
-      );
-      grad.addColorStop(0, COLORS.white);
-      grad.addColorStop(0.4, axisColor);
-      grad.addColorStop(1, "rgba(2, 16, 20, 0.85)");
-
+      // Precision crosshair ticks (N, S, E, W)
+      const tickLen = 4;
       ctx.beginPath();
-      ctx.arc(item.p.px, item.p.py, baseR * 0.55, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.shadowColor = axisColor;
-      ctx.shadowBlur = 6;
+      ctx.moveTo(item.p.px, item.p.py - baseR - tickLen); ctx.lineTo(item.p.px, item.p.py - baseR + 2);
+      ctx.moveTo(item.p.px, item.p.py + baseR - 2); ctx.lineTo(item.p.px, item.p.py + baseR + tickLen);
+      ctx.moveTo(item.p.px - baseR - tickLen, item.p.py); ctx.lineTo(item.p.px - baseR + 2, item.p.py);
+      ctx.moveTo(item.p.px + baseR - 2, item.p.py); ctx.lineTo(item.p.px + baseR + tickLen, item.p.py);
+      ctx.stroke();
+
+      // Central glowing bio-locus core
+      ctx.beginPath();
+      ctx.arc(item.p.px, item.p.py, 3.2 * (item.p.scale || 1), 0, Math.PI * 2);
+      ctx.fillStyle = hit.hit ? COLORS.white : rgba(axisColor, 0.95);
       ctx.fill();
 
-      // 3 Micro-satélites orbitais giroscópicos em eixos 3D inclinados
-      for (let s = 0; s < 3; s += 1) {
-        const tiltAngle = (s * Math.PI) / 3;
-        const orbSpeed = now * 0.0025 + item.phase + (s * Math.PI * 2) / 3;
-        const orbR = baseR * 1.35;
-        const u = Math.cos(orbSpeed) * orbR;
-        const v = Math.sin(orbSpeed) * (orbR * 0.52);
-        const cosT = Math.cos(tiltAngle);
-        const sinT = Math.sin(tiltAngle);
-        const ox = item.p.px + (u * cosT - v * sinT);
-        const oy = item.p.py + (u * sinT + v * cosT);
-
-        ctx.beginPath();
-        ctx.arc(ox, oy, 1.3 * item.p.scale, 0, Math.PI * 2);
-        ctx.fillStyle = rgba(axisColor, 0.90);
-        ctx.shadowColor = axisColor;
-        ctx.shadowBlur = 4;
-        ctx.fill();
-      }
-
-      // Micro-etiqueta técnica de Locus Genômico abaixo do cisto
-      if (z > 0.38) {
-        ctx.font = "bold 6px monospace";
+      // Clinical Locus Badge Label
+      if (z > 0.28) {
+        const shortName = (item.name || "LOCUS").split(":")[0].slice(0, 16).toUpperCase();
+        ctx.font = "bold 9.5px monospace";
         ctx.textAlign = "center";
-        ctx.fillStyle = rgba(axisColor, 0.85);
-        const shortName = (item.name || "LOCUS").split(":")[0].slice(0, 14).toUpperCase();
-        ctx.fillText(`[${shortName}]`, item.p.px, item.p.py + baseR + 8);
+        const tagText = `[${shortName}]`;
+        const textW = ctx.measureText(tagText).width;
+        const tagY = item.p.py + baseR + 13;
+
+        // Dark medical backdrop pill for guaranteed contrast
+        ctx.fillStyle = "rgba(2, 14, 18, 0.88)";
+        ctx.strokeStyle = rgba(axisColor, 0.70);
+        ctx.lineWidth = 0.8;
+        ctx.fillRect(item.p.px - textW / 2 - 4, tagY - 9, textW + 8, 12);
+        ctx.strokeRect(item.p.px - textW / 2 - 4, tagY - 9, textW + 8, 12);
+
+        ctx.fillStyle = hit.hit ? COLORS.white : rgba(axisColor, 0.95);
+        ctx.fillText(tagText, item.p.px, tagY);
       }
 
       ctx.restore();
@@ -1665,7 +1570,7 @@ export class KaijuGenomeRenderer {
     ctx.save();
 
     // 1. Escala Métrica Molecular em Angstroms (Top Scientific Ruler)
-    const rulerY = 16;
+    const rulerY = 20;
     const rulerStartX = startX;
     const rulerEndX = Math.min(endX, width - 40);
     const rulerWidth = rulerEndX - rulerStartX;
@@ -1673,65 +1578,62 @@ export class KaijuGenomeRenderer {
       ctx.beginPath();
       ctx.moveTo(rulerStartX, rulerY);
       ctx.lineTo(rulerEndX, rulerY);
-      ctx.strokeStyle = "rgba(63, 244, 213, 0.35)";
+      ctx.strokeStyle = "rgba(63, 244, 213, 0.30)";
       ctx.lineWidth = 1.0;
       ctx.stroke();
 
-      // Divisões a cada 10 Ångströms (34 Å representa um passo helicoidal completo do B-DNA)
       const majorStep = rulerWidth / 6;
       for (let i = 0; i <= 6; i += 1) {
         const rx = rulerStartX + i * majorStep;
         ctx.beginPath();
-        ctx.moveTo(rx, rulerY - 4);
-        ctx.lineTo(rx, rulerY + 4);
+        ctx.moveTo(rx, rulerY - 5);
+        ctx.lineTo(rx, rulerY + 5);
         ctx.strokeStyle = "rgba(63, 244, 213, 0.65)";
         ctx.lineWidth = 1.0;
         ctx.stroke();
 
-        ctx.font = "6.5px monospace";
-        ctx.fillStyle = "rgba(63, 244, 213, 0.60)";
+        ctx.font = "9.5px monospace";
+        ctx.fillStyle = "rgba(63, 244, 213, 0.75)";
         ctx.textAlign = "center";
-        ctx.fillText(`${i * 10}Å`, rx, rulerY - 7);
+        ctx.fillText(`${i * 10}Å`, rx, rulerY - 8);
 
-        // Sub-divisões menores (minor ticks)
         if (i < 6) {
           for (let m = 1; m < 5; m += 1) {
             const mx = rx + (m / 5) * majorStep;
             ctx.beginPath();
             ctx.moveTo(mx, rulerY - 2);
             ctx.lineTo(mx, rulerY + 2);
-            ctx.strokeStyle = "rgba(63, 244, 213, 0.28)";
+            ctx.strokeStyle = "rgba(63, 244, 213, 0.22)";
             ctx.stroke();
           }
         }
       }
 
-      // Parâmetro do passo helicoidal B-DNA
-      ctx.font = "bold 7px monospace";
+      ctx.font = "bold 9.5px monospace";
       ctx.textAlign = "right";
-      ctx.fillStyle = "rgba(255, 209, 92, 0.75)";
-      ctx.fillText("HELICAL PITCH λ = 34.0 Å (10.5 bp/turn) | B-DNA CONFORMATION", rulerEndX, rulerY + 12);
+      ctx.fillStyle = "rgba(255, 209, 92, 0.85)";
+      ctx.fillText("PASSO HELICOIDAL λ = 34.0 Å (10.5 pb/volta) · B-DNA HÍBRIDO K-03", rulerEndX, rulerY + 16);
     }
 
     // 2. Polaridade Química Antiparalela (5' → 3' e 3' → 5')
-    ctx.font = "bold 8px monospace";
-    ctx.textAlign = "left";
+    ctx.font = "bold 11px monospace";
     // Fita 1: 5' à esquerda, 3' à direita
-    ctx.fillStyle = "rgba(63, 244, 213, 0.70)";
-    ctx.fillText("5' α-STRAND", startX - 2, centerY - radius - 8);
+    ctx.textAlign = "left";
+    ctx.fillStyle = "rgba(63, 244, 213, 0.85)";
+    ctx.fillText("5' α-STRAND [PO₄³⁻]", startX, centerY - radius - 12);
     ctx.textAlign = "right";
-    ctx.fillText("3' [OH]", endX + 8, centerY - radius - 8);
+    ctx.fillText("3' [OH]", endX + 6, centerY - radius - 12);
 
     // Fita 2: 3' à esquerda, 5' à direita (antiparalela)
     ctx.textAlign = "left";
-    ctx.fillStyle = "rgba(255, 209, 92, 0.65)";
-    ctx.fillText("3' β-STRAND", startX - 2, centerY + radius + 15);
+    ctx.fillStyle = "rgba(255, 209, 92, 0.85)";
+    ctx.fillText("3' β-STRAND [OH]", startX, centerY + radius + 18);
     ctx.textAlign = "right";
-    ctx.fillText("5' [PO₄³⁻]", endX + 8, centerY + radius + 15);
+    ctx.fillText("5' [PO₄³⁻]", endX + 6, centerY + radius + 18);
 
-    // 3. Retículos Ópticos de Calibração nos 4 Cantos do Espectro
-    const reticleSize = 9;
-    const margin = 10;
+    // 3. Retículos Ópticos de Calibração nos 4 Cantos
+    const reticleSize = 10;
+    const margin = 8;
     ctx.strokeStyle = "rgba(63, 244, 213, 0.35)";
     ctx.lineWidth = 1.0;
 
@@ -1784,23 +1686,23 @@ export class KaijuGenomeRenderer {
 
   _drawScanner(laserX) {
     const ctx = this.ctx;
-    const top = this.height * 0.18;
-    const bottom = this.height * 0.88;
+    const top = this.height * 0.14;
+    const bottom = this.height * 0.90;
 
-    // DNA ANALYSIS original: halo amplo + feixe dourado + núcleo branco.
-    ctx.strokeStyle = "rgba(255,190,60,0.18)";
-    ctx.lineWidth = 10;
+    // Laser scanner com feixe holográfico e núcleo luminoso
+    ctx.strokeStyle = "rgba(255, 209, 92, 0.16)";
+    ctx.lineWidth = 12;
     ctx.beginPath();
     ctx.moveTo(laserX, top);
     ctx.lineTo(laserX, bottom);
     ctx.stroke();
 
     const gradient = ctx.createLinearGradient(0, top, 0, bottom);
-    gradient.addColorStop(0, "rgba(255,209,92,0)");
-    gradient.addColorStop(0.15, "rgba(255,209,92,0.75)");
-    gradient.addColorStop(0.5, "rgba(255,255,255,0.95)");
-    gradient.addColorStop(0.85, "rgba(255,209,92,0.75)");
-    gradient.addColorStop(1, "rgba(255,209,92,0)");
+    gradient.addColorStop(0, "rgba(255, 209, 92, 0)");
+    gradient.addColorStop(0.15, "rgba(255, 209, 92, 0.85)");
+    gradient.addColorStop(0.5, "rgba(255, 255, 255, 0.98)");
+    gradient.addColorStop(0.85, "rgba(255, 209, 92, 0.85)");
+    gradient.addColorStop(1, "rgba(255, 209, 92, 0)");
 
     ctx.strokeStyle = gradient;
     ctx.lineWidth = 2.4;
@@ -1812,20 +1714,18 @@ export class KaijuGenomeRenderer {
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    ctx.strokeStyle = "rgba(255,255,255,0.95)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
     ctx.lineWidth = 1.0;
     ctx.beginPath();
-    ctx.moveTo(laserX, top + 10);
-    ctx.lineTo(laserX, bottom - 10);
+    ctx.moveTo(laserX, top + 8);
+    ctx.lineTo(laserX, bottom - 8);
     ctx.stroke();
 
     ctx.strokeStyle = COLORS.gold;
     ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.moveTo(laserX - 6, top);
-    ctx.lineTo(laserX + 6, top);
-    ctx.moveTo(laserX - 6, bottom);
-    ctx.lineTo(laserX + 6, bottom);
+    ctx.moveTo(laserX - 6, top); ctx.lineTo(laserX + 6, top);
+    ctx.moveTo(laserX - 6, bottom); ctx.lineTo(laserX + 6, bottom);
     ctx.stroke();
   }
 
@@ -1835,7 +1735,7 @@ export class KaijuGenomeRenderer {
     const { x: hx, y: hy } = this.hoverPoint;
 
     let closest = null;
-    let minDist = 32;
+    let minDist = 34;
     for (let i = 0; i < this._poolIndex; i += 1) {
       const item = this._renderables[i];
       if ((item.type !== "mutation_ring" && item.type !== "mutation_cyst") || !item.p) continue;
@@ -1855,7 +1755,7 @@ export class KaijuGenomeRenderer {
 
     ctx.save();
     // Brackets around locus
-    const s = 14 * (1 + Math.sin(now * 0.005) * 0.1);
+    const s = 15 * (1 + Math.sin(now * 0.005) * 0.08);
     ctx.strokeStyle = color;
     ctx.lineWidth = 1.5;
     ctx.shadowColor = color;
@@ -1869,28 +1769,28 @@ export class KaijuGenomeRenderer {
     ctx.stroke();
 
     // Connecting line to info box
-    const boxX = Math.min(this.width - 120, px + 20);
-    const boxY = Math.max(20, py - 32);
+    const boxX = Math.min(this.width - 150, px + 22);
+    const boxY = Math.max(24, py - 36);
     ctx.beginPath();
     ctx.moveTo(px + s, py - s);
-    ctx.lineTo(boxX, boxY + 16);
-    ctx.lineTo(boxX + 105, boxY + 16);
+    ctx.lineTo(boxX, boxY + 18);
+    ctx.lineTo(boxX + 130, boxY + 18);
     ctx.stroke();
 
-    // Tactical tooltip box
-    ctx.fillStyle = "rgba(4, 18, 22, 0.90)";
+    // Medical holographic tooltip box
+    ctx.fillStyle = "rgba(4, 18, 22, 0.95)";
     ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
-    ctx.fillRect(boxX, boxY - 14, 105, 30);
-    ctx.strokeRect(boxX, boxY - 14, 105, 30);
+    ctx.lineWidth = 1.2;
+    ctx.fillRect(boxX, boxY - 18, 130, 38);
+    ctx.strokeRect(boxX, boxY - 18, 130, 38);
 
     ctx.shadowBlur = 0;
     ctx.fillStyle = COLORS.white;
-    ctx.font = "bold 9px monospace";
-    ctx.fillText((closest.name || "LOCUS MUTADO").toUpperCase().slice(0, 15), boxX + 6, boxY - 2);
+    ctx.font = "bold 10.5px monospace";
+    ctx.fillText((closest.name || "LOCUS MUTADO").toUpperCase().slice(0, 16), boxX + 8, boxY - 2);
     ctx.fillStyle = color;
-    ctx.font = "8px monospace";
-    ctx.fillText(`AXIS: ${axis.toUpperCase()}`, boxX + 6, boxY + 10);
+    ctx.font = "9.5px monospace";
+    ctx.fillText(`EIXO: ${axis.toUpperCase()}`, boxX + 8, boxY + 12);
     ctx.restore();
   }
 }

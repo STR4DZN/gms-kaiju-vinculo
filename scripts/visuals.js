@@ -138,13 +138,31 @@ export function buildChatCardHTML(carrier) {
 }
 
 function overviewHTML(carrier, profile) {
-  return `${renderGenomePanel(carrier)}<section class="kj-live-diagnosis"><span><i class="fa-solid fa-microscope"></i><small>INTERPRETAÇÃO K-03</small><strong>${escapeHTML(getReading(carrier.values))}</strong></span><span class="kj-live-diagnosis-data"><b>AVG ${String(profile.average).padStart(3,"0")}</b><b>CONV ${String(profile.balance).padStart(3,"0")}</b><b>TENS ${String(profile.tension).padStart(3,"0")}</b></span></section>`;
+  const reading = getReading(carrier.values);
+  return `${renderGenomePanel(carrier, { reading, profile })}
+  <section class="kj-live-diagnosis">
+    <div class="kj-diagnosis-main">
+      <div class="kj-diagnosis-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+      <div class="kj-diagnosis-content">
+        <div class="kj-diagnosis-label-row">
+          <span class="kj-diagnosis-title">DIAGNÓSTICO CLÍNICO DO VÍNCULO</span>
+          <span class="kj-diagnosis-badge">${escapeHTML(profile.dominant)}</span>
+        </div>
+        <p class="kj-diagnosis-desc">${escapeHTML(reading)}</p>
+      </div>
+    </div>
+    <div class="kj-live-diagnosis-data">
+      <div class="kj-diag-card"><small>MÉDIA VITAL</small><b>${profile.average}%</b></div>
+      <div class="kj-diag-card"><small>CONVERGÊNCIA</small><b>${profile.balance}%</b></div>
+      <div class="kj-diag-card"><small>TENSÃO</small><b>${profile.tension}%</b></div>
+    </div>
+  </section>`;
 }
 
 function stagesHTML(carrier) {
   return `<section class="kj-stage-matrix">${Object.entries(AXES).map(([key, axis]) => {
     const current = stageIndexAt(carrier.values[key]);
-    return `<article class="kj-stage-axis" style="--kj-accent:${axis.accent};--kj-rgb:${axis.rgb}"><header><i class="fa-solid ${axis.icon}"></i><div><small>${axis.taxonomy}</small><strong>${axis.title}</strong></div><output>${clamp(carrier.values[key])}%</output></header><div class="kj-stage-rail">${axis.stages.map((stage, i) => `<div class="${i===current?"is-current":i<current?"is-passed":""}"><span>${STAGE_ROMAN[i]} · ${STAGE_LIMITS[i]}</span><i class="fa-solid ${stage.icon}"></i><strong>${escapeHTML(stage.label)}</strong><small>${escapeHTML(stage.signal)}</small></div>`).join("")}</div></article>`;
+    return `<article class="kj-stage-axis" style="--kj-accent:${axis.accent};--kj-rgb:${axis.rgb}"><header><i class="fa-solid ${axis.icon}"></i><div><small>${axis.taxonomy}</small><strong>${axis.title}</strong></div><output>${clamp(carrier.values[key])}%</output></header><div class="kj-stage-rail">${axis.stages.map((stage, i) => `<div class="${i===current?"is-current":i<current?"is-passed":""}"><span>${STAGE_ROMAN[i]} · ${STAGE_LIMITS[i]}%</span><i class="fa-solid ${stage.icon}"></i><strong>${escapeHTML(stage.label)}</strong><small>${escapeHTML(stage.signal)}</small></div>`).join("")}</div></article>`;
   }).join("")}</section>`;
 }
 
@@ -172,9 +190,14 @@ export function renderCarrierDetail(carrier, { isGM = false, tab = "overview" } 
   const idCode = String(carrier.id || "K03").slice(0, 8).toUpperCase();
   return `<div class="kj-detail-shell" data-carrier-id="${carrier.id}">
     <header class="kj-record-head">
-      <div class="kj-record-ident"><span class="kj-record-mark"><i class="fa-solid fa-fingerprint"></i></span><div><small>SUBJECT // ${escapeHTML(idCode)}</small><h2>${escapeHTML(carrier.name)}</h2><p>${escapeHTML(carrier.designation || "REGISTRO DE PORTADOR")}</p></div></div>
-      <div class="kj-record-vector"><span style="--vec:#e85d48"><small>V</small><b>${clamp(carrier.values.vontade)}</b></span><span style="--vec:#4ac8b7"><small>C</small><b>${clamp(carrier.values.comunhao)}</b></span><span style="--vec:#78abe1"><small>H</small><b>${clamp(carrier.values.humanidade)}</b></span><span class="kj-record-average"><small>AVG</small><b>${profile.average}</b></span></div>
-      <div class="kj-record-link">${owners.length ? `<small>LINKED USER</small><strong>${owners.map(escapeHTML).join(" / ")}</strong>` : `<small>LINKED USER</small><strong>UNBOUND</strong>`}</div>
+      <div class="kj-record-ident"><span class="kj-record-mark"><i class="fa-solid fa-fingerprint"></i></span><div><small>REGISTRO MÉDICO // ${escapeHTML(idCode)}</small><h2>${escapeHTML(carrier.name)}</h2><p>${escapeHTML(carrier.designation || "REGISTRO DE PORTADOR")}</p></div></div>
+      <div class="kj-record-vector">
+        <div class="kj-header-vital-badge kj-v" title="Vontade da Fera"><span class="kj-vital-tag">FERA</span><strong class="kj-vital-num">${clamp(carrier.values.vontade)}%</strong></div>
+        <div class="kj-header-vital-badge kj-c" title="Comunhão Simbiótica"><span class="kj-vital-tag">COMUNHÃO</span><strong class="kj-vital-num">${clamp(carrier.values.comunhao)}%</strong></div>
+        <div class="kj-header-vital-badge kj-h" title="Integridade Humana"><span class="kj-vital-tag">HUMANO</span><strong class="kj-vital-num">${clamp(carrier.values.humanidade)}%</strong></div>
+        <div class="kj-header-vital-badge kj-avg" title="Média dos Vetores"><span class="kj-vital-tag">MÉDIA</span><strong class="kj-vital-num">${profile.average}%</strong></div>
+      </div>
+      <div class="kj-record-link">${owners.length ? `<small>USUÁRIO VINCULADO</small><strong>${owners.map(escapeHTML).join(" / ")}</strong>` : `<small>USUÁRIO VINCULADO</small><strong>DESVINCULADO</strong>`}</div>
       <button type="button" class="kj-record-chat-btn" data-action="post-chat" title="Transmitir telemetria deste portador para o Chat"><i class="fa-solid fa-tower-broadcast"></i><span>CHAT</span></button>
     </header>
     ${carrier.description ? `<div class="kj-description">${escapeHTML(carrier.description)}</div>` : ""}
