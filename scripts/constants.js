@@ -1,7 +1,8 @@
 export const MODULE_ID = "gms-kaiju-vinculo";
 export const MODULE_TITLE = "GMS // Vínculo Kaiju";
-export const MODULE_VERSION = "2.0.0-dev.6";
+export const MODULE_VERSION = "2.0.0";
 export const DATABASE_VERSION = 2;
+export const DEFAULT_LEGACY_JOURNAL_UUID = "JournalEntry.wVaD3Qgcpv8Cbldq";
 
 export const SETTINGS = Object.freeze({
   DATABASE: "database",

@@ -101,32 +101,40 @@ function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>'"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[c]);
 }
 
-function radarSVG(values, profile) {
-  const pointAt = (value, degrees) => {
-    const radians = degrees * Math.PI / 180;
-    const radius = 18 + clamp(value) * 0.62;
-    return { x: (90 + Math.cos(radians) * radius).toFixed(1), y: (90 + Math.sin(radians) * radius).toFixed(1) };
-  };
-  const contacts = [
-    ["F", "vontade", -90], ["C", "comunhao", 30], ["H", "humanidade", 150]
-  ].map(([label, key, deg]) => {
-    const point = pointAt(values[key], deg);
-    const axis = AXES[key];
-    return `<g><path d="M90 90L${point.x} ${point.y}" stroke="${axis.accent}" stroke-width="1" stroke-dasharray="3 7" opacity=".42"/><circle cx="${point.x}" cy="${point.y}" r="3.2" fill="${axis.accent}"/><circle class="kj-radar-pulse" cx="${point.x}" cy="${point.y}" r="5" fill="none" stroke="${axis.accent}"/><text x="${point.x}" y="${Number(point.y)-7}" fill="${axis.accent}" font-family="monospace" font-size="7" font-weight="700" text-anchor="middle">${label}${clamp(values[key])}</text></g>`;
-  }).join("");
-  const dominant = AXES[profile.dominantKey];
-  return `<svg class="kj-radar-svg" viewBox="0 0 180 180" aria-label="Radar de contenção"><defs><radialGradient id="kjradar"><stop offset="0" stop-color="#173038" stop-opacity=".52"/><stop offset="1" stop-color="#050a0e" stop-opacity=".96"/></radialGradient></defs><rect width="180" height="180" fill="url(#kjradar)"/><g fill="none" stroke="#5d858a" opacity=".42"><circle cx="90" cy="90" r="22"/><circle cx="90" cy="90" r="44"/><circle cx="90" cy="90" r="66"/><circle cx="90" cy="90" r="84"/><path d="M6 90H174M90 6V174M31 31L149 149M149 31L31 149" stroke-dasharray="2 7"/></g><g class="kj-radar-sweep"><path d="M90 90L90 6A84 84 0 0 1 149 31Z" fill="${dominant.accent}" opacity=".12"/><path d="M90 90V6" stroke="${dominant.accent}" stroke-width="1.4" opacity=".8"/></g>${contacts}<path d="M90 77L101 83V97L90 103L79 97V83Z" fill="#071014" stroke="${dominant.accent}" stroke-width="1.4"/></svg>`;
-}
+export function buildChatCardHTML(carrier) {
+  const profile = getProfile(carrier.values);
+  const reading = getReading(carrier.values);
+  const v = clamp(carrier.values.vontade);
+  const c = clamp(carrier.values.comunhao);
+  const h = clamp(carrier.values.humanidade);
+  const idCode = String(carrier.id || "K03").slice(0, 8).toUpperCase();
+  const mutationsCount = carrier.genome?.mutations?.length ?? 0;
 
-function metricHTML(key, value) {
-  const axis = AXES[key];
-  const stage = stageAt(key, value);
-  return `<article class="kj-metric" style="--kj-accent:${axis.accent};--kj-rgb:${axis.rgb};--kj-value:${clamp(value)}%" data-axis="${key}">
-    <div class="kj-metric-head"><span class="kj-metric-icon"><i class="fa-solid ${axis.icon}"></i></span><div><small>${escapeHTML(axis.taxonomy)}</small><strong>${escapeHTML(axis.title)}</strong></div><output>${clamp(value)}%</output></div>
-    <div class="kj-progress"><span></span></div>
-    <div class="kj-metric-stage"><span>ESTÁGIO ${stage.roman}</span><strong>${escapeHTML(stage.label)}</strong></div>
-    <p>${escapeHTML(axis.description)}</p>
-  </article>`;
+  return `<div class="kj-chat-card" style="--kj-v:#e85d48;--kj-c:#4ac8b7;--kj-h:#78abe1;">
+    <header class="kj-chat-header">
+      <div class="kj-chat-badge"><i class="fa-solid fa-dna"></i><span>K-03 // ${escapeHTML(idCode)}</span></div>
+      <h3 class="kj-chat-title">${escapeHTML(carrier.name)}</h3>
+      <small class="kj-chat-sub">${escapeHTML(carrier.designation || "REGISTRO DE PORTADOR")}</small>
+    </header>
+    <div class="kj-chat-vectors">
+      <div class="kj-chat-vec" style="color:var(--kj-v)"><span>VONTADE</span><strong>${v}%</strong><small>Est. ${stageAt("vontade", v).roman}</small></div>
+      <div class="kj-chat-vec" style="color:var(--kj-c)"><span>COMUNHÃO</span><strong>${c}%</strong><small>Est. ${stageAt("comunhao", c).roman}</small></div>
+      <div class="kj-chat-vec" style="color:var(--kj-h)"><span>HUMANIDADE</span><strong>${h}%</strong><small>Est. ${stageAt("humanidade", h).roman}</small></div>
+    </div>
+    <div class="kj-chat-diagnosis">
+      <i class="fa-solid fa-microscope"></i>
+      <div>
+        <small>DIAGNÓSTICO XENOGENÔMICO</small>
+        <strong>${escapeHTML(reading)}</strong>
+      </div>
+    </div>
+    <div class="kj-chat-meta">
+      <span>DOMINANTE: <b>${escapeHTML(profile.dominant)}</b></span>
+      <span>TENSÃO: <b>${profile.tension}%</b></span>
+      <span>MUTAÇÕES: <b>${mutationsCount}</b></span>
+    </div>
+    ${carrier.description ? `<p class="kj-chat-desc">${escapeHTML(carrier.description)}</p>` : ""}
+  </div>`;
 }
 
 function overviewHTML(carrier, profile) {
@@ -167,6 +175,7 @@ export function renderCarrierDetail(carrier, { isGM = false, tab = "overview" } 
       <div class="kj-record-ident"><span class="kj-record-mark"><i class="fa-solid fa-fingerprint"></i></span><div><small>SUBJECT // ${escapeHTML(idCode)}</small><h2>${escapeHTML(carrier.name)}</h2><p>${escapeHTML(carrier.designation || "REGISTRO DE PORTADOR")}</p></div></div>
       <div class="kj-record-vector"><span style="--vec:#e85d48"><small>V</small><b>${clamp(carrier.values.vontade)}</b></span><span style="--vec:#4ac8b7"><small>C</small><b>${clamp(carrier.values.comunhao)}</b></span><span style="--vec:#78abe1"><small>H</small><b>${clamp(carrier.values.humanidade)}</b></span><span class="kj-record-average"><small>AVG</small><b>${profile.average}</b></span></div>
       <div class="kj-record-link">${owners.length ? `<small>LINKED USER</small><strong>${owners.map(escapeHTML).join(" / ")}</strong>` : `<small>LINKED USER</small><strong>UNBOUND</strong>`}</div>
+      <button type="button" class="kj-record-chat-btn" data-action="post-chat" title="Transmitir telemetria deste portador para o Chat"><i class="fa-solid fa-tower-broadcast"></i><span>CHAT</span></button>
     </header>
     ${carrier.description ? `<div class="kj-description">${escapeHTML(carrier.description)}</div>` : ""}
     <nav class="kj-tabs" aria-label="Seções do registro"><button data-kj-tab="overview" class="${tab==="overview"?"active":""}"><i class="fa-solid fa-dna"></i><span>ANÁLISE AO VIVO</span></button><button data-kj-tab="genome" class="${tab==="genome"?"active":""}"><i class="fa-solid fa-microscope"></i><span>MEMÓRIA GENÉTICA</span></button><button data-kj-tab="stages" class="${tab==="stages"?"active":""}"><i class="fa-solid fa-bars-staggered"></i><span>ESTÁGIOS</span></button><button data-kj-tab="history" class="${tab==="history"?"active":""}"><i class="fa-solid fa-clock-rotate-left"></i><span>HISTÓRICO</span></button><button data-kj-tab="notes" class="${tab==="notes"?"active":""}"><i class="fa-solid fa-note-sticky"></i><span>NOTAS</span></button></nav>

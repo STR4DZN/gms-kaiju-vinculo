@@ -1,7 +1,19 @@
 import { MODULE_ID, MODULE_TITLE, MODULE_VERSION } from "./constants.js";
 import { openKaijuDashboard, refreshKaijuDashboard } from "./dashboard.js";
 import { openKaijuEditor, refreshKaijuEditor } from "./editor.js";
-import { getCarrier, getDatabase, getOrderedCarriers, migrateGenomeDatabase } from "./storage.js";
+import {
+  deleteCarrier,
+  duplicateCarrier,
+  exportDatabaseJSON,
+  getCarrier,
+  getDatabase,
+  getOrderedCarriers,
+  importDatabaseJSON,
+  importFromLegacyJournal,
+  migrateGenomeDatabase,
+  resetCarrierGenome,
+  upsertCarrier
+} from "./storage.js";
 import { registerSettings } from "./settings.js";
 
 function getRoot(html) {
@@ -68,6 +80,13 @@ Hooks.once("ready", async () => {
     getDatabase,
     getCarriers: getOrderedCarriers,
     getCarrier,
+    upsertCarrier,
+    deleteCarrier,
+    duplicateCarrier,
+    resetCarrierGenome,
+    exportDatabaseJSON,
+    importDatabaseJSON,
+    importFromLegacyJournal,
     version: MODULE_VERSION
   });
   const module = game.modules.get(MODULE_ID);

@@ -196,12 +196,9 @@ export function getGenomeMetrics(carrier) {
   const stageMorph = (value) => {
     const v = clamp(value);
     if (v <= 0) return 0;
-    if (v < 20) return (v / 20) * 0.045;
-    if (v < 40) return 0.045 + ((v - 20) / 20) * 0.075;
-    if (v < 60) return 0.12 + ((v - 40) / 20) * 0.12;
-    if (v < 80) return 0.24 + ((v - 60) / 20) * 0.25;
-    if (v < 100) return 0.49 + ((v - 80) / 20) * 0.39;
-    return 1;
+    // Curva morfológica progressiva contínua: alterações biológicas reais perceptíveis a partir de 20%,
+    // escalando para aberrações estruturais dramáticas nos estágios médios e extremos.
+    return Math.pow(v / 100, 1.25);
   };
 
   const willMorph = dormant ? 0 : stageMorph(current.vontade);
@@ -229,27 +226,26 @@ export function getGenomeMetrics(carrier) {
     humanity * 50 + communion * 38 + (1 - will) * 12 - antagonism * 8
   );
 
-  // Famílias morfológicas atuais. Os números crescem por estágio, mas o renderer
-  // usa esses elementos como mutações localizadas — não para substituir a hélice-base.
+  // Famílias morfológicas ativas: geram espigões, membranas, rupturas e mutações genuínas
   const branchCount = dormant ? 0 : Math.round(
-    Math.max(0, willMorph - 0.08) * 11 + Math.max(0, identityLossMorph - 0.42) * 3
+    willMorph * 14 + identityLossMorph * 4
   );
   const latticeCount = dormant ? 0 : Math.round(
-    Math.max(0, communionMorph - 0.07) * 12 + currentAlienSynergy * 4
+    communionMorph * 14 + currentAlienSynergy * 5
   );
   const fractureCount = dormant ? 0 : Math.round(
-    Math.max(0, identityLossMorph - 0.22) * 6 + Math.max(0, willMorph - 0.55) * Math.max(0, 0.65 - communionMorph) * 4
+    identityLossMorph * 7 + (willMorph * Math.max(0, 0.75 - communionMorph)) * 4
   );
   const nodeCount = dormant ? 0 : Math.round(
-    willMorph * 5 + communionMorph * 5 + humanityMorph * 5 + currentAlienSynergy * 4
+    willMorph * 7 + communionMorph * 7 + humanityMorph * 5 + currentAlienSynergy * 4
   );
   const anomalousPairs = dormant ? 0 : Math.round(
-    Math.max(0, identityLossMorph - 0.10) * 10 + willMorph * 3 + currentAlienSynergy * 4
+    identityLossMorph * 14 + willMorph * 6 + currentAlienSynergy * 5
   );
   const extraStrand = dormant ? 0 : Math.max(0, Math.min(1,
-    (communionMorph - 0.31) / 0.69 + currentAlienSynergy * 0.20
+    (communionMorph - 0.15) / 0.85 + currentAlienSynergy * 0.22
   ));
-  const humanityLocks = dormant ? 0 : Math.round(Math.max(0, humanityMorph - 0.08) * 12);
+  const humanityLocks = dormant ? 0 : Math.round(humanityMorph * 12);
 
   return {
     genome,

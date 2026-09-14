@@ -1,12 +1,31 @@
 <div class="kj-editor-app">
-  <header class="kj-editor-app-head"><div><small>GMS K-03 // ADMINISTRATIVE LAYER</small><h2>Editor de Portadores</h2><p>Gerencie os registros próprios do módulo. Nenhum Journal é utilizado.</p></div><button type="button" data-action="add"><i class="fa-solid fa-plus"></i> Adicionar portador</button></header>
+  <header class="kj-editor-app-head">
+    <div>
+      <small>GMS K-03 // ADMINISTRATIVE LAYER</small>
+      <h2>Editor de Portadores</h2>
+      <p>Gerencie os registros próprios do módulo. Armazenamento interno K-03.</p>
+    </div>
+    <div class="kj-editor-head-actions">
+      <button type="button" class="kj-btn-primary" data-action="add"><i class="fa-solid fa-plus"></i> Novo portador</button>
+      <button type="button" data-action="import-legacy" title="Importar do Diário K-03 da v1.0.0"><i class="fa-solid fa-book-bookmark"></i> Importar Diário v1</button>
+      <button type="button" data-action="export-json" title="Exportar backup em JSON"><i class="fa-solid fa-file-export"></i> Backup</button>
+      <button type="button" data-action="import-json" title="Restaurar backup de JSON"><i class="fa-solid fa-file-import"></i> Restaurar</button>
+    </div>
+  </header>
   <div class="kj-editor-table-head"><span>Portador</span><span>Vontade</span><span>Comunhão</span><span>Humanidade</span><span>Players</span><span>Ações</span></div>
   <div class="kj-editor-list">
     {{#each carriers}}
     <article class="kj-editor-row">
       <div class="kj-editor-row-name"><i class="fa-solid fa-fingerprint"></i><span><strong>{{name}}</strong><small>{{#if designation}}{{designation}}{{else}}REGISTRO K-03{{/if}}</small></span></div>
       <strong class="kj-editor-val kj-v">{{vontade}}%</strong><strong class="kj-editor-val kj-c">{{comunhao}}%</strong><strong class="kj-editor-val kj-h">{{humanidade}}%</strong><span class="kj-editor-owners">{{ownerNames}}</span>
-      <div class="kj-editor-actions"><button type="button" data-action="move" data-direction="up" data-id="{{id}}" {{#unless canMoveUp}}disabled{{/unless}} title="Mover para cima"><i class="fa-solid fa-chevron-up"></i></button><button type="button" data-action="move" data-direction="down" data-id="{{id}}" {{#unless canMoveDown}}disabled{{/unless}} title="Mover para baixo"><i class="fa-solid fa-chevron-down"></i></button><button type="button" data-action="edit" data-id="{{id}}" title="Editar"><i class="fa-solid fa-pen"></i></button><button type="button" class="danger" data-action="delete" data-id="{{id}}" title="Apagar"><i class="fa-solid fa-trash"></i></button></div>
+      <div class="kj-editor-actions">
+        <button type="button" data-action="move" data-direction="up" data-id="{{id}}" {{#unless canMoveUp}}disabled{{/unless}} title="Mover para cima"><i class="fa-solid fa-chevron-up"></i></button>
+        <button type="button" data-action="move" data-direction="down" data-id="{{id}}" {{#unless canMoveDown}}disabled{{/unless}} title="Mover para baixo"><i class="fa-solid fa-chevron-down"></i></button>
+        <button type="button" data-action="duplicate" data-id="{{id}}" title="Duplicar portador"><i class="fa-solid fa-clone"></i></button>
+        <button type="button" data-action="reset-genome" data-id="{{id}}" title="Reiniciar memória genética"><i class="fa-solid fa-rotate-left"></i></button>
+        <button type="button" data-action="edit" data-id="{{id}}" title="Editar"><i class="fa-solid fa-pen"></i></button>
+        <button type="button" class="danger" data-action="delete" data-id="{{id}}" title="Apagar"><i class="fa-solid fa-trash"></i></button>
+      </div>
     </article>
     {{/each}}
     {{#unless hasCarriers}}<div class="kj-editor-empty-state"><i class="fa-solid fa-dna"></i><strong>Banco K-03 vazio</strong><span>Adicione o primeiro portador para começar.</span></div>{{/unless}}

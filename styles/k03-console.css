@@ -173,3 +173,151 @@
   .kj-dna-bottom-panel{height:104px!important;flex-basis:104px!important}
   .kj-dna-main-frame{grid-template-columns:138px minmax(0,1fr)!important}
 }
+
+/* ========================= CHAT BROADCAST & QOL ACTIONS ========================= */
+.kj-record-chat-btn {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 28px !important;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  border: 1px solid #11646a !important;
+  border-radius: 0 !important;
+  background: #02171a !important;
+  color: var(--k03-cyan) !important;
+  font: 700 7px/1 var(--k03-mono) !important;
+  letter-spacing: .08em;
+  cursor: pointer;
+  box-shadow: none !important;
+}
+.kj-record-chat-btn:hover {
+  border-color: var(--k03-cyan) !important;
+  background: rgba(63, 244, 213, 0.12) !important;
+  color: #fff !important;
+  box-shadow: 0 0 10px rgba(63, 244, 213, 0.25) !important;
+}
+
+/* CHAT CARD RENDERED IN FOUNDRY CHAT LOG */
+.kj-chat-card {
+  position: relative;
+  margin: 2px 0;
+  padding: 8px 10px;
+  border: 1px solid #0d555b;
+  border-left: 3px solid var(--kj-accent, #3ff4d5);
+  background: linear-gradient(135deg, rgba(2, 22, 25, 0.98), rgba(1, 14, 17, 0.99));
+  font-family: var(--k03-mono, "Share Tech Mono", monospace);
+  color: #dffaf7;
+}
+.kj-chat-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(13, 83, 91, 0.5);
+  font-size: 8px;
+}
+.kj-chat-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #3ff4d5;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.kj-chat-card-badge i {
+  color: #3ff4d5;
+  font-size: 9px;
+}
+.kj-chat-card-stage {
+  color: #ffd15c;
+  font-weight: 700;
+  font-size: 8px;
+  letter-spacing: .08em;
+}
+.kj-chat-card-body {
+  margin-top: 6px;
+}
+.kj-chat-card-title {
+  margin: 0;
+  color: #ffffff;
+  font-family: var(--k03-display, "Rajdhani", sans-serif);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.kj-chat-card-desc {
+  margin: 3px 0 6px;
+  color: #72a8a5;
+  font-size: 8px;
+  line-height: 1.3;
+}
+.kj-chat-card-vector-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-top: 6px;
+}
+.kj-chat-card-vector {
+  padding: 4px 6px;
+  border: 1px solid rgba(13, 83, 91, 0.6);
+  background: #021417;
+  text-align: center;
+}
+.kj-chat-card-vector small {
+  display: block;
+  color: #4b8585;
+  font-size: 6.5px;
+  text-transform: uppercase;
+}
+.kj-chat-card-vector strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.kj-chat-card-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(13, 83, 91, 0.35);
+  color: #3b6f71;
+  font-size: 6.5px;
+  text-transform: uppercase;
+}
+
+/* EDITOR HEAD ACTIONS & QOL BUTTONS */
+.kj-editor-head-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.kj-editor-head-actions button {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px;
+  height: 26px !important;
+  margin: 0 !important;
+  padding: 0 9px !important;
+  border: 1px solid #3c5861 !important;
+  border-radius: 0 !important;
+  background: #071015 !important;
+  color: #c7e8e4 !important;
+  font: 700 7.5px/1 var(--k03-mono) !important;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.kj-editor-head-actions button:hover {
+  border-color: var(--k03-cyan, #3ff4d5) !important;
+  background: rgba(63, 244, 213, 0.12) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 8px rgba(63, 244, 213, 0.22) !important;
+}
+

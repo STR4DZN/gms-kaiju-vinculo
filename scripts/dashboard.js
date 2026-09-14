@@ -1,7 +1,7 @@
 import { MODULE_ID, SETTINGS } from "./constants.js";
 import { openKaijuEditor } from "./editor.js";
 import { canViewCarrier, getOrderedCarriers } from "./storage.js";
-import { renderCarrierDetail } from "./visuals.js";
+import { buildChatCardHTML, renderCarrierDetail } from "./visuals.js";
 import { startGenomeRenderer } from "./genome-renderer.js";
 
 let dashboardInstance = null;
@@ -122,7 +122,8 @@ export class KaijuDashboardApplication extends Application {
       if (event.button !== 0 || event.target.closest("button, input, select, textarea, a")) return;
       const startX = event.clientX;
       const startY = event.clientY;
-      const appBox = this.element?.getBoundingClientRect?.();
+      const appEl = this.element?.[0] ?? this.element;
+      const appBox = appEl?.getBoundingClientRect?.();
       const startLeft = Number(this.position?.left ?? appBox?.left ?? 0);
       const startTop = Number(this.position?.top ?? appBox?.top ?? 0);
       const onMove = (moveEvent) => {
@@ -177,6 +178,30 @@ export class KaijuDashboardApplication extends Application {
     this._genomeRenderer = null;
     detail.innerHTML = renderCarrierDetail(carrier, { isGM: game.user?.isGM ?? false, tab: this._activeTab });
     this._genomeRenderer = startGenomeRenderer(detail, carrier);
+
+    detail.querySelector("[data-action='post-chat']")?.addEventListener("click", async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const cardHTML = buildChatCardHTML(carrier);
+      await ChatMessage.create({
+        user: game.user.id,
+        speaker: ChatMessage.getSpeaker(),
+        content: cardHTML,
+        flavor: "K-03 // Telemetria Xenobiológica de Vínculo"
+      });
+      ui.notifications.info(`K-03: telemetria de “${carrier.name}” transmitida ao chat.`);
+    });
+
+    const pausePill = detail.querySelector(".kj-dna-pill.is-filled");
+    pausePill?.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (!this._genomeRenderer) return;
+      const isPaused = this._genomeRenderer.togglePause();
+      const span = pausePill.querySelector("span");
+      if (span) span.textContent = isPaused ? "SEQUENCING PAUSED" : "SEQUENCING ACTIVE";
+      pausePill.classList.toggle("is-paused", isPaused);
+    });
+
     detail.querySelectorAll("[data-kj-tab]").forEach((button) => button.addEventListener("click", () => {
       this._activeTab = button.dataset.kjTab || "overview";
       this._renderSelected(root);

@@ -23,8 +23,8 @@ export async function saveDatabase(database, { emit = true } = {}) {
   if (!game.user?.isGM) throw new Error("Somente o mestre pode alterar o banco K-03.");
   const normalized = normalizeDatabase(database);
   await game.settings.set(MODULE_ID, SETTINGS.DATABASE, normalized);
-  Hooks.callAll(`${MODULE_ID}.databaseUpdated`, { by: game.user.id, local: true });
-  if (emit) game.socket?.emit(`module.${MODULE_ID}`, { type: "database-updated", by: game.user.id });
+  Hooks.callAll(`${MODULE_ID}.databaseUpdated`, { by: game.user.id, local: true, database: normalized });
+  if (emit) game.socket?.emit(`module.${MODULE_ID}`, { type: "database-updated", database: normalized, by: game.user.id });
   return normalized;
 }
 
@@ -103,6 +103,128 @@ export async function moveCarrier(id, direction) {
   [db.order[index], db.order[next]] = [db.order[next], db.order[index]];
   await saveDatabase(db);
   return true;
+}
+
+export async function duplicateCarrier(id) {
+  const original = getCarrier(id);
+  if (!original) return null;
+  const copy = clone(original);
+  copy.id = foundry.utils.randomID(16);
+  copy.name = `${original.name} (Cópia)`;
+  copy.createdAt = Date.now();
+  copy.updatedAt = Date.now();
+  copy.history = [];
+  copy.genome = normalizeGenomeState(null, copy.id, copy.values);
+  return upsertCarrier(copy);
+}
+
+export async function resetCarrierGenome(id) {
+  const carrier = getCarrier(id);
+  if (!carrier) return null;
+  carrier.genome = normalizeGenomeState(null, carrier.id, carrier.values);
+  carrier.updatedAt = Date.now();
+  return upsertCarrier(carrier, { previous: carrier });
+}
+
+export function exportDatabaseJSON() {
+  const db = getDatabase();
+  return JSON.stringify(db, null, 2);
+}
+
+export async function importDatabaseJSON(jsonString, { mode = "merge" } = {}) {
+  if (!game.user?.isGM) throw new Error("Somente o mestre pode importar dados.");
+  const parsed = typeof jsonString === "string" ? JSON.parse(jsonString) : jsonString;
+  if (!parsed || typeof parsed !== "object" || !parsed.carriers) {
+    throw new Error("Formato de arquivo K-03 inválido.");
+  }
+  const current = getDatabase();
+  let nextDb = current;
+  if (mode === "replace") {
+    nextDb = normalizeDatabase(parsed);
+  } else {
+    for (const [id, carrier] of Object.entries(parsed.carriers)) {
+      nextDb.carriers[id] = carrier;
+      if (!nextDb.order.includes(id)) nextDb.order.push(id);
+    }
+    nextDb = normalizeDatabase(nextDb);
+  }
+  await saveDatabase(nextDb);
+  return nextDb;
+}
+
+export async function importFromLegacyJournal(journalOrUuid) {
+  if (!game.user?.isGM) throw new Error("Somente o mestre pode importar dados.");
+  let journal = null;
+  if (typeof journalOrUuid === "string") {
+    journal = fromUuidSync?.(journalOrUuid) ?? game.journal.get(journalOrUuid) ?? null;
+  } else {
+    journal = journalOrUuid;
+  }
+  if (!journal) throw new Error("Diário K-03 legado não encontrado.");
+
+  const pages = journal.pages ? Array.from(journal.pages.values()) : [];
+  if (!pages.length) throw new Error("O diário selecionado não possui páginas.");
+
+  const db = getDatabase();
+  let importedCount = 0;
+
+  for (const page of pages) {
+    const html = page.text?.content || "";
+    if (!html) continue;
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const card = doc.querySelector(".gms-kaiju-card") || doc.querySelector("[data-vontade]");
+    if (!card && !html.includes("data-kaiju-meter")) continue;
+
+    const readVal = (key) => {
+      const attr = card?.getAttribute?.(`data-${key}`);
+      if (attr != null) return clamp(attr);
+      const meter = doc.querySelector(`[data-kaiju-meter="${key}"]`);
+      const txt = meter?.querySelector("[data-kaiju-percent]")?.textContent ?? "";
+      const m = txt.match(/(\d{1,3})\s*%/);
+      return clamp(m?.[1] ?? 0);
+    };
+
+    const values = {
+      vontade: readVal("vontade"),
+      comunhao: readVal("comunhao"),
+      humanidade: readVal("humanidade")
+    };
+
+    const newId = foundry.utils.randomID(16);
+    const newCarrier = {
+      id: newId,
+      name: page.name?.trim() || "Portador Legado",
+      designation: "IMPORTADO // K-03 v1.0.0",
+      description: `Registro importado da página “${page.name}” do Diário ${journal.name}.`,
+      values,
+      genome: normalizeGenomeState(null, newId, values),
+      ownerUserIds: [],
+      visibility: "all",
+      publicNotes: "",
+      gmNotes: "",
+      history: [{
+        id: foundry.utils.randomID(12),
+        timestamp: Date.now(),
+        userId: game.user.id,
+        changes: [
+          { key: "vontade", before: 0, after: values.vontade },
+          { key: "comunhao", before: 0, after: values.comunhao },
+          { key: "humanidade", before: 0, after: values.humanidade }
+        ]
+      }],
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+
+    db.carriers[newId] = newCarrier;
+    if (!db.order.includes(newId)) db.order.push(newId);
+    importedCount += 1;
+  }
+
+  if (importedCount > 0) {
+    await saveDatabase(db);
+  }
+  return importedCount;
 }
 
 export async function migrateGenomeDatabase() {

@@ -9,10 +9,27 @@ const COLORS = Object.freeze({
   gold: "#ffd15c",
   goldSoft: "#ffbd4a",
   white: "#f7ffff",
-  will: "#e85d48",
-  communion: "#4ac8b7",
-  humanity: "#78abe1"
+  will: "#ff5e36",
+  willDeep: "#b82a12",
+  willCore: "#ffe5b4",
+  communion: "#3fa9f5",
+  communionBright: "#82d4ff",
+  humanity: "#3ff48b",
+  humanityDim: "#1a7042",
+  redAlert: "#ff385c",
+  adenine: "#3ff4d5",
+  thymine: "#ffd15c",
+  guanine: "#3fa9f5",
+  cytosine: "#ff5e36",
+  phosphate: "#c4f5ed"
 });
+
+const BASE_PAIRS = Object.freeze([
+  { b1: "A", b2: "T", bonds: 2, c1: COLORS.adenine, c2: COLORS.thymine },
+  { b1: "T", b2: "A", bonds: 2, c1: COLORS.thymine, c2: COLORS.adenine },
+  { b1: "G", b2: "C", bonds: 3, c1: COLORS.guanine, c2: COLORS.cytosine },
+  { b1: "C", b2: "G", bonds: 3, c1: COLORS.cytosine, c2: COLORS.guanine }
+]);
 
 function mulberry32(seed) {
   let state = seed >>> 0;
@@ -93,11 +110,32 @@ export class KaijuGenomeRenderer {
     this.quality = 1;
     this.slowFrames = 0;
     this.fastFrames = 0;
+    this.paused = false;
+    this.signalPulsePhase = 0;
+    this.hoverPoint = null;
+    this._renderables = [];
+    this._renderablePool = [];
+    this._poolIndex = 0;
 
     this._buildStaticGenome();
     this._boundMouseMove = (event) => this._onMouseMove(event);
-    this._boundMouseLeave = () => { this.targetTiltX = 0; this.targetTiltY = 0; };
+    this._boundMouseLeave = () => { this.targetTiltX = 0; this.targetTiltY = 0; this.hoverPoint = null; };
     this._boundClick = (event) => this._onClick(event);
+  }
+
+  togglePause() {
+    this.paused = !this.paused;
+    return this.paused;
+  }
+
+  _pushRenderable(data) {
+    if (this._poolIndex >= this._renderablePool.length) {
+      this._renderablePool.push({});
+    }
+    const item = this._renderablePool[this._poolIndex];
+    Object.assign(item, data);
+    this._renderables[this._poolIndex] = item;
+    this._poolIndex += 1;
   }
 
   _buildStaticGenome() {
@@ -189,6 +227,8 @@ export class KaijuGenomeRenderer {
       return {
         t: 0.07 + mrng() * 0.84,
         axis: mutation.axis,
+        name: mutation.name || mutation.label || mutation.id || `LOCUS #${index + 1}`,
+        description: mutation.description || "",
         ring: 4 + mrng() * 4,
         phase: mrng() * Math.PI * 2
       };
@@ -241,10 +281,13 @@ export class KaijuGenomeRenderer {
 
   _onMouseMove(event) {
     const rect = this.canvas.getBoundingClientRect();
-    const mx = (event.clientX - rect.left) / Math.max(1, rect.width) - 0.5;
-    const my = (event.clientY - rect.top) / Math.max(1, rect.height) - 0.5;
-    this.targetTiltY = mx * 0.15;
-    this.targetTiltX = -my * 0.12;
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const mx = x / Math.max(1, rect.width) - 0.5;
+    const my = y / Math.max(1, rect.height) - 0.5;
+    this.targetTiltY = mx * 0.18;
+    this.targetTiltX = -my * 0.14;
+    this.hoverPoint = { x, y };
   }
 
   _onClick(event) {
@@ -297,10 +340,8 @@ export class KaijuGenomeRenderer {
   _fractureStrength(t) {
     let strength = 0;
     for (const fracture of this.fractureSlots) strength = Math.max(strength, gaussian(t, fracture.t, fracture.width));
-    // Rupturas só ficam anatômicas quando a perda identitária realmente avançou.
-    // Nos estágios baixos elas aparecem como telemetria/pares anômalos, preservando
-    // a silhueta do DNA ANALYSIS original.
-    return strength * Math.max(0, (this.metrics.identityLossMorph - 0.18) / 0.82);
+    // Rupturas anatômicas visíveis: causadas por perda de humanidade ou avanço predatório
+    return strength * Math.max(0, (this.metrics.identityLossMorph || 0) * 0.95 + (this.metrics.willMorph || 0) * 0.45);
   }
 
   _hotspotFields(t) {
@@ -313,7 +354,7 @@ export class KaijuGenomeRenderer {
       else if (spot.axis === "comunhao") communion += g;
       else humanity += g;
     }
-    return { will: Math.min(1.8, will), communion: Math.min(1.8, communion), humanity: Math.min(1.8, humanity) };
+    return { will: Math.min(2.5, will), communion: Math.min(2.5, communion), humanity: Math.min(2.5, humanity) };
   }
 
   _helixWorld(t, strand, centerY, radius, startX, endX) {
@@ -321,10 +362,8 @@ export class KaijuGenomeRenderer {
     const fields = this._hotspotFields(t);
     const xBase = startX + t * (endX - startX);
 
-    // DNA ANALYSIS original: loopWidth=(end-start)/4 e theta=(x/loopWidth)*PI.
-    // Isso equivale a 4*PI ao longo do viewport. A dev.5 usava 8*PI e dobrava
-    // artificialmente a frequência da hélice.
-    const strandPhase = strand === 2 ? Math.PI : 0;
+    // Geometria B-DNA autêntica: ângulo diedro assimétrico (Sulco Menor ~136° e Sulco Maior ~224°)
+    const strandPhase = strand === 2 ? (Math.PI - 0.44) : 0;
     const baseTheta = t * Math.PI * 4 + this.angle + strandPhase;
 
     const willMorph = m.willMorph || 0;
@@ -333,46 +372,53 @@ export class KaijuGenomeRenderer {
     const lossMorph = m.identityLossMorph || 0;
     const sign = strand === 1 ? 1 : -1;
 
-    // Deformações são locais e progressivas. Em 40–59 o DNA ainda permanece muito
-    // próximo da referência; 60+ abre deformações anatômicas e 80–100 permite extremos.
-    const localWill = Math.min(1.35, fields.will) * willMorph;
-    const localComm = Math.min(1.35, fields.communion) * communionMorph;
-    const localLoss = Math.min(1.35, fields.humanity) * lossMorph;
+    const localWill = (0.25 + fields.will * 0.75) * willMorph;
+    const localComm = (0.25 + fields.communion * 0.75) * communionMorph;
+    const localLoss = (0.25 + fields.humanity * 0.75) * lossMorph;
 
     const seedPhase = (this.seed % 997) * 0.0061;
-    const highWill = Math.max(0, (willMorph - 0.24) / 0.76);
-    const highLoss = Math.max(0, (lossMorph - 0.24) / 0.76);
-    const highComm = Math.max(0, (communionMorph - 0.24) / 0.76);
 
-    // Fase local: quase nula nos estágios baixos, podendo cisalhar as fitas nos altos.
+    // Cisalhamento e torção caótica: fitas perdem paralelismo sob perda de humanidade / predação
     const phaseShear = sign * (
-      Math.sin(t * Math.PI * 5.5 + seedPhase) * highLoss * 0.20 +
-      Math.sin(t * Math.PI * 3.0 + seedPhase * 0.7) * highWill * highLoss * 0.12
-    ) * (0.35 + localLoss * 0.65);
+      Math.sin(t * Math.PI * 4.8 + seedPhase) * lossMorph * 0.48 +
+      Math.sin(t * Math.PI * 2.6 + seedPhase * 0.7) * willMorph * 0.38
+    );
     const theta = baseTheta + phaseShear;
 
-    // Raio preserva o DNA original como base. Predação cria hipertrofia localizada;
-    // perda identitária gera assimetria; Comunhão tende a reconectar/organizar.
-    const radial = 1
-      + localWill * highWill * 0.285
-      + localLoss * highLoss * 0.200
-      - localComm * highComm * 0.038;
+    // Hipertrofia Titânica visível: fita 1 (Vontade) expande até +66% radial
+    // Fita 2 undula assimetricamente
+    let strandRadial = 1.0;
+    if (strand === 1) {
+      strandRadial += willMorph * 0.42 + localWill * 0.32;
+    } else {
+      strandRadial += lossMorph * 0.28 * Math.sin(t * Math.PI * 6.2 + seedPhase) - localComm * 0.06;
+    }
 
-    // Deslocamento lateral/vertical só ganha força real após o estágio IV.
-    const warp = radius * sign * (
-      Math.sin(t * Math.PI * 4.7 + seedPhase) * highWill * 0.055 +
-      Math.sin(t * Math.PI * 7.1 + seedPhase * 1.3) * highLoss * 0.070
+    // Bulbo anatômico nos loci mutados permanentes
+    for (const mark of this.persistentMarks) {
+      const dist = Math.abs(t - mark.t);
+      if (dist < 0.06) {
+        strandRadial += (1 - dist / 0.06) * 0.34;
+      }
+    }
+
+    // Ondulação 3D viva em eixos Y e Z
+    const warpY = radius * sign * (
+      Math.sin(t * Math.PI * 3.6 + seedPhase) * willMorph * 0.22 +
+      Math.sin(t * Math.PI * 5.8 + seedPhase * 1.3) * lossMorph * 0.25
+    );
+    const warpZ = radius * (
+      Math.cos(t * Math.PI * 3.0 + seedPhase) * willMorph * 0.18 +
+      Math.sin(t * Math.PI * 4.4 + seedPhase * 0.9) * lossMorph * 0.20
     );
 
-    // Humanidade alta funciona como contenção geométrica: reduz distorções locais,
-    // mas sua presença visual aparece principalmente nos humanity-locks azuis.
-    const containment = 1 - humanityMorph * 0.20;
-    const y = centerY + radius * radial * Math.sin(theta) + warp * containment;
-    const z = radius * (1 + localWill * highWill * 0.11 + localLoss * highLoss * 0.08) * Math.cos(theta) + warp * 0.30 * containment;
+    // Contenção da humanidade: estabiliza quando em 100%; quando cai, o genoma fica descontrolado
+    const containment = Math.max(0.32, 1 - humanityMorph * 0.52);
+    const y = centerY + radius * strandRadial * Math.sin(theta) + warpY * containment;
+    const z = radius * strandRadial * Math.cos(theta) + warpZ * containment;
+    const x = xBase + Math.sin(t * Math.PI * 8 + seedPhase) * radius * 0.05 * (willMorph + lossMorph * 0.8) * containment;
 
-    // Em estados extremos a própria linha axial pode ficar levemente irregular.
-    const x = xBase + Math.sin(t * Math.PI * 9 + seedPhase) * radius * 0.035 * Math.max(highWill, highLoss);
-    return { x, y, z, theta, baseTheta, fields, radial };
+    return { x, y, z, theta, baseTheta, fields, radial: strandRadial, localWill, localLoss, localComm };
   }
 
   _drawBackground(project, centerY, timeSec) {
@@ -439,7 +485,7 @@ export class KaijuGenomeRenderer {
     ctx.restore();
   }
 
-  _pushBranchRenderables(renderables, project, centerY, radius, startX, endX) {
+  _pushBranchRenderables(project, centerY, radius, startX, endX) {
     const m = this.metrics;
     const strength = clamp01(m.willMorph || 0);
     if (strength < 0.10 || !this.branchSlots.length) return;
@@ -449,7 +495,7 @@ export class KaijuGenomeRenderer {
       const points = [];
       const high = Math.max(0, (strength - 0.20) / 0.80);
       const steps = 12 + Math.round(branch.length * (5 + high * 7));
-      const maxLen = radius * (0.12 + strength * 0.78) * branch.length;
+      const maxLen = radius * (0.22 + strength * 0.95) * branch.length;
       const tangent = source.theta + Math.PI * 0.5;
       for (let step = 0; step < steps; step += 1) {
         const f = step / Math.max(1, steps - 1);
@@ -462,24 +508,42 @@ export class KaijuGenomeRenderer {
       for (let i = 0; i < points.length - 1; i += 1) {
         const p1 = points[i];
         const p2 = points[i + 1];
-        renderables.push({
+        this._pushRenderable({
           type: "branch",
           p1,
           p2,
           z: (p1.z + p2.z) * 0.5,
           strength,
           persistent: branch.persistent,
-          width: Math.max(0.55, (0.9 + strength * 1.4) * (1 - i / points.length * 0.64))
+          width: Math.max(0.75, (1.2 + strength * 2.2) * (1 - i / points.length * 0.58))
         });
-        if (high > 0.16 && i % 3 === 0) renderables.push({ type: "branch_bead", p: p1, z: p1.z, strength, persistent: branch.persistent });
+        if (high > 0.16 && i % 3 === 0) {
+          this._pushRenderable({ type: "branch_bead", p: p1, z: p1.z, strength, persistent: branch.persistent });
+        }
+        // Espinhos laterais afiados projetando-se das ramificações
+        if (high > 0.22 && (i === 3 || i === 7)) {
+          const dx = p2.px - p1.px;
+          const dy = p2.py - p1.py;
+          const barbLen = (5 + strength * 9) * p1.scale;
+          const barbAngle = Math.atan2(dy, dx) + branch.sign * 0.78;
+          const barbP2 = {
+            px: p1.px + Math.cos(barbAngle) * barbLen,
+            py: p1.py + Math.sin(barbAngle) * barbLen,
+            scale: p1.scale,
+            normZ: p1.normZ,
+            z: p1.z
+          };
+          this._pushRenderable({ type: "spine_barb", p1, p2: barbP2, z: p1.z, strength });
+        }
       }
-      if (high > 0.45 && branchIndex % 3 === 0 && points.at(-1)) {
-        renderables.push({ type: "branch_tip", p: points.at(-1), z: points.at(-1).z, strength });
+      if (strength > 0.18 && points.length > 0) {
+        const tip = points.at(-1);
+        this._pushRenderable({ type: "branch_tip", p: tip, z: tip.z, strength });
       }
     });
   }
 
-  _pushLatticeRenderables(renderables, project, centerY, radius, startX, endX) {
+  _pushLatticeRenderables(project, centerY, radius, startX, endX) {
     const m = this.metrics;
     const strength = clamp01(m.communionMorph || 0);
     if (strength < 0.09 || !this.latticeSlots.length) return;
@@ -494,34 +558,70 @@ export class KaijuGenomeRenderer {
         centerY + slot.sign * radius * (1.02 + slot.spread * (0.10 + high * 0.35)),
         (a.z + b.z) * 0.5 + slot.sign * radius * (0.08 + high * 0.30)
       );
-      renderables.push({ type: "lattice", p1: pA, p2: outer, z: (pA.z + outer.z) * 0.5, strength, phase: slot.phase, index });
-      renderables.push({ type: "lattice", p1: outer, p2: pB, z: (outer.z + pB.z) * 0.5, strength, phase: slot.phase, index });
-      if (high > 0.10) renderables.push({ type: "lattice_node", p: outer, z: outer.z, strength });
+      // Membrana bio-orgânica translúcida preenchendo a malha
+      this._pushRenderable({ type: "lattice_membrane", p1: pA, p2: outer, p3: pB, z: (pA.z + pB.z + outer.z) / 3, strength, phase: slot.phase, index });
+      this._pushRenderable({ type: "lattice", p1: pA, p2: outer, z: (pA.z + outer.z) * 0.5, strength, phase: slot.phase, index });
+      this._pushRenderable({ type: "lattice", p1: outer, p2: pB, z: (outer.z + pB.z) * 0.5, strength, phase: slot.phase, index });
+      this._pushRenderable({ type: "lattice_node", p: outer, z: outer.z, strength });
     });
   }
 
-  _pushHumanityLocks(renderables, project, centerY, radius, startX, endX) {
-    const strength = clamp01(this.metrics.humanityMorph || 0);
-    if (strength < 0.09 || !this.humanityLockSlots?.length) return;
+  _pushHumanityLocks(project, centerY, radius, startX, endX) {
+    const humanityMorph = clamp01(this.metrics.humanityMorph || 0);
+    const lossMorph = clamp01(this.metrics.identityLossMorph || 0);
+    if (!this.humanityLockSlots?.length) return;
     this.humanityLockSlots.forEach((slot) => {
       const w1 = this._helixWorld(slot.t, 1, centerY, radius, startX, endX);
       const w2 = this._helixWorld(slot.t, 2, centerY, radius, startX, endX);
       const p1 = project(w1.x, w1.y, w1.z);
       const p2 = project(w2.x, w2.y, w2.z);
       const center = project((w1.x + w2.x) * 0.5, centerY, 0);
-      renderables.push({ type: "humanity_lock", p1, p2, p: center, z: center.z + 3, strength, phase: slot.phase, weight: slot.weight });
+      if (humanityMorph >= 0.38 && lossMorph < 0.45) {
+        this._pushRenderable({
+          type: "humanity_lock",
+          p1,
+          p2,
+          p: center,
+          z: center.z + 3,
+          strength: humanityMorph,
+          phase: slot.phase,
+          weight: slot.weight,
+          t: slot.t
+        });
+      } else {
+        this._pushRenderable({
+          type: "broken_lock",
+          p1,
+          p2,
+          p: center,
+          z: center.z + 3,
+          strength: Math.max(0.3, lossMorph),
+          phase: slot.phase,
+          weight: slot.weight,
+          t: slot.t
+        });
+      }
     });
   }
 
-  _pushPersistentMarks(renderables, project, centerY, radius, startX, endX) {
+  _pushPersistentMarks(project, centerY, radius, startX, endX) {
     for (const mark of this.persistentMarks) {
       const world = this._helixWorld(mark.t, 1, centerY, radius, startX, endX);
       const p = project(world.x, world.y, world.z);
-      renderables.push({ type: "mutation_ring", p, z: p.z + 6, axis: mark.axis, ring: mark.ring, phase: mark.phase });
+      this._pushRenderable({
+        type: "mutation_cyst",
+        p,
+        z: p.z + 6,
+        axis: mark.axis,
+        ring: Math.max(6, mark.ring * 1.3),
+        phase: mark.phase,
+        t: mark.t,
+        name: mark.name
+      });
     }
   }
 
-  _pushTerminalTail(renderables, project, centerY, radius, startX, endX) {
+  _pushTerminalTail(project, centerY, radius, startX, endX) {
     // Mantém a cauda fractal característica do DNA ANALYSIS original em todos os
     // estados. Vontade/perda identitária apenas ampliam sua agressividade em estágios altos.
     const will = this.metrics.willMorph || 0;
@@ -541,8 +641,8 @@ export class KaijuGenomeRenderer {
       }
       for (let step = 0; step < pts.length - 1; step += 1) {
         const p1 = pts[step]; const p2 = pts[step + 1];
-        renderables.push({ type: "tail", p1, p2, z: (p1.z + p2.z) * 0.5, energy, child: kind === "child", width: widthFn(step, pts.length) });
-        renderables.push({ type: "tail_bead", p: p1, z: p1.z, energy, child: kind === "child", radius: Math.max(0.75, 2.35 - step * 0.075) });
+        this._pushRenderable({ type: "tail", p1, p2, z: (p1.z + p2.z) * 0.5, energy, child: kind === "child", width: widthFn(step, pts.length) });
+        this._pushRenderable({ type: "tail_bead", p: p1, z: p1.z, energy, child: kind === "child", radius: Math.max(0.75, 2.35 - step * 0.075) });
       }
       return pts;
     };
@@ -587,8 +687,11 @@ export class KaijuGenomeRenderer {
 
     this.tiltX += (this.targetTiltX - this.tiltX) * 0.08;
     this.tiltY += (this.targetTiltY - this.tiltY) * 0.08;
-    this.angle += this.rotSpeed * (dt / 16.667);
-    this.laserPhase += 0.018 * (dt / 16.667);
+    if (!this.paused) {
+      this.angle += this.rotSpeed * (dt / 16.667);
+      this.laserPhase += 0.018 * (dt / 16.667);
+      this.signalPulsePhase += 0.035 * (dt / 16.667);
+    }
 
     const centerY = height * 0.52;
     // Mesmas proporções do DNA ANALYSIS original. Os estágios alteram a anatomia
@@ -605,10 +708,10 @@ export class KaijuGenomeRenderer {
     this._drawBackground(project, centerY, timeSec);
 
     const laserX = startX + (0.5 + 0.5 * Math.sin(this.laserPhase)) * (endX - startX);
-    const renderables = [];
+    this._poolIndex = 0;
     const sampleCount = 120;
-    const s1 = [];
-    const s2 = [];
+    if (!this._s1) this._s1 = [];
+    if (!this._s2) this._s2 = [];
 
     for (let i = 0; i < sampleCount; i += 1) {
       const t = i / (sampleCount - 1);
@@ -616,20 +719,33 @@ export class KaijuGenomeRenderer {
       const w2 = this._helixWorld(t, 2, centerY, radius, startX, endX);
       const p1 = project(w1.x, w1.y, w1.z);
       const p2 = project(w2.x, w2.y, w2.z);
-      s1.push({ ...p1, t, world: w1, fracture: this._fractureStrength(t) });
-      s2.push({ ...p2, t, world: w2, fracture: this._fractureStrength(t) });
+      this._s1[i] = { ...p1, t, world: w1, fracture: this._fractureStrength(t) };
+      this._s2[i] = { ...p2, t, world: w2, fracture: this._fractureStrength(t) };
     }
 
     for (let i = 0; i < sampleCount - 1; i += 1) {
-      const a1 = s1[i]; const b1 = s1[i + 1];
-      const a2 = s2[i]; const b2 = s2[i + 1];
+      const a1 = this._s1[i]; const b1 = this._s1[i + 1];
+      const a2 = this._s2[i]; const b2 = this._s2[i + 1];
       const frag1 = Math.max(a1.fracture, b1.fracture);
       const frag2 = Math.max(a2.fracture, b2.fracture);
-      if (frag1 < 0.68) renderables.push({ type: "backbone", p1: a1, p2: b1, z: (a1.z + b1.z) * 0.5, strand: 1, fracture: frag1 });
-      if (frag2 < 0.72) renderables.push({ type: "backbone", p1: a2, p2: b2, z: (a2.z + b2.z) * 0.5, strand: 2, fracture: frag2 });
+      if (frag1 < 0.52) {
+        this._pushRenderable({ type: "backbone", p1: a1, p2: b1, z: (a1.z + b1.z) * 0.5, strand: 1, fracture: frag1, t: a1.t, sampleIndex: i });
+      } else {
+        this._pushRenderable({ type: "fracture_shard", p1: a1, p2: b1, z: (a1.z + b1.z) * 0.5, strand: 1, fracture: frag1, t: a1.t, sampleIndex: i });
+      }
+      if (frag2 < 0.56) {
+        this._pushRenderable({ type: "backbone", p1: a2, p2: b2, z: (a2.z + b2.z) * 0.5, strand: 2, fracture: frag2, t: a2.t, sampleIndex: i });
+      } else {
+        this._pushRenderable({ type: "fracture_shard", p1: a2, p2: b2, z: (a2.z + b2.z) * 0.5, strand: 2, fracture: frag2, t: a2.t, sampleIndex: i });
+      }
     }
 
     const rungCount = 64;
+    const instability = Math.max(0, (100 - (this.metrics.stability || 100)) / 100);
+    const willMorph = this.metrics.willMorph || 0;
+    const communionMorph = this.metrics.communionMorph || 0;
+    const lossMorph = this.metrics.identityLossMorph || 0;
+
     for (let i = 0; i < rungCount; i += 1) {
       const t = i / (rungCount - 1);
       const w1 = this._helixWorld(t, 1, centerY, radius, startX, endX);
@@ -638,7 +754,20 @@ export class KaijuGenomeRenderer {
       const p2 = project(w2.x, w2.y, w2.z);
       const fracture = this._fractureStrength(t);
       const anomalous = this.anomalousRungs.has(i);
-      if (fracture < 0.78) renderables.push({ type: "rung", p1, p2, z: (p1.z + p2.z) * 0.5 - 4, anomalous, fracture });
+
+      // Mapeamento autêntico de pares de bases Watson-Crick (A-T / G-C)
+      const bpIndex = Math.abs(Math.floor(Math.sin(i * 12.9898 + (this.seed % 100)) * 43758.5453)) % 4;
+      const bp = BASE_PAIRS[bpIndex];
+
+      if (fracture < 0.82) {
+        if (anomalous && (willMorph > 0.25 || lossMorph > 0.22)) {
+          this._pushRenderable({ type: "torn_rung", p1, p2, z: (p1.z + p2.z) * 0.5 - 4, anomalous: true, fracture, t, i, bp });
+        } else if (communionMorph > 0.28 && i % 3 === 0) {
+          this._pushRenderable({ type: "symbiotic_rung", p1, p2, z: (p1.z + p2.z) * 0.5 - 4, anomalous, fracture, t, i, bp });
+        } else {
+          this._pushRenderable({ type: "rung", p1, p2, z: (p1.z + p2.z) * 0.5 - 4, anomalous, fracture, t, i, bp });
+        }
+      }
 
       const beads = 13;
       for (let b = 1; b < beads; b += 1) {
@@ -646,26 +775,30 @@ export class KaijuGenomeRenderer {
         let y = w1.y + (w2.y - w1.y) * u;
         let z = w1.z + (w2.z - w1.z) * u;
         if (anomalous) {
-          const bend = Math.sin(u * Math.PI) * radius * 0.10 * (this.metrics.identityLossMorph || 0);
+          const bend = Math.sin(u * Math.PI) * radius * 0.16 * (lossMorph + willMorph * 0.6);
           y += bend * Math.sin(i * 0.9 + this.seed);
           z += bend * Math.cos(i * 0.7 + this.seed);
         }
+        if (instability > 0.12) {
+          const jitter = Math.sin(now * 0.008 + b * 1.7 + i * 2.3) * (instability * 3.2);
+          y += jitter;
+        }
         const p = project(w1.x, y, z);
-        renderables.push({ type: "bead", p, z: p.z, anomalous, index: b });
+        this._pushRenderable({ type: "bead", p, z: p.z, anomalous, index: b, rungIndex: i, t });
       }
 
       const absSin = Math.abs(Math.sin(w1.theta));
       const crest = absSin > 0.52;
       const peak = crest ? (absSin - 0.52) / 0.48 : 0;
-      renderables.push({ type: "strand_node", p: p1, z: p1.z, ring: crest, peak, axis: anomalous ? "vontade" : "neutral" });
-      renderables.push({ type: "strand_node", p: p2, z: p2.z, ring: crest, peak, axis: anomalous ? "humanidade" : "neutral" });
+      this._pushRenderable({ type: "strand_node", p: p1, z: p1.z, ring: crest, peak, axis: anomalous ? "vontade" : "neutral", strand: 1, t });
+      this._pushRenderable({ type: "strand_node", p: p2, z: p2.z, ring: crest, peak, axis: anomalous ? "humanidade" : "neutral", strand: 2, t });
       if (peak > 0.82 && i % 2 === 0) {
         const off = (p1.py < centerY ? -9 : 9) * p1.scale;
-        renderables.push({ type: "satellite", p: { ...p1, py: p1.py + off, z: p1.z + 9 }, z: p1.z + 9 });
+        this._pushRenderable({ type: "satellite", p: { ...p1, py: p1.py + off, z: p1.z + 9 }, z: p1.z + 9 });
       }
       if (absSin < 0.22) {
         const cross = project(w1.x, centerY + Math.sin(i + this.seed) * radius * (this.metrics.identityLossMorph || 0) * 0.04, 0);
-        renderables.push({ type: "twist", p: cross, z: cross.z });
+        this._pushRenderable({ type: "twist", p: cross, z: cross.z });
       }
     }
 
@@ -675,32 +808,42 @@ export class KaijuGenomeRenderer {
       for (let i = 0; i < sampleCount; i += 1) {
         const t = i / (sampleCount - 1);
         const base = this._helixWorld(t, 1, centerY, radius, startX, endX);
-        const theta = base.theta + (Math.PI * 2) / 3 + Math.sin(t * 9 + this.seed) * 0.08 * thirdAlpha;
-        const r = radius * (0.83 + thirdAlpha * 0.14);
+        // Terceira fita posicionada no Sulco Maior (Major Groove ~θ1 + π + 0.38)
+        const majorGroovePhase = Math.PI + 0.38;
+        const theta = base.theta + majorGroovePhase + Math.sin(t * 9 + this.seed) * 0.08 * thirdAlpha;
+        const r = radius * (0.86 + thirdAlpha * 0.12);
         const world = {
           x: base.x,
           y: centerY + r * Math.sin(theta),
           z: r * Math.cos(theta)
         };
         const p = project(world.x, world.y, world.z);
-        if (last) renderables.push({ type: "third", p1: last, p2: p, z: (last.z + p.z) * 0.5, strength: thirdAlpha });
+        if (last) this._pushRenderable({ type: "third", p1: last, p2: p, z: (last.z + p.z) * 0.5, strength: thirdAlpha, t });
+        // Pontes Hoogsteen periódicas conectando a 3ª fita ao duplex
+        if (i % 8 === 0 && this._s1[i]) {
+          this._pushRenderable({ type: "third_bridge", p1: p, p2: this._s1[i], z: (p.z + this._s1[i].z) * 0.5, strength: thirdAlpha, t });
+          this._pushRenderable({ type: "third_node", p, z: p.z, strength: thirdAlpha });
+        }
         last = p;
       }
     }
 
-    this._pushBranchRenderables(renderables, project, centerY, radius, startX, endX);
-    this._pushLatticeRenderables(renderables, project, centerY, radius, startX, endX);
-    this._pushHumanityLocks(renderables, project, centerY, radius, startX, endX);
-    this._pushPersistentMarks(renderables, project, centerY, radius, startX, endX);
-    this._pushTerminalTail(renderables, project, centerY, radius, startX, endX);
+    this._pushBranchRenderables(project, centerY, radius, startX, endX);
+    this._pushLatticeRenderables(project, centerY, radius, startX, endX);
+    this._pushHumanityLocks(project, centerY, radius, startX, endX);
+    this._pushPersistentMarks(project, centerY, radius, startX, endX);
+    this._pushTerminalTail(project, centerY, radius, startX, endX);
 
-    renderables.sort((a, b) => a.z - b.z);
-    for (const item of renderables) this._drawRenderable(item, laserX, now);
+    const active = this._renderables.slice(0, this._poolIndex);
+    active.sort((a, b) => a.z - b.z);
+    for (let i = 0; i < active.length; i += 1) {
+      this._drawRenderable(active[i], laserX, now);
+    }
 
+    this._drawScientificHUD(startX, endX, centerY, radius);
     this._drawSparks(dt);
     this._drawScanner(laserX);
-    // O DNA ANALYSIS original não desenha um retículo adicional por cima da molécula;
-    // o retículo pertence à instrumentação lateral. Mantemos o viewport molecular limpo.
+    this._drawHoverTarget(now);
 
     this.frameId = requestAnimationFrame((next) => this._render(next));
   }
@@ -711,56 +854,351 @@ export class KaijuGenomeRenderer {
     else if (item.p1 && item.p2) x = (item.p1.px + item.p2.px) * 0.5;
     if (x == null) return { hit: false, intensity: 0 };
     const dist = Math.abs(x - laserX);
-    return { hit: dist < range, intensity: dist < range ? 1 - dist / range : 0 };
+    const effRange = (item.type === "mutation_ring" || item.type === "mutation_cyst") ? 36 : range;
+    return { hit: dist < effRange, intensity: dist < effRange ? 1 - dist / effRange : 0 };
   }
 
   _drawRenderable(item, laserX, now) {
     const ctx = this.ctx;
-    const hit = this._hitFor(item, laserX, item.type === "mutation_ring" ? 36 : 28);
+    const isMutationNode = item.type === "mutation_ring" || item.type === "mutation_cyst";
+    const hit = this._hitFor(item, laserX, isMutationNode ? 36 : 28);
     const z = item.p?.normZ ?? item.p1?.normZ ?? 0.5;
 
+    // Onda de bio-luminescência ao longo da fita (pulse wave)
+    const signalWave = Math.sin((item.t ?? 0) * 12 - this.signalPulsePhase);
+    const pulseBoost = signalWave > 0.78 ? (signalWave - 0.78) / 0.22 : 0;
+    const dofFactor = z < 0.35 ? 0.60 + z * 1.14 : 1.0;
+    const willMorph = this.metrics.willMorph || 0;
+    const communionMorph = this.metrics.communionMorph || 0;
+    const lossMorph = this.metrics.identityLossMorph || 0;
+
     if (item.type === "backbone") {
+      // Hipertrofia Titânica: fita 1 (Vontade) ganha blindagem osteodérmica quitinosa
+      if (item.strand === 1 && willMorph > 0.15) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(item.p1.px, item.p1.py);
+        ctx.lineTo(item.p2.px, item.p2.py);
+        const auraAlpha = (0.25 + willMorph * 0.45) * dofFactor;
+        ctx.strokeStyle = rgba(COLORS.willDeep, auraAlpha);
+        ctx.lineWidth = (3.4 + willMorph * 3.6) * (z > 0.5 ? 1.25 : 0.85);
+        ctx.shadowColor = COLORS.will;
+        ctx.shadowBlur = 10 * willMorph;
+        ctx.stroke();
+        ctx.restore();
+
+        // Estriações cuticulares transversais quitinosas (placas osteodérmicas segmentadas)
+        if (willMorph > 0.20 && (item.sampleIndex % 2 === 0)) {
+          const dx = item.p2.px - item.p1.px;
+          const dy = item.p2.py - item.p1.py;
+          const segLen = Math.hypot(dx, dy) || 1;
+          const nx = -dy / segLen;
+          const ny = dx / segLen;
+          const ribLen = (2.8 + willMorph * 3.8) * (item.p1.scale || 1);
+          ctx.beginPath();
+          ctx.moveTo(item.p1.px - nx * ribLen, item.p1.py - ny * ribLen);
+          ctx.lineTo(item.p1.px + nx * ribLen, item.p1.py + ny * ribLen);
+          ctx.strokeStyle = rgba(COLORS.willCore, 0.65 * willMorph * dofFactor);
+          ctx.lineWidth = 1.1;
+          ctx.stroke();
+        }
+      }
+
+      // Traçado do esqueleto de fosfodiéster com sombreamento cilíndrico 3D
       ctx.beginPath();
       ctx.moveTo(item.p1.px, item.p1.py);
       ctx.lineTo(item.p2.px, item.p2.py);
       if (hit.hit) {
-        ctx.strokeStyle = rgba("#ffebaa", 0.55 + hit.intensity * 0.45);
-        ctx.lineWidth = z > 0.5 ? 2.2 : 1.4;
+        ctx.strokeStyle = rgba("#ffebaa", 0.60 + hit.intensity * 0.40);
+        ctx.lineWidth = z > 0.5 ? 2.8 : 1.8;
         ctx.shadowColor = COLORS.gold;
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 9;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      } else if (pulseBoost > 0) {
+        const coreCol = item.strand === 1 && willMorph > 0.4 ? COLORS.will : COLORS.cyanBright;
+        ctx.strokeStyle = rgba(coreCol, (0.50 + pulseBoost * 0.50) * dofFactor);
+        ctx.lineWidth = (z > 0.5 ? 2.6 : 1.6) + pulseBoost * 1.0;
+        ctx.shadowColor = coreCol;
+        ctx.shadowBlur = 8 * pulseBoost;
         ctx.stroke();
         ctx.shadowBlur = 0;
       } else {
-        if (z > 0.5) {
-          ctx.strokeStyle = rgba(COLORS.cyan, 0.35 + z * 0.45);
-          ctx.lineWidth = 1.8;
+        if (item.strand === 1 && willMorph > 0.25) {
+          ctx.strokeStyle = rgba(COLORS.will, (0.50 + z * 0.45) * dofFactor);
+          ctx.lineWidth = 2.4;
+        } else if (z > 0.5) {
+          ctx.strokeStyle = rgba(COLORS.cyan, (0.38 + z * 0.45) * dofFactor);
+          ctx.lineWidth = 2.0;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(item.p1.px, item.p1.py);
+          ctx.lineTo(item.p2.px, item.p2.py);
+          ctx.strokeStyle = rgba(COLORS.cyanBright, (0.25 + z * 0.50) * dofFactor);
+          ctx.lineWidth = 0.8;
         } else {
-          ctx.strokeStyle = rgba("#147378", 0.15 + z * 0.25);
-          ctx.lineWidth = 1.0;
+          ctx.strokeStyle = rgba(COLORS.cyanDim, (0.18 + z * 0.25) * dofFactor);
+          ctx.lineWidth = 1.1;
         }
         ctx.stroke();
       }
-      if (hit.hit && Math.random() < 0.035 + hit.intensity * 0.06) this._sparkAt((item.p1.px + item.p2.px) / 2, (item.p1.py + item.p2.py) / 2, hit.intensity);
+
+      // Nódulos de Fosfato (PO4 3-) a cada 2 amostras ao longo da cadeia
+      if ((item.sampleIndex % 2 === 0) && z > 0.22) {
+        const noduleR = (1.2 + z * 1.3) * (item.p1.scale || 1);
+        ctx.beginPath();
+        ctx.arc(item.p1.px, item.p1.py, noduleR, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(COLORS.phosphate, (0.45 + z * 0.45) * dofFactor);
+        ctx.fill();
+        if (z > 0.48) {
+          ctx.beginPath();
+          ctx.arc(item.p1.px - 0.4, item.p1.py - 0.4, noduleR * 0.4, 0, Math.PI * 2);
+          ctx.fillStyle = rgba(COLORS.white, 0.85);
+          ctx.fill();
+        }
+      }
+
+      if (hit.hit && Math.random() < 0.035 + hit.intensity * 0.06) {
+        this._sparkAt((item.p1.px + item.p2.px) * 0.5, (item.p1.py + item.p2.py) * 0.5, hit.intensity);
+      }
+      return;
+    }
+
+    if (item.type === "fracture_shard") {
+      // Lasca óssea / fibra genética fragmentada sob cisalhamento
+      const dx = item.p2.px - item.p1.px;
+      const dy = item.p2.py - item.p1.py;
+      const angle = Math.atan2(dy, dx);
+      const len = Math.max(1, Math.hypot(dx, dy));
+      ctx.save();
+      ctx.translate(item.p1.px, item.p1.py);
+      ctx.rotate(angle + Math.sin(now * 0.008 + (item.t || 0) * 8) * 0.15);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(len * 0.40, -2.5);
+      ctx.lineTo(len * 0.60, 2.5);
+      ctx.lineTo(len * 0.88, 0);
+      ctx.strokeStyle = rgba(COLORS.will, 0.88 * dofFactor);
+      ctx.lineWidth = 1.8;
+      ctx.shadowColor = COLORS.will;
+      ctx.shadowBlur = 6;
+      ctx.stroke();
+      ctx.restore();
+      if (Math.random() < 0.05) this._sparkAt((item.p1.px + item.p2.px) * 0.5, (item.p1.py + item.p2.py) * 0.5, 0.7);
       return;
     }
 
     if (item.type === "rung") {
+      const bp = item.bp || BASE_PAIRS[0];
+      const dx = item.p2.px - item.p1.px;
+      const dy = item.p2.py - item.p1.py;
+      const len = Math.hypot(dx, dy);
+      if (len < 1) return;
+      const nx = dx / len;
+      const ny = dy / len;
+      const px = -ny;
+      const py = nx;
+
+      // Base 1 (Fita 1 -> 38%)
+      const end1X = item.p1.px + nx * len * 0.38;
+      const end1Y = item.p1.py + ny * len * 0.38;
+      const w1 = 2.4 * (item.p1.scale || 1);
+      const w1Tip = 1.8 * (item.p1.scale || 1);
+
+      ctx.save();
+      // Placa trapezoidal do Nucleotídeo 1 (Purina/Pirimidina)
       ctx.beginPath();
-      ctx.moveTo(item.p1.px, item.p1.py);
-      ctx.lineTo(item.p2.px, item.p2.py);
+      ctx.moveTo(item.p1.px + px * w1, item.p1.py + py * w1);
+      ctx.lineTo(end1X + px * w1Tip, end1Y + py * w1Tip);
+      ctx.lineTo(end1X - px * w1Tip, end1Y - py * w1Tip);
+      ctx.lineTo(item.p1.px - px * w1, item.p1.py - py * w1);
+      ctx.closePath();
+      const col1 = item.anomalous ? COLORS.will : (hit.hit ? COLORS.gold : bp.c1);
+      ctx.fillStyle = rgba(col1, (0.55 + z * 0.40) * dofFactor);
       if (hit.hit) {
-        ctx.strokeStyle = rgba("#ffe6a0", 0.45 + hit.intensity * 0.55);
-        ctx.lineWidth = 1.4;
         ctx.shadowColor = COLORS.gold;
         ctx.shadowBlur = 6;
-      } else {
-        ctx.strokeStyle = item.anomalous ? rgba(COLORS.will, 0.34) : rgba(COLORS.cyan, 0.22);
-        ctx.lineWidth = item.anomalous ? 1.0 : 0.8;
       }
-      if (item.anomalous) ctx.setLineDash([2, 3]);
-      ctx.stroke();
+      ctx.fill();
+
+      // Base 2 (Fita 2 -> 38%)
+      const start2X = item.p1.px + nx * len * 0.62;
+      const start2Y = item.p1.py + ny * len * 0.62;
+      const w2Tip = 1.8 * (item.p2.scale || 1);
+      const w2 = 2.4 * (item.p2.scale || 1);
+
+      ctx.beginPath();
+      ctx.moveTo(start2X + px * w2Tip, start2Y + py * w2Tip);
+      ctx.lineTo(item.p2.px + px * w2, item.p2.py + py * w2);
+      ctx.lineTo(item.p2.px - px * w2, item.p2.py - py * w2);
+      ctx.lineTo(start2X - px * w2Tip, start2Y - py * w2Tip);
+      ctx.closePath();
+      const col2 = item.anomalous ? COLORS.will : (hit.hit ? COLORS.gold : bp.c2);
+      ctx.fillStyle = rgba(col2, (0.55 + z * 0.40) * dofFactor);
+      ctx.fill();
+
+      // Pontes de Hidrogênio centrais (Zona 38% a 62%):
+      // A=T -> 2 pontes paralelas | G≡C -> 3 pontes paralelas
+      const bonds = bp.bonds || 2;
+      ctx.setLineDash([2, 2]);
+      ctx.lineWidth = 1.0;
+      ctx.strokeStyle = hit.hit ? rgba(COLORS.white, 0.95) : rgba(COLORS.white, (0.50 + z * 0.40) * dofFactor);
+
+      if (bonds === 2) {
+        const offset = 1.2 * (item.p1.scale || 1);
+        ctx.beginPath();
+        ctx.moveTo(end1X + px * offset, end1Y + py * offset);
+        ctx.lineTo(start2X + px * offset, start2Y + py * offset);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(end1X - px * offset, end1Y - py * offset);
+        ctx.lineTo(start2X - px * offset, start2Y - py * offset);
+        ctx.stroke();
+      } else {
+        const offset = 1.6 * (item.p1.scale || 1);
+        ctx.beginPath();
+        ctx.moveTo(end1X + px * offset, end1Y + py * offset);
+        ctx.lineTo(start2X + px * offset, start2Y + py * offset);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(end1X, end1Y);
+        ctx.lineTo(start2X, start2Y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(end1X - px * offset, end1Y - py * offset);
+        ctx.lineTo(start2X - px * offset, start2Y - py * offset);
+        ctx.stroke();
+      }
       ctx.setLineDash([]);
-      ctx.shadowBlur = 0;
+
+      // Micro-rotulagem de bases A/T/C/G em alta resolução no primeiro plano
+      if (z > 0.42 && len > 32) {
+        ctx.font = "bold 6.5px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = rgba(COLORS.white, 0.88 * dofFactor);
+        const mid1X = (item.p1.px + end1X) * 0.5;
+        const mid1Y = (item.p1.py + end1Y) * 0.5;
+        ctx.fillText(bp.b1, mid1X, mid1Y);
+        const mid2X = (start2X + item.p2.px) * 0.5;
+        const mid2Y = (start2Y + item.p2.py) * 0.5;
+        ctx.fillText(bp.b2, mid2X, mid2Y);
+      }
+
+      ctx.restore();
+      return;
+    }
+
+    if (item.type === "torn_rung") {
+      // Degrau rompido por mutação predatória: clivagem assimétrica (extremidades coesivas)
+      const dx = item.p2.px - item.p1.px;
+      const dy = item.p2.py - item.p1.py;
+      const len = Math.hypot(dx, dy);
+      if (len < 1) return;
+      const nx = dx / len;
+      const ny = dy / len;
+      const px = -ny;
+      const py = nx;
+
+      const stub1Len = len * 0.34;
+      const stub2Len = len * 0.22;
+      const s1EndX = item.p1.px + nx * stub1Len;
+      const s1EndY = item.p1.py + ny * stub1Len;
+      const s2StartX = item.p2.px - nx * stub2Len;
+      const s2StartY = item.p2.py - ny * stub2Len;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(item.p1.px, item.p1.py);
+      ctx.lineTo(s1EndX, s1EndY);
+      ctx.lineTo(s1EndX + px * 2, s1EndY + py * 2);
+      ctx.strokeStyle = rgba(COLORS.will, 0.90 * dofFactor);
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(item.p2.px, item.p2.py);
+      ctx.lineTo(s2StartX, s2StartY);
+      ctx.lineTo(s2StartX - px * 2, s2StartY - py * 2);
+      ctx.strokeStyle = rgba(COLORS.will, 0.90 * dofFactor);
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      if (Math.random() < 0.08) {
+        this._sparkAt(s1EndX, s1EndY, 0.85);
+      }
+
+      // Arcos duplos de plasma elétrico cruzando a ruptura com jitter temporal
+      const arcSteps = 5;
+      for (let arc = 0; arc < 2; arc += 1) {
+        ctx.beginPath();
+        ctx.moveTo(s1EndX, s1EndY);
+        const arcSign = arc === 0 ? 1 : -1;
+        for (let s = 1; s < arcSteps; s += 1) {
+          const ratio = s / arcSteps;
+          const mx = s1EndX + (s2StartX - s1EndX) * ratio;
+          const my = s1EndY + (s2StartY - s1EndY) * ratio;
+          const jitter = Math.sin(now * 0.032 + s * 4.1 + (item.i || 0) * 5 + arc * 2.7) * (3.8 + lossMorph * 3.5) * arcSign;
+          ctx.lineTo(mx + px * jitter, my + py * jitter);
+        }
+        ctx.lineTo(s2StartX, s2StartY);
+        ctx.strokeStyle = arc === 0 ? rgba(COLORS.white, 0.95) : rgba(COLORS.gold, 0.80);
+        ctx.lineWidth = arc === 0 ? 1.2 : 0.8;
+        ctx.shadowColor = COLORS.gold;
+        ctx.shadowBlur = 7;
+        ctx.stroke();
+      }
+      ctx.restore();
+      return;
+    }
+
+    if (item.type === "symbiotic_rung") {
+      // Degrau simbiótico harmônico com trilho duplo e núcleo de ressonância em diamante
+      const dx = item.p2.px - item.p1.px;
+      const dy = item.p2.py - item.p1.py;
+      const len = Math.hypot(dx, dy);
+      if (len < 1) return;
+      const nx = -dy / len * 2.2;
+      const ny = dx / len * 2.2;
+
+      ctx.beginPath();
+      ctx.moveTo(item.p1.px + nx, item.p1.py + ny);
+      ctx.lineTo(item.p2.px + nx, item.p2.py + ny);
+      ctx.strokeStyle = rgba(COLORS.communion, 0.70 * dofFactor);
+      ctx.lineWidth = 1.0;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(item.p1.px - nx, item.p1.py - ny);
+      ctx.lineTo(item.p2.px - nx, item.p2.py - ny);
+      ctx.strokeStyle = rgba(COLORS.communion, 0.70 * dofFactor);
+      ctx.lineWidth = 1.0;
+      ctx.stroke();
+
+      const midX = (item.p1.px + item.p2.px) * 0.5;
+      const midY = (item.p1.py + item.p2.py) * 0.5;
+      const pulse = 1 + Math.sin(now * 0.004 + (item.t || 0) * 8) * 0.25;
+      const dSize = 3.6 * pulse * (item.p1.scale || 1);
+
+      ctx.save();
+      ctx.strokeStyle = rgba(COLORS.communionBright, 0.75);
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(midX - dSize * 1.8, midY); ctx.lineTo(midX + dSize * 1.8, midY);
+      ctx.moveTo(midX, midY - dSize * 1.8); ctx.lineTo(midX, midY + dSize * 1.8);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(midX, midY - dSize);
+      ctx.lineTo(midX + dSize, midY);
+      ctx.lineTo(midX, midY + dSize);
+      ctx.lineTo(midX - dSize, midY);
+      ctx.closePath();
+      ctx.fillStyle = rgba(COLORS.white, 0.95);
+      ctx.shadowColor = COLORS.communionBright;
+      ctx.shadowBlur = 10;
+      ctx.fill();
+      ctx.restore();
       return;
     }
 
@@ -772,12 +1210,16 @@ export class KaijuGenomeRenderer {
         ctx.fillStyle = COLORS.white;
         ctx.shadowColor = COLORS.gold;
         ctx.shadowBlur = 10;
+      } else if (pulseBoost > 0) {
+        ctx.fillStyle = rgba(item.anomalous ? COLORS.will : COLORS.white, (0.75 + pulseBoost * 0.25) * dofFactor);
+        ctx.shadowColor = item.anomalous ? COLORS.will : COLORS.cyanBright;
+        ctx.shadowBlur = 6 * pulseBoost;
       } else if (item.anomalous) {
-        ctx.fillStyle = rgba(COLORS.will, 0.62 + z * 0.25);
+        ctx.fillStyle = rgba(COLORS.will, (0.62 + z * 0.25) * dofFactor);
       } else if (z > 0.45) {
-        ctx.fillStyle = rgba(COLORS.cyan, 0.55 + z * 0.45);
+        ctx.fillStyle = rgba(COLORS.cyan, (0.55 + z * 0.45) * dofFactor);
       } else {
-        ctx.fillStyle = rgba("#106e73", 0.20 + z * 0.35);
+        ctx.fillStyle = rgba("#106e73", (0.20 + z * 0.35) * dofFactor);
       }
       ctx.fill();
       ctx.shadowBlur = 0;
@@ -802,17 +1244,17 @@ export class KaijuGenomeRenderer {
           ctx.fillStyle = COLORS.white;
           ctx.fill();
         } else {
-          ctx.strokeStyle = rgba(accent, 0.70 + z * 0.30);
+          ctx.strokeStyle = rgba(accent, (0.70 + z * 0.30) * dofFactor);
           ctx.lineWidth = 2.4;
-          if (z > 0.4) {
+          if (z > 0.4 || pulseBoost > 0) {
             ctx.shadowColor = rgba(accent, 0.75);
-            ctx.shadowBlur = 8 * z;
+            ctx.shadowBlur = (8 * z) + (pulseBoost * 8);
           }
           ctx.stroke();
           ctx.shadowBlur = 0;
           ctx.beginPath();
           ctx.arc(item.p.px, item.p.py, ring * 0.45, 0, Math.PI * 2);
-          ctx.strokeStyle = rgba(COLORS.cyanBright, 0.40 + z * 0.40);
+          ctx.strokeStyle = rgba(COLORS.cyanBright, (0.40 + z * 0.40) * dofFactor);
           ctx.lineWidth = 0.8;
           ctx.stroke();
           ctx.beginPath();
@@ -828,10 +1270,14 @@ export class KaijuGenomeRenderer {
           ctx.fillStyle = COLORS.white;
           ctx.shadowColor = COLORS.gold;
           ctx.shadowBlur = 10;
+        } else if (pulseBoost > 0) {
+          ctx.fillStyle = rgba(accent, (0.70 + pulseBoost * 0.30) * dofFactor);
+          ctx.shadowColor = accent;
+          ctx.shadowBlur = 7 * pulseBoost;
         } else if (z > 0.45) {
-          ctx.fillStyle = rgba(accent, 0.50 + z * 0.50);
+          ctx.fillStyle = rgba(accent, (0.50 + z * 0.50) * dofFactor);
         } else {
-          ctx.fillStyle = rgba("#106e73", 0.20 + z * 0.35);
+          ctx.fillStyle = rgba("#106e73", (0.20 + z * 0.35) * dofFactor);
         }
         ctx.fill();
         ctx.shadowBlur = 0;
@@ -871,29 +1317,141 @@ export class KaijuGenomeRenderer {
       return;
     }
 
-    if (item.type === "branch") {
+    if (item.type === "third_bridge") {
+      // Pontes Hoogsteen no Sulco Maior (Major Groove)
       ctx.beginPath();
       ctx.moveTo(item.p1.px, item.p1.py);
       ctx.lineTo(item.p2.px, item.p2.py);
+      ctx.strokeStyle = rgba(COLORS.communionBright, 0.55 * item.strength * dofFactor);
+      ctx.lineWidth = 1.0;
+      ctx.setLineDash([2, 2]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const midX = (item.p1.px + item.p2.px) * 0.5;
+      const midY = (item.p1.py + item.p2.py) * 0.5;
+      ctx.beginPath();
+      ctx.arc(midX, midY, 1.2 * (item.p1.scale || 1), 0, Math.PI * 2);
+      ctx.fillStyle = rgba(COLORS.white, 0.85);
+      ctx.fill();
+      return;
+    }
+
+    if (item.type === "third_node") {
+      ctx.beginPath();
+      ctx.arc(item.p.px, item.p.py, 2.2 * item.p.scale, 0, Math.PI * 2);
+      ctx.fillStyle = rgba(COLORS.communion, 0.80);
+      ctx.shadowColor = COLORS.communion;
+      ctx.shadowBlur = 5;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      return;
+    }
+
+    if (item.type === "branch") {
+      // Placas de quitina articuladas trapezoidais formando os cornos osteodérmicos
+      const dx = item.p2.px - item.p1.px;
+      const dy = item.p2.py - item.p1.py;
+      const segLen = Math.hypot(dx, dy);
+      if (segLen < 0.5) return;
+      const nx = dx / segLen;
+      const ny = dy / segLen;
+      const px = -ny;
+      const py = nx;
+
+      const wBase = (item.width || 2) * 1.2 * (item.p1.scale || 1);
+      const wTip = Math.max(0.6, wBase * 0.72);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(item.p1.px + px * wBase, item.p1.py + py * wBase);
+      ctx.lineTo(item.p2.px + px * wTip, item.p2.py + py * wTip);
+      ctx.lineTo(item.p2.px - px * wTip, item.p2.py - py * wTip);
+      ctx.lineTo(item.p1.px - px * wBase, item.p1.py - py * wBase);
+      ctx.closePath();
+
       const color = item.persistent ? COLORS.will : "#d76a51";
-      ctx.strokeStyle = hit.hit ? rgba(COLORS.gold, 0.95) : rgba(color, 0.38 + item.strength * 0.56);
-      ctx.lineWidth = item.width * (0.72 + z * 0.5);
-      ctx.shadowColor = color;
-      ctx.shadowBlur = item.persistent ? 5 + item.strength * 5 : 2 + item.strength * 3;
+      ctx.fillStyle = hit.hit ? rgba(COLORS.gold, 0.90) : rgba(color, (0.42 + item.strength * 0.50) * dofFactor);
+      if (item.persistent || hit.hit) {
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 5 + item.strength * 6;
+      }
+      ctx.fill();
+
+      // Quilha dorsal central da placa de quitina
+      ctx.beginPath();
+      ctx.moveTo(item.p1.px, item.p1.py);
+      ctx.lineTo(item.p2.px, item.p2.py);
+      ctx.strokeStyle = rgba(COLORS.willCore, 0.55 * dofFactor);
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+
+      ctx.restore();
+      return;
+    }
+
+    if (item.type === "spine_barb") {
+      ctx.beginPath();
+      ctx.moveTo(item.p1.px, item.p1.py);
+      ctx.lineTo(item.p2.px, item.p2.py);
+      ctx.strokeStyle = rgba(COLORS.will, 0.85);
+      ctx.lineWidth = 1.1;
+      ctx.shadowColor = COLORS.will;
+      ctx.shadowBlur = 4;
       ctx.stroke();
       ctx.shadowBlur = 0;
       return;
     }
 
-    if (item.type === "branch_bead" || item.type === "branch_tip") {
-      const r = item.type === "branch_tip" ? 4.2 : 1.6 + z * 1.4;
+    if (item.type === "branch_bead") {
+      const r = 1.6 + z * 1.4;
       ctx.beginPath();
       ctx.arc(item.p.px, item.p.py, r, 0, Math.PI * 2);
-      ctx.fillStyle = hit.hit ? COLORS.white : rgba(COLORS.will, item.type === "branch_tip" ? 0.92 : 0.68);
-      ctx.shadowColor = item.type === "branch_tip" ? COLORS.will : "transparent";
-      ctx.shadowBlur = item.type === "branch_tip" ? 9 : 0;
+      ctx.fillStyle = hit.hit ? COLORS.white : rgba(COLORS.will, 0.68);
       ctx.fill();
-      ctx.shadowBlur = 0;
+      return;
+    }
+
+    if (item.type === "branch_tip") {
+      const size = 5.5 * item.p.scale;
+      ctx.save();
+      ctx.translate(item.p.px, item.p.py);
+      ctx.rotate(now * 0.0035);
+      // Coroa de ionização de 4 pontas
+      ctx.beginPath();
+      ctx.moveTo(0, -size);
+      ctx.lineTo(size * 0.28, -size * 0.28);
+      ctx.lineTo(size, 0);
+      ctx.lineTo(size * 0.28, size * 0.28);
+      ctx.lineTo(0, size);
+      ctx.lineTo(-size * 0.28, size * 0.28);
+      ctx.lineTo(-size, 0);
+      ctx.lineTo(-size * 0.28, -size * 0.28);
+      ctx.closePath();
+      ctx.fillStyle = hit.hit ? COLORS.white : COLORS.will;
+      ctx.shadowColor = COLORS.will;
+      ctx.shadowBlur = 12;
+      ctx.fill();
+
+      // Ponto de luz nuclear central
+      ctx.beginPath();
+      ctx.arc(0, 0, 1.4 * item.p.scale, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS.white;
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
+
+    if (item.type === "lattice_membrane") {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(item.p1.px, item.p1.py);
+      ctx.lineTo(item.p2.px, item.p2.py);
+      ctx.lineTo(item.p3.px, item.p3.py);
+      ctx.closePath();
+      const memAlpha = (0.04 + item.strength * 0.12) * (0.8 + Math.sin(now * 0.002 + item.phase) * 0.2);
+      ctx.fillStyle = rgba(COLORS.communion, memAlpha);
+      ctx.fill();
+      ctx.restore();
       return;
     }
 
@@ -926,7 +1484,7 @@ export class KaijuGenomeRenderer {
       ctx.beginPath();
       ctx.moveTo(item.p1.px, item.p1.py);
       ctx.lineTo(item.p2.px, item.p2.py);
-      const tailColor = (this.metrics.willMorph || 0) > 0.72 ? COLORS.will : COLORS.cyan;
+      const tailColor = willMorph > 0.72 ? COLORS.will : COLORS.cyan;
       ctx.strokeStyle = hit.hit ? rgba(COLORS.gold, 0.94) : rgba(tailColor, (item.child ? 0.45 : 0.66) + item.energy * 0.20);
       ctx.lineWidth = item.width * (0.76 + z * 0.48);
       ctx.shadowColor = tailColor;
@@ -937,7 +1495,7 @@ export class KaijuGenomeRenderer {
     }
 
     if (item.type === "tail_bead") {
-      const tailColor = (this.metrics.willMorph || 0) > 0.72 ? COLORS.will : COLORS.cyanBright;
+      const tailColor = willMorph > 0.72 ? COLORS.will : COLORS.cyanBright;
       ctx.beginPath();
       ctx.arc(item.p.px, item.p.py, (item.child ? 1.15 : 1.65) * item.p.scale, 0, Math.PI * 2);
       ctx.fillStyle = hit.hit ? COLORS.white : rgba(tailColor, 0.72 + z * 0.22);
@@ -948,40 +1506,243 @@ export class KaijuGenomeRenderer {
     if (item.type === "humanity_lock") {
       const strength = item.strength || 0;
       const pulse = 1 + Math.sin(now * 0.0018 + item.phase) * (0.03 + strength * 0.08);
-      // Travessa de contenção entre as duas fitas.
+      const r = (3.2 + strength * 6.5) * pulse * (item.weight || 1);
+
+      ctx.save();
+      // Haste transversal de contenção criogênica com marcadores Vernier
       ctx.beginPath();
       ctx.moveTo(item.p1.px, item.p1.py);
       ctx.lineTo(item.p2.px, item.p2.py);
-      ctx.strokeStyle = hit.hit ? rgba(COLORS.gold, 0.86) : rgba(COLORS.humanity, 0.10 + strength * 0.38);
-      ctx.lineWidth = 0.55 + strength * 0.75;
+      ctx.strokeStyle = hit.hit ? rgba(COLORS.gold, 0.90) : rgba(COLORS.humanity, 0.35 + strength * 0.45);
+      ctx.lineWidth = 1.1 + strength * 0.8;
       ctx.stroke();
-      // Anel técnico central, pequeno nos estágios médios e mais evidente nos altos.
-      const r = (2.6 + strength * 5.2) * pulse * (item.weight || 1);
+
+      // Anel de contenção central com divisões de escala Vernier (ticks a cada 45°)
       ctx.beginPath();
       ctx.arc(item.p.px, item.p.py, r, 0, Math.PI * 2);
-      ctx.strokeStyle = hit.hit ? COLORS.gold : rgba(COLORS.humanity, 0.24 + strength * 0.58);
-      ctx.lineWidth = 0.8 + strength * 0.9;
-      ctx.shadowColor = COLORS.humanity;
-      ctx.shadowBlur = strength > 0.45 ? 3 + strength * 5 : 0;
+      ctx.strokeStyle = hit.hit ? COLORS.gold : rgba(COLORS.humanity, 0.40 + strength * 0.60);
+      ctx.lineWidth = 1.2 + strength * 0.8;
+      if (strength > 0.4) {
+        ctx.shadowColor = COLORS.humanity;
+        ctx.shadowBlur = 6 + strength * 6;
+      }
       ctx.stroke();
-      ctx.shadowBlur = 0;
+
+      // Graduação Vernier do calibre de confinamento
+      for (let a = 0; a < 8; a += 1) {
+        const ang = item.phase + (a * Math.PI) / 4;
+        const tickR1 = r - 1.6;
+        const tickR2 = r + 1.8;
+        ctx.beginPath();
+        ctx.moveTo(item.p.px + Math.cos(ang) * tickR1, item.p.py + Math.sin(ang) * tickR1);
+        ctx.lineTo(item.p.px + Math.cos(ang) * tickR2, item.p.py + Math.sin(ang) * tickR2);
+        ctx.strokeStyle = rgba(COLORS.humanity, 0.75);
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+
+      // Garras bilaterais de fixação nas fitas 1 e 2
+      ctx.fillStyle = rgba(COLORS.humanity, 0.90);
+      ctx.beginPath();
+      ctx.arc(item.p1.px, item.p1.py, 2.0 * (item.p1.scale || 1), 0, Math.PI * 2);
+      ctx.arc(item.p2.px, item.p2.py, 2.0 * (item.p2.scale || 1), 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
       return;
     }
 
-    if (item.type === "mutation_ring") {
-      const axisColor = item.axis === "vontade" ? COLORS.will : item.axis === "comunhao" ? COLORS.communion : COLORS.humanity;
-      const pulse = 1 + Math.sin(now * 0.0022 + item.phase) * 0.17;
+    if (item.type === "broken_lock") {
+      // Braçadeira de contenção mecânica arrebentada por cisalhamento do Kaiju
+      ctx.save();
+      // Garra 1 deformada com fratura em dente de serra
       ctx.beginPath();
-      ctx.arc(item.p.px, item.p.py, item.ring * pulse * item.p.scale, 0, Math.PI * 2);
-      ctx.strokeStyle = hit.hit ? COLORS.gold : rgba(axisColor, 0.82);
-      ctx.lineWidth = 1.3;
-      ctx.setLineDash([2, 3]);
+      ctx.moveTo(item.p1.px - 8, item.p1.py - 5);
+      ctx.lineTo(item.p1.px + 2, item.p1.py + 1);
+      ctx.lineTo(item.p1.px + 5, item.p1.py - 2);
+      ctx.strokeStyle = rgba(COLORS.will, 0.90);
+      ctx.lineWidth = 2.0;
+      ctx.stroke();
+
+      // Garra 2 deformada
+      ctx.beginPath();
+      ctx.moveTo(item.p2.px + 8, item.p2.py + 5);
+      ctx.lineTo(item.p2.px - 2, item.p2.py - 1);
+      ctx.lineTo(item.p2.px - 5, item.p2.py + 2);
+      ctx.strokeStyle = rgba(COLORS.will, 0.90);
+      ctx.lineWidth = 2.0;
+      ctx.stroke();
+
+      // Ponto de ruptura em superaquecimento (vermelho de alerta)
+      const pulse = 1 + Math.sin(now * 0.008 + item.phase) * 0.3;
+      ctx.beginPath();
+      ctx.arc(item.p.px, item.p.py, 4.8 * pulse, 0, Math.PI * 1.4);
+      ctx.strokeStyle = rgba(COLORS.redAlert, 0.95);
+      ctx.lineWidth = 1.6;
+      ctx.shadowColor = COLORS.redAlert;
+      ctx.shadowBlur = 9;
+      ctx.stroke();
+      ctx.restore();
+
+      if (Math.random() < 0.06) {
+        this._sparkAt(item.p.px, item.p.py, 1.0);
+      }
+      return;
+    }
+
+    if (item.type === "mutation_ring" || item.type === "mutation_cyst") {
+      const axisColor = item.axis === "vontade" ? COLORS.will : item.axis === "comunhao" ? COLORS.communion : COLORS.humanity;
+      const pulse = 1 + Math.sin(now * 0.003 + item.phase) * 0.18;
+      const baseR = item.ring * pulse * item.p.scale;
+
+      ctx.save();
+      // Anel bio-luminescente externo pontilhado
+      ctx.beginPath();
+      ctx.arc(item.p.px, item.p.py, baseR, 0, Math.PI * 2);
+      ctx.strokeStyle = hit.hit ? COLORS.gold : rgba(axisColor, 0.88);
+      ctx.lineWidth = 1.6;
+      ctx.setLineDash([3, 3]);
       ctx.shadowColor = axisColor;
-      ctx.shadowBlur = 5;
+      ctx.shadowBlur = 8;
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.shadowBlur = 0;
+
+      // Esfera 3D densa com gradiente esférico (ponto de luz especular)
+      const grad = ctx.createRadialGradient(
+        item.p.px - baseR * 0.25, item.p.py - baseR * 0.25, baseR * 0.1,
+        item.p.px, item.p.py, baseR * 0.55
+      );
+      grad.addColorStop(0, COLORS.white);
+      grad.addColorStop(0.4, axisColor);
+      grad.addColorStop(1, "rgba(2, 16, 20, 0.85)");
+
+      ctx.beginPath();
+      ctx.arc(item.p.px, item.p.py, baseR * 0.55, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.shadowColor = axisColor;
+      ctx.shadowBlur = 6;
+      ctx.fill();
+
+      // 3 Micro-satélites orbitais giroscópicos em eixos 3D inclinados
+      for (let s = 0; s < 3; s += 1) {
+        const tiltAngle = (s * Math.PI) / 3;
+        const orbSpeed = now * 0.0025 + item.phase + (s * Math.PI * 2) / 3;
+        const orbR = baseR * 1.35;
+        const u = Math.cos(orbSpeed) * orbR;
+        const v = Math.sin(orbSpeed) * (orbR * 0.52);
+        const cosT = Math.cos(tiltAngle);
+        const sinT = Math.sin(tiltAngle);
+        const ox = item.p.px + (u * cosT - v * sinT);
+        const oy = item.p.py + (u * sinT + v * cosT);
+
+        ctx.beginPath();
+        ctx.arc(ox, oy, 1.3 * item.p.scale, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(axisColor, 0.90);
+        ctx.shadowColor = axisColor;
+        ctx.shadowBlur = 4;
+        ctx.fill();
+      }
+
+      // Micro-etiqueta técnica de Locus Genômico abaixo do cisto
+      if (z > 0.38) {
+        ctx.font = "bold 6px monospace";
+        ctx.textAlign = "center";
+        ctx.fillStyle = rgba(axisColor, 0.85);
+        const shortName = (item.name || "LOCUS").split(":")[0].slice(0, 14).toUpperCase();
+        ctx.fillText(`[${shortName}]`, item.p.px, item.p.py + baseR + 8);
+      }
+
+      ctx.restore();
+      return;
     }
+  }
+
+  _drawScientificHUD(startX, endX, centerY, radius) {
+    const ctx = this.ctx;
+    const width = this.width;
+    const height = this.height;
+
+    ctx.save();
+
+    // 1. Escala Métrica Molecular em Angstroms (Top Scientific Ruler)
+    const rulerY = 16;
+    const rulerStartX = startX;
+    const rulerEndX = Math.min(endX, width - 40);
+    const rulerWidth = rulerEndX - rulerStartX;
+    if (rulerWidth > 180) {
+      ctx.beginPath();
+      ctx.moveTo(rulerStartX, rulerY);
+      ctx.lineTo(rulerEndX, rulerY);
+      ctx.strokeStyle = "rgba(63, 244, 213, 0.35)";
+      ctx.lineWidth = 1.0;
+      ctx.stroke();
+
+      // Divisões a cada 10 Ångströms (34 Å representa um passo helicoidal completo do B-DNA)
+      const majorStep = rulerWidth / 6;
+      for (let i = 0; i <= 6; i += 1) {
+        const rx = rulerStartX + i * majorStep;
+        ctx.beginPath();
+        ctx.moveTo(rx, rulerY - 4);
+        ctx.lineTo(rx, rulerY + 4);
+        ctx.strokeStyle = "rgba(63, 244, 213, 0.65)";
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+
+        ctx.font = "6.5px monospace";
+        ctx.fillStyle = "rgba(63, 244, 213, 0.60)";
+        ctx.textAlign = "center";
+        ctx.fillText(`${i * 10}Å`, rx, rulerY - 7);
+
+        // Sub-divisões menores (minor ticks)
+        if (i < 6) {
+          for (let m = 1; m < 5; m += 1) {
+            const mx = rx + (m / 5) * majorStep;
+            ctx.beginPath();
+            ctx.moveTo(mx, rulerY - 2);
+            ctx.lineTo(mx, rulerY + 2);
+            ctx.strokeStyle = "rgba(63, 244, 213, 0.28)";
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Parâmetro do passo helicoidal B-DNA
+      ctx.font = "bold 7px monospace";
+      ctx.textAlign = "right";
+      ctx.fillStyle = "rgba(255, 209, 92, 0.75)";
+      ctx.fillText("HELICAL PITCH λ = 34.0 Å (10.5 bp/turn) | B-DNA CONFORMATION", rulerEndX, rulerY + 12);
+    }
+
+    // 2. Polaridade Química Antiparalela (5' → 3' e 3' → 5')
+    ctx.font = "bold 8px monospace";
+    ctx.textAlign = "left";
+    // Fita 1: 5' à esquerda, 3' à direita
+    ctx.fillStyle = "rgba(63, 244, 213, 0.70)";
+    ctx.fillText("5' α-STRAND", startX - 2, centerY - radius - 8);
+    ctx.textAlign = "right";
+    ctx.fillText("3' [OH]", endX + 8, centerY - radius - 8);
+
+    // Fita 2: 3' à esquerda, 5' à direita (antiparalela)
+    ctx.textAlign = "left";
+    ctx.fillStyle = "rgba(255, 209, 92, 0.65)";
+    ctx.fillText("3' β-STRAND", startX - 2, centerY + radius + 15);
+    ctx.textAlign = "right";
+    ctx.fillText("5' [PO₄³⁻]", endX + 8, centerY + radius + 15);
+
+    // 3. Retículos Ópticos de Calibração nos 4 Cantos do Espectro
+    const reticleSize = 9;
+    const margin = 10;
+    ctx.strokeStyle = "rgba(63, 244, 213, 0.35)";
+    ctx.lineWidth = 1.0;
+
+    ctx.beginPath();
+    ctx.moveTo(margin, margin + reticleSize); ctx.lineTo(margin, margin); ctx.lineTo(margin + reticleSize, margin);
+    ctx.moveTo(width - margin - reticleSize, margin); ctx.lineTo(width - margin, margin); ctx.lineTo(width - margin, margin + reticleSize);
+    ctx.moveTo(margin, height - margin - reticleSize); ctx.lineTo(margin, height - margin); ctx.lineTo(margin + reticleSize, height - margin);
+    ctx.moveTo(width - margin - reticleSize, height - margin); ctx.lineTo(width - margin, height - margin); ctx.lineTo(width - margin, height - margin - reticleSize);
+    ctx.stroke();
+
+    ctx.restore();
   }
 
   _sparkAt(x, y, intensity = 1) {
@@ -1068,33 +1829,68 @@ export class KaijuGenomeRenderer {
     ctx.stroke();
   }
 
-  _drawReticleOverlay(now, centerY, startX, endX) {
+  _drawHoverTarget(now) {
+    if (!this.hoverPoint) return;
     const ctx = this.ctx;
-    const pulse = 0.5 + Math.sin(now * 0.002) * 0.5;
-    ctx.save();
-    ctx.strokeStyle = rgba(COLORS.cyan, 0.18 + pulse * 0.07);
-    ctx.lineWidth = 0.65;
-    ctx.setLineDash([4, 8]);
-    ctx.beginPath();
-    ctx.moveTo(startX, centerY);
-    ctx.lineTo(endX, centerY);
-    ctx.stroke();
-    ctx.setLineDash([]);
+    const { x: hx, y: hy } = this.hoverPoint;
 
-    const x = this.width * 0.72;
-    const y = this.height * 0.19;
-    const r = Math.min(31, this.height * 0.06);
-    ctx.translate(x, y);
-    ctx.rotate(now * 0.00015);
-    ctx.strokeStyle = rgba(COLORS.cyan, 0.28);
+    let closest = null;
+    let minDist = 32;
+    for (let i = 0; i < this._poolIndex; i += 1) {
+      const item = this._renderables[i];
+      if ((item.type !== "mutation_ring" && item.type !== "mutation_cyst") || !item.p) continue;
+      const d = Math.hypot(item.p.px - hx, item.p.py - hy);
+      if (d < minDist) {
+        minDist = d;
+        closest = item;
+      }
+    }
+
+    if (!closest) return;
+
+    const px = closest.p.px;
+    const py = closest.p.py;
+    const axis = closest.axis || "neutral";
+    const color = axis === "vontade" ? COLORS.will : axis === "comunhao" ? COLORS.communion : COLORS.humanity;
+
+    ctx.save();
+    // Brackets around locus
+    const s = 14 * (1 + Math.sin(now * 0.005) * 0.1);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 8;
+
     ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.moveTo(px - s, py - s + 5); ctx.lineTo(px - s, py - s); ctx.lineTo(px - s + 5, py - s);
+    ctx.moveTo(px + s, py - s + 5); ctx.lineTo(px + s, py - s); ctx.lineTo(px + s - 5, py - s);
+    ctx.moveTo(px - s, py + s - 5); ctx.lineTo(px - s, py + s); ctx.lineTo(px - s + 5, py + s);
+    ctx.moveTo(px + s, py + s - 5); ctx.lineTo(px + s, py + s); ctx.lineTo(px + s - 5, py + s);
     ctx.stroke();
-    ctx.rotate(-now * 0.00035);
-    ctx.strokeStyle = rgba(COLORS.gold, 0.28);
+
+    // Connecting line to info box
+    const boxX = Math.min(this.width - 120, px + 20);
+    const boxY = Math.max(20, py - 32);
     ctx.beginPath();
-    ctx.arc(0, 0, r * 0.63, 0, Math.PI * 1.45);
+    ctx.moveTo(px + s, py - s);
+    ctx.lineTo(boxX, boxY + 16);
+    ctx.lineTo(boxX + 105, boxY + 16);
     ctx.stroke();
+
+    // Tactical tooltip box
+    ctx.fillStyle = "rgba(4, 18, 22, 0.90)";
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.fillRect(boxX, boxY - 14, 105, 30);
+    ctx.strokeRect(boxX, boxY - 14, 105, 30);
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = COLORS.white;
+    ctx.font = "bold 9px monospace";
+    ctx.fillText((closest.name || "LOCUS MUTADO").toUpperCase().slice(0, 15), boxX + 6, boxY - 2);
+    ctx.fillStyle = color;
+    ctx.font = "8px monospace";
+    ctx.fillText(`AXIS: ${axis.toUpperCase()}`, boxX + 6, boxY + 10);
     ctx.restore();
   }
 }
