@@ -1,6 +1,6 @@
-# GMS // Vínculo Kaiju — v2.0.1
+# GMS // Vínculo Kaiju — v2.0.2
 
-Versão 2.0.1 com HUD de biodiagnóstico médico futurista de alta visibilidade, limpeza profunda de ruído visual, ampliação dramática de mostradores vitais e renderizador biomolecular 3D de alta precisão clínica (B-DNA Watson-Crick).
+Versão 2.0.2 com HUD de biodiagnóstico médico futurista de alta visibilidade, visão 100% desobstruída do DNA, barra lateral de sinais vitais vertical (104px), eliminação de componentes obsoletos, renderizador 3D reativo inspirado nas interfaces Sci-Fi do Behance e mutagênese titânica puramente dinâmica proporcional aos vetores em tempo real.
 
 ## Correções de fidelidade do DNA
 
