@@ -205,15 +205,15 @@ export class KaijuEditorApplication extends Application {
       const carrier = getOrderedCarriers().find((entry) => entry.id === button.dataset.id);
       if (!carrier) return;
       const confirmed = await foundry.applications.api.DialogV2.confirm({
-        window: { title: "K-03 // Reiniciar Memória Genética", icon: "fa-solid fa-rotate-left" },
-        content: `<div class="kj-delete-confirm"><strong>Reiniciar genoma de ${escapeHTML(carrier.name)}?</strong><p>Todas as mutações persistentes e extremos históricos serão zerados para os valores atuais deste portador.</p></div>`,
-        yes: { label: "Reiniciar genoma", icon: "fa-solid fa-rotate-left" },
+        window: { title: "K-03 // Re-sincronizar Genoma", icon: "fa-solid fa-rotate-left" },
+        content: `<div class="kj-delete-confirm"><strong>Re-sincronizar genoma de ${escapeHTML(carrier.name)}?</strong><p>A assinatura molecular procedural K-03 será regenerada e harmonizada com a telemetria atual deste portador.</p></div>`,
+        yes: { label: "Re-sincronizar genoma", icon: "fa-solid fa-rotate-left" },
         no: { label: "Cancelar", icon: "fa-solid fa-xmark" },
         modal: true
       });
       if (!confirmed) return;
       await resetCarrierGenome(carrier.id);
-      ui.notifications.info(`Vínculo Kaiju: memória genética de ${carrier.name} reiniciada.`);
+      ui.notifications.info(`Vínculo Kaiju: genoma procedural de ${carrier.name} re-sincronizado.`);
       this.render(false);
     }));
 

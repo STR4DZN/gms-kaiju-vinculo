@@ -57,6 +57,21 @@ function rgba(hex, alpha = 1) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
+export function lerpColor(hexA, hexB, factor) {
+  const t = Math.max(0, Math.min(1, Number(factor) || 0));
+  const parseHex = (hex) => {
+    const clean = String(hex).replace("#", "");
+    const parsed = Number.parseInt(clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean, 16);
+    return [(parsed >> 16) & 255, (parsed >> 8) & 255, parsed & 255];
+  };
+  const [rA, gA, bA] = parseHex(hexA);
+  const [rB, gB, bB] = parseHex(hexB);
+  const r = Math.round(rA + (rB - rA) * t);
+  const g = Math.round(gA + (gB - gA) * t);
+  const b = Math.round(bA + (bB - bA) * t);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 function chooseSlots(rng, count, min = 0.08, max = 0.92, minGap = 0.055) {
   const result = [];
   let guard = 0;
@@ -110,11 +125,26 @@ export class KaijuGenomeRenderer {
     this._renderables = [];
     this._renderablePool = [];
     this._poolIndex = 0;
+    this._lastSignature = valueSignature(this.metrics);
 
     this._buildStaticGenome();
     this._boundMouseMove = (event) => this._onMouseMove(event);
     this._boundMouseLeave = () => { this.targetTiltX = 0; this.targetTiltY = 0; this.hoverPoint = null; };
     this._boundClick = (event) => this._onClick(event);
+  }
+
+  update(carrier) {
+    if (!carrier) return;
+    this.carrier = carrier;
+    this.metrics = getGenomeMetrics(carrier);
+    this.seed = this.metrics.genome.seed >>> 0;
+    this.rng = mulberry32(this.seed ^ 0x4B303344);
+    this._lastSignature = valueSignature(this.metrics);
+    this._buildStaticGenome();
+  }
+
+  setCarrier(carrier) {
+    this.update(carrier);
   }
 
   togglePause() {
@@ -551,6 +581,15 @@ export class KaijuGenomeRenderer {
     const height = this.height;
     ctx.clearRect(0, 0, width, height);
 
+    // Reatividade dinâmica em tempo real: detecta alterações de valores in-place no portador
+    const currentValues = this.carrier?.values;
+    const currentSig = currentValues ? `${currentValues.vontade}/${currentValues.comunhao}/${currentValues.humanidade}` : "";
+    if (currentSig && currentSig !== this._lastSignature) {
+      this.metrics = getGenomeMetrics(this.carrier);
+      this._lastSignature = currentSig;
+      this._buildStaticGenome();
+    }
+
     this.tiltX += (this.targetTiltX - this.tiltX) * 0.08;
     this.tiltY += (this.targetTiltY - this.tiltY) * 0.08;
     if (!this.paused) {
@@ -564,6 +603,8 @@ export class KaijuGenomeRenderer {
     const willMorph = this.metrics.willMorph || 0;
     const humanityMorph = this.metrics.humanityMorph || 0;
     const communionMorph = this.metrics.communionMorph || 0;
+    this._s1Color = lerpColor(COLORS.cyan, COLORS.will, willMorph);
+    this._s2Color = lerpColor(COLORS.humanity, COLORS.cyanBright, humanityMorph);
     const radius = baseRadius * (1 + willMorph * 0.04 - humanityMorph * 0.02);
 
     const startX = width * 0.06;
@@ -677,11 +718,14 @@ export class KaijuGenomeRenderer {
     const hit = this._hitFor(item, laserX, item.type === "mutation_cyst" ? 40 : 28);
     const z = item.p?.normZ ?? item.p1?.normZ ?? 0.5;
     const willMorph = this.metrics.willMorph || 0;
+    const humanityMorph = this.metrics.humanityMorph || 0;
+    const s1Color = this._s1Color || lerpColor(COLORS.cyan, COLORS.will, willMorph);
+    const s2Color = this._s2Color || lerpColor(COLORS.humanity, COLORS.cyanBright, humanityMorph);
 
     // Fitas do esqueleto molecular (Backbone)
     if (item.type === "backbone") {
       const isStrand1 = item.strand === 1;
-      const baseColor = isStrand1 ? COLORS.will : COLORS.cyan;
+      const baseColor = isStrand1 ? s1Color : s2Color;
       const isFront = z > 0.48;
       const strokeWidth = isFront ? (isStrand1 && willMorph > 0.3 ? 3.4 : 2.8) : 1.5;
       const alpha = isFront ? (0.75 + z * 0.25) : (0.28 + z * 0.30);
@@ -701,7 +745,7 @@ export class KaijuGenomeRenderer {
         ctx.lineWidth = strokeWidth;
         if (isFront) {
           ctx.shadowColor = baseColor;
-          ctx.shadowBlur = isStrand1 ? 6 + willMorph * 4 : 5;
+          ctx.shadowBlur = isStrand1 ? (4 + willMorph * 6) : 4;
         }
       }
       ctx.stroke();
@@ -709,16 +753,14 @@ export class KaijuGenomeRenderer {
       return;
     }
 
-    // Nós esféricos moleculares (Efeito pérola holográfica Behance 001)
+    // Nós esféricos moleculares (Efeito pérola holográfica 3D Behance 001)
     if (item.type === "backbone_node") {
       const isFront = z > 0.46;
       const scale = item.p.scale || 1;
-      const baseR = isFront ? (3.0 + z * 1.5) : (1.6 + z * 1.0);
+      const baseR = isFront ? (3.2 + z * 1.6) : (1.8 + z * 1.0);
       const r = baseR * scale;
       const isStrand1 = item.strand === 1;
-      const nodeColor = isStrand1
-        ? (willMorph > 0.25 ? COLORS.will : COLORS.cyanBright)
-        : COLORS.humanity;
+      const nodeColor = isStrand1 ? s1Color : s2Color;
 
       ctx.save();
       ctx.beginPath();
@@ -728,20 +770,22 @@ export class KaijuGenomeRenderer {
         ctx.fillStyle = COLORS.white;
         ctx.shadowColor = COLORS.gold;
         ctx.shadowBlur = 10;
+        ctx.fill();
       } else {
-        ctx.fillStyle = isFront ? rgba(nodeColor, 0.92) : rgba(nodeColor, 0.40);
         if (isFront) {
+          const sphereGrad = ctx.createRadialGradient(
+            item.p.px - r * 0.32, item.p.py - r * 0.32, r * 0.1,
+            item.p.px, item.p.py, r
+          );
+          sphereGrad.addColorStop(0, "rgba(255, 255, 255, 0.95)");
+          sphereGrad.addColorStop(0.35, rgba(nodeColor, 0.92));
+          sphereGrad.addColorStop(1, rgba(nodeColor, 0.45));
+          ctx.fillStyle = sphereGrad;
           ctx.shadowColor = nodeColor;
           ctx.shadowBlur = isStrand1 && willMorph > 0.3 ? 7 : 4;
+        } else {
+          ctx.fillStyle = rgba(nodeColor, 0.40);
         }
-      }
-      ctx.fill();
-
-      // Ponto de brilho especular / núcleo vítreo nos nós frontais
-      if (isFront) {
-        ctx.beginPath();
-        ctx.arc(item.p.px - r * 0.28, item.p.py - r * 0.28, r * 0.38, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
         ctx.fill();
       }
       ctx.restore();
@@ -756,9 +800,9 @@ export class KaijuGenomeRenderer {
 
       ctx.save();
       const grad = ctx.createLinearGradient(item.p1.px, item.p1.py, item.p2.px, item.p2.py);
-      grad.addColorStop(0, rgba(COLORS.will, alpha));
+      grad.addColorStop(0, rgba(s1Color, alpha));
       grad.addColorStop(0.5, rgba(COLORS.white, alpha * 0.9));
-      grad.addColorStop(1, rgba(COLORS.cyan, alpha));
+      grad.addColorStop(1, rgba(s2Color, alpha));
 
       ctx.beginPath();
       ctx.moveTo(item.p1.px, item.p1.py);
@@ -766,7 +810,7 @@ export class KaijuGenomeRenderer {
       ctx.strokeStyle = hit.hit ? rgba(COLORS.gold, 0.95) : grad;
       ctx.lineWidth = hit.hit ? lineWidth + 1.0 : lineWidth;
       if (hit.hit || isFront) {
-        ctx.shadowColor = hit.hit ? COLORS.gold : COLORS.cyan;
+        ctx.shadowColor = hit.hit ? COLORS.gold : (willMorph > 0.3 ? COLORS.will : COLORS.cyan);
         ctx.shadowBlur = hit.hit ? 8 : 4;
       }
       ctx.stroke();
@@ -790,14 +834,14 @@ export class KaijuGenomeRenderer {
       ctx.beginPath();
       ctx.moveTo(item.p1.px, item.p1.py);
       ctx.lineTo(midX - 4, midY - 2);
-      ctx.strokeStyle = rgba(COLORS.will, 0.9);
+      ctx.strokeStyle = rgba(s1Color, 0.9);
       ctx.lineWidth = 2.0;
       ctx.stroke();
 
       ctx.beginPath();
       ctx.moveTo(midX + 4, midY + 2);
       ctx.lineTo(item.p2.px, item.p2.py);
-      ctx.strokeStyle = rgba(COLORS.cyan, 0.9);
+      ctx.strokeStyle = rgba(s2Color, 0.9);
       ctx.lineWidth = 2.0;
       ctx.stroke();
       ctx.restore();
@@ -854,39 +898,29 @@ export class KaijuGenomeRenderer {
       return;
     }
 
-    // Marcação Holográfica Clínica de Locus Mutado (Mutation Cyst)
+    // Marcação Óptica Clínica Sutil (sem obstruir a visão da hélice)
     if (item.type === "mutation_cyst") {
-      const axisColor = item.axis === "vontade" ? COLORS.will : item.axis === "comunhao" ? COLORS.cyan : COLORS.humanity;
+      const axisColor = item.axis === "vontade" ? s1Color : (item.axis === "comunhao" ? COLORS.cyanBright : COLORS.humanity);
       const scale = item.p.scale || 1;
-      const r = Math.max(6, (item.ring || 8) * scale);
-      const pulse = 1 + Math.sin(now * 0.005 + (item.phase || 0)) * 0.18;
+      const r = Math.max(5, (item.ring || 6) * scale);
+      const pulse = 1 + Math.sin(now * 0.004 + (item.phase || 0)) * 0.15;
 
       ctx.save();
-      // Anel holográfico concêntrico do retículo
+      // Anel óptico sutil e translúcido (sem crosshair obstrutivo)
       ctx.beginPath();
       ctx.arc(item.p.px, item.p.py, r * pulse, 0, Math.PI * 2);
-      ctx.strokeStyle = hit.hit ? COLORS.gold : rgba(axisColor, 0.85);
-      ctx.lineWidth = hit.hit ? 2.0 : 1.5;
+      ctx.strokeStyle = hit.hit ? COLORS.gold : rgba(axisColor, 0.45);
+      ctx.lineWidth = hit.hit ? 1.5 : 0.8;
+      ctx.setLineDash([2, 3]);
+      ctx.stroke();
+
+      // Ponto de luz central suave
+      ctx.beginPath();
+      ctx.arc(item.p.px, item.p.py, 1.8 * scale, 0, Math.PI * 2);
+      ctx.fillStyle = hit.hit ? COLORS.white : rgba(axisColor, 0.85);
       ctx.shadowColor = axisColor;
-      ctx.shadowBlur = 9;
-      ctx.stroke();
-
-      // Crosshair central médico
-      const ch = 4 * scale;
-      ctx.beginPath();
-      ctx.moveTo(item.p.px - ch, item.p.py); ctx.lineTo(item.p.px + ch, item.p.py);
-      ctx.moveTo(item.p.px, item.p.py - ch); ctx.lineTo(item.p.px, item.p.py + ch);
-      ctx.strokeStyle = COLORS.white;
-      ctx.lineWidth = 1.0;
-      ctx.stroke();
-
-      // Ponto óptico central sutil
-      ctx.beginPath();
-      ctx.arc(item.p.px, item.p.py, 2.0 * scale, 0, Math.PI * 2);
-      ctx.fillStyle = hit.hit ? COLORS.white : rgba(axisColor, 0.95);
+      ctx.shadowBlur = 6;
       ctx.fill();
-
-      // Sem caixas ou textos flutuantes cobrindo a hélice (detalhes exibidos exclusivamente no HUD de hover)
       ctx.restore();
       return;
     }
@@ -942,6 +976,8 @@ export class KaijuGenomeRenderer {
     const sampleCount = this._s1.length;
 
     ctx.save();
+    const particlePoints = [];
+
     for (let i = 0; i < this.plexusParticles.length; i += 1) {
       const pt = this.plexusParticles[i];
       const t = (pt.t + timeSec * 0.015 * pt.speed) % 1.0;
@@ -953,26 +989,48 @@ export class KaijuGenomeRenderer {
       const oy = Math.sin(timeSec * 0.5 + pt.phase) * 14 + pt.yDrift;
       const px = refNode.px + ox;
       const py = refNode.py + oy;
+      particlePoints.push({ px, py, hue: pt.hue, size: pt.size, refNode, ox, oy });
 
       ctx.beginPath();
       ctx.arc(px, py, pt.size, 0, Math.PI * 2);
-      ctx.fillStyle = rgba(pt.hue, 0.40);
+      ctx.fillStyle = rgba(pt.hue, 0.45);
       ctx.shadowColor = pt.hue;
       ctx.shadowBlur = 4;
       ctx.fill();
 
+      // Ligação com o esqueleto do DNA
       const dist = Math.hypot(ox, oy);
-      if (dist < 42) {
-        const lineAlpha = (1 - dist / 42) * 0.12;
+      if (dist < 44) {
+        const lineAlpha = (1 - dist / 44) * 0.12;
         ctx.beginPath();
         ctx.moveTo(px, py);
         ctx.lineTo(refNode.px, refNode.py);
         ctx.strokeStyle = rgba(pt.hue, lineAlpha);
-        ctx.lineWidth = 0.6;
+        ctx.lineWidth = 0.5;
         ctx.shadowBlur = 0;
         ctx.stroke();
       }
     }
+
+    // Rede de constelação bio-quântica entre partículas próximas (Estilo Behance 001/005)
+    for (let i = 0; i < particlePoints.length; i += 1) {
+      const pA = particlePoints[i];
+      for (let j = i + 1; j < particlePoints.length; j += 1) {
+        const pB = particlePoints[j];
+        const pDist = Math.hypot(pA.px - pB.px, pA.py - pB.py);
+        if (pDist < 46) {
+          const alpha = (1 - pDist / 46) * 0.10;
+          ctx.beginPath();
+          ctx.moveTo(pA.px, pA.py);
+          ctx.lineTo(pB.px, pB.py);
+          ctx.strokeStyle = rgba(COLORS.cyan, alpha);
+          ctx.lineWidth = 0.5;
+          ctx.shadowBlur = 0;
+          ctx.stroke();
+        }
+      }
+    }
+
     ctx.restore();
   }
 
@@ -983,7 +1041,7 @@ export class KaijuGenomeRenderer {
 
     ctx.save();
 
-    // 1. Retículos Ópticos Médicos de Precisão nos 4 Cantos
+    // 1. Retículos Ópticos Médicos de Precisão nos 4 Cantos (Behance HUD)
     const reticleSize = 12;
     const margin = 10;
     ctx.strokeStyle = "rgba(0, 240, 208, 0.35)";
@@ -1010,8 +1068,10 @@ export class KaijuGenomeRenderer {
     ctx.fillStyle = stabColor;
     ctx.fillText(`${stabLabel} [${stab}%]`, width - margin - 8, margin + 14);
 
+    const willMorph = this.metrics.willMorph || 0;
+    const s1Color = this._s1Color || lerpColor(COLORS.cyan, COLORS.will, willMorph);
     ctx.textAlign = "left";
-    ctx.fillStyle = "rgba(255, 77, 77, 0.85)";
+    ctx.fillStyle = rgba(s1Color, 0.90);
     ctx.fillText("5' α-STRAND [FERA]", startX, height - margin - 8);
 
     ctx.textAlign = "right";
@@ -1097,7 +1157,7 @@ export class KaijuGenomeRenderer {
     const { x: hx, y: hy } = this.hoverPoint;
 
     let closest = null;
-    let minDist = 36;
+    let minDist = 32;
     for (let i = 0; i < this._poolIndex; i += 1) {
       const item = this._renderables[i];
       if (item.type !== "mutation_cyst" || !item.p) continue;
@@ -1113,46 +1173,41 @@ export class KaijuGenomeRenderer {
     const px = closest.p.px;
     const py = closest.p.py;
     const axis = closest.axis || "vontade";
-    const color = axis === "vontade" ? COLORS.will : axis === "comunhao" ? COLORS.cyan : COLORS.humanity;
+    const willMorph = this.metrics.willMorph || 0;
+    const color = axis === "vontade" ? (willMorph > 0.1 ? COLORS.will : COLORS.cyan) : axis === "comunhao" ? COLORS.cyanBright : COLORS.humanity;
 
     ctx.save();
-    // Brackets de mira holográfica em torno do locus
-    const s = 14;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.6;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 8;
-
-    ctx.beginPath();
-    ctx.moveTo(px - s, py - s + 4); ctx.lineTo(px - s, py - s); ctx.lineTo(px - s + 4, py - s);
-    ctx.moveTo(px + s, py - s + 4); ctx.lineTo(px + s, py - s); ctx.lineTo(px - s + 4, py - s);
-    ctx.moveTo(px - s, py + s - 4); ctx.lineTo(px - s, py + s); ctx.lineTo(px - s + 4, py + s);
-    ctx.moveTo(px + s, py + s - 4); ctx.lineTo(px + s, py + s); ctx.lineTo(px - s + 4, py + s);
-    ctx.stroke();
-
-    // Linha conetora para painel de detalhes
-    const boxX = Math.min(this.width - 160, px + 20);
-    const boxY = Math.max(30, py - 30);
-    ctx.beginPath();
-    ctx.moveTo(px + s, py - s);
-    ctx.lineTo(boxX, boxY + 16);
-    ctx.lineTo(boxX + 140, boxY + 16);
-    ctx.stroke();
-
-    // Caixa de diagnóstico médico
-    ctx.fillStyle = "rgba(2, 20, 24, 0.95)";
+    // Brackets de mira discretos em torno do ponto (sem bloquear visão)
+    const s = 10;
     ctx.strokeStyle = color;
     ctx.lineWidth = 1.2;
-    ctx.fillRect(boxX, boxY - 16, 140, 36);
-    ctx.strokeRect(boxX, boxY - 16, 140, 36);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 6;
 
+    ctx.beginPath();
+    ctx.moveTo(px - s, py - s + 3); ctx.lineTo(px - s, py - s); ctx.lineTo(px - s + 3, py - s);
+    ctx.moveTo(px + s, py - s + 3); ctx.lineTo(px + s, py - s); ctx.lineTo(px - s + 3, py - s);
+    ctx.moveTo(px - s, py + s - 3); ctx.lineTo(px - s, py + s); ctx.lineTo(px - s + 3, py + s);
+    ctx.moveTo(px + s, py + s - 3); ctx.lineTo(px + s, py + s); ctx.lineTo(px - s + 3, py + s);
+    ctx.stroke();
+
+    // Telemetria clínica acoplada na borda inferior (jamais cobre a hélice)
+    const hudX = Math.min(this.width - 180, Math.max(16, px - 80));
+    const hudY = this.height - 38;
+    ctx.fillStyle = "rgba(2, 20, 24, 0.92)";
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.0;
     ctx.shadowBlur = 0;
+    ctx.fillRect(hudX, hudY, 170, 28);
+    ctx.strokeRect(hudX, hudY, 170, 28);
+
     ctx.fillStyle = COLORS.white;
-    ctx.font = "bold 10.5px monospace";
-    ctx.fillText((closest.name || "LOCUS MUTADO").toUpperCase().slice(0, 18), boxX + 8, boxY - 1);
+    ctx.font = "bold 9.5px monospace";
+    ctx.textAlign = "left";
+    ctx.fillText((closest.name || "LOCUS DINÂMICO").toUpperCase().slice(0, 20), hudX + 6, hudY + 12);
     ctx.fillStyle = color;
-    ctx.font = "9.5px monospace";
-    ctx.fillText(`EIXO: ${axis.toUpperCase()} · LIMIAR: ${closest.threshold || 20}%`, boxX + 8, boxY + 12);
+    ctx.font = "8.5px monospace";
+    ctx.fillText(`TELEMETRIA: ${axis.toUpperCase()} · VALOR: ${closest.threshold || 0}%`, hudX + 6, hudY + 23);
     ctx.restore();
   }
 }

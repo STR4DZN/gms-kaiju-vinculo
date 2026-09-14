@@ -164,6 +164,30 @@ for (const tc of testCarriers) {
 }
 console.assert(rendererMathOk, "Renderer 3D math projection must be valid");
 
+import { lerpColor } from "../scripts/genome-renderer.js";
+
+// 3b. COLOR INTERPOLATION & REACTIVITY
+const cZero = lerpColor("#00f0d0", "#ff4d4d", 0);
+console.assert(cZero === "rgb(0, 240, 208)", `Expected cyan at 0% Fera, got ${cZero}`);
+const cFull = lerpColor("#00f0d0", "#ff4d4d", 1);
+console.assert(cFull === "rgb(255, 77, 77)", `Expected red at 100% Fera, got ${cFull}`);
+
+// Test renderer.update()
+const dynamicCarrier = { id: "dyn-1", name: "Dynamic Subject", values: { vontade: 0, comunhao: 0, humanidade: 100 }, genome: dorm };
+const testRenderer = new KaijuGenomeRenderer(mockCanvas, dynamicCarrier);
+console.assert(testRenderer.metrics.mutationLoad === 0, "Initial mutationLoad must be 0");
+console.assert(testRenderer.metrics.branchCount === 0, "Initial branchCount must be 0");
+
+// Dynamic update via .update()
+testRenderer.update({ ...dynamicCarrier, values: { vontade: 85, comunhao: 30, humanidade: 15 } });
+console.assert(testRenderer.metrics.mutationLoad > 50, "Updated mutationLoad must be > 50");
+console.assert(testRenderer.metrics.branchCount >= 5, "Updated branchCount must be >= 5");
+
+// Dynamic regression via .update() back to pure human
+testRenderer.update({ ...dynamicCarrier, values: { vontade: 0, comunhao: 0, humanidade: 100 } });
+console.assert(testRenderer.metrics.mutationLoad === 0, "Regressed mutationLoad must be 0");
+console.assert(testRenderer.metrics.branchCount === 0, "Regressed branchCount must be 0");
+
 // 4. QoL & STORAGE OPERATIONS
 async function runQoL() {
   const carrierAlpha = getCarrier("carrier-alpha");
@@ -206,7 +230,7 @@ async function runQoL() {
   console.assert(detailHTML.includes("HUMANO"), "HUMANO vital tag present");
   console.assert(detailHTML.includes("MÉDIA"), "MÉDIA vital tag present");
 
-  console.log("TODAS AS 12 VERIFICAÇÕES PROFUNDAS PASSARAM COM SUCESSO (100%)!");
+  console.log("TODAS AS 16 VERIFICAÇÕES PROFUNDAS PASSARAM COM SUCESSO (100%)!");
 }
 
 runQoL().catch(err => {
