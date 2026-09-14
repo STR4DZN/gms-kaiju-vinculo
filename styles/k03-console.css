@@ -1270,67 +1270,6 @@
   letter-spacing: 0.05em;
 }
 
-/* Sample Control Block */
-.kj-block-title {
-  margin-bottom: 5px;
-  color: #609d9b;
-  font: 700 10px/1 var(--k03-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.kj-dna-pill {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  height: 28px;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 1px solid var(--k03-cyan) !important;
-  border-radius: 0 !important;
-  background: rgba(0, 240, 208, 0.12) !important;
-  color: var(--k03-cyan) !important;
-  font: 700 10px/1 var(--k03-display) !important;
-  letter-spacing: 0.08em;
-  box-shadow: 0 0 8px rgba(0, 240, 208, 0.15) !important;
-  cursor: pointer;
-}
-
-.kj-dna-pill.is-filled {
-  background: rgba(0, 240, 208, 0.18) !important;
-  color: #3affdc !important;
-  box-shadow: 0 0 10px rgba(0, 240, 208, 0.25) !important;
-}
-
-/* Memory Grid */
-.kj-memory-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 5px;
-}
-
-.kj-memory-item {
-  display: flex;
-  flex-direction: column;
-  padding: 4px 6px;
-  border: 1px solid #0d4a52;
-  background: rgba(2, 18, 22, 0.88);
-}
-
-.kj-memory-item small {
-  font: 700 9px/1 var(--k03-mono);
-  color: #518c8b;
-  letter-spacing: 0.05em;
-}
-
-.kj-memory-item b {
-  font: 700 13px/1 var(--k03-mono);
-  color: #d8f7f4;
-  margin-top: 3px;
-}
-
 /* Center Column */
 .kj-dna-center-col {
   display: flex;
@@ -1548,8 +1487,9 @@
 }
 
 .kj-dna-legend-strand.s1 .legend-dot {
-  background: #ff4d4d;
-  box-shadow: 0 0 6px #ff4d4d;
+  background: var(--s1-color, #00f0d0);
+  box-shadow: 0 0 6px var(--s1-color, #00f0d0);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
 .kj-dna-legend-strand.s2 .legend-dot {
@@ -2199,7 +2139,7 @@
     grid-template-columns: var(--kj-carrier-column, clamp(210px, 23vw, 250px)) minmax(0, 1fr) !important;
   }
   .kj-dna-main-frame {
-    grid-template-columns: 210px minmax(0, 1fr) !important;
+    grid-template-columns: 104px minmax(0, 1fr) !important;
   }
   .kj-record-head {
     grid-template-columns: minmax(200px, 1fr) auto !important;
@@ -2214,16 +2154,13 @@
     grid-template-columns: var(--kj-carrier-column, clamp(180px, 24vw, 220px)) minmax(0, 1fr) !important;
   }
   .kj-dna-main-frame {
-    grid-template-columns: 190px minmax(0, 1fr) !important;
+    grid-template-columns: 104px minmax(0, 1fr) !important;
   }
-  .kj-dna-vital-card {
-    height: 54px;
-    grid-template-columns: 44px minmax(0, 1fr);
-  }
-  .kj-vital-gauge,
-  .kj-dial-svg {
-    width: 44px;
-    height: 44px;
+  .kj-dna-vital-card.vertical {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    height: auto !important;
   }
 }
 

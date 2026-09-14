@@ -56,6 +56,21 @@ function normalizeValues(values = {}) {
   };
 }
 
+export function lerpColor(hexA, hexB, factor) {
+  const t = Math.max(0, Math.min(1, Number(factor) || 0));
+  const parseHex = (hex) => {
+    const clean = String(hex).replace("#", "");
+    const parsed = Number.parseInt(clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean, 16);
+    return [(parsed >> 16) & 255, (parsed >> 8) & 255, parsed & 255];
+  };
+  const [rA, gA, bA] = parseHex(hexA);
+  const [rB, gB, bB] = parseHex(hexB);
+  const r = Math.round(rA + (rB - rA) * t);
+  const g = Math.round(gA + (gB - gA) * t);
+  const b = Math.round(bA + (bB - bA) * t);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 function isDormant(values) {
   return !values.vontade && !values.comunhao && !values.humanidade;
 }
@@ -264,6 +279,9 @@ export function renderGenomePanel(carrier, { detailed = false, reading = "", pro
   const stabilityStatus = metrics.stability >= 75 ? "ESTÁVEL" : metrics.stability >= 45 ? "COMPENSADA" : "CRÍTICA";
   const stabilityColor = metrics.stability >= 75 ? PALETTE.humanidade : metrics.stability >= 45 ? PALETTE.amber : PALETTE.vontade;
 
+  const willMorph = metrics.willMorph || 0;
+  const s1Color = lerpColor("#00f0d0", "#ff4d4d", willMorph);
+
   return `<section class="kj-dna-console ${detailed ? "is-detailed" : ""}" data-kj-genome-console data-genome-seed="${seed}">
     <div class="kj-dna-crt" aria-hidden="true"></div><div class="kj-dna-vignette" aria-hidden="true"></div>
 
@@ -322,7 +340,7 @@ export function renderGenomePanel(carrier, { detailed = false, reading = "", pro
         <div class="kj-dna-canvas-container">
           <canvas class="kj-dna-helix-canvas" data-kj-genome-canvas title="DNA procedural K-03 — mova o mouse para inclinar; clique para alterar a rotação"></canvas>
           <div class="kj-dna-canvas-badges">
-            <span class="kj-dna-legend-strand s1"><i class="legend-dot"></i> FITA 1 (α / FERA)</span>
+            <span class="kj-dna-legend-strand s1" style="--s1-color:${s1Color}; color:${s1Color};"><i class="legend-dot"></i> FITA 1 (α / FERA)</span>
             <span class="kj-dna-legend-strand s2"><i class="legend-dot"></i> FITA 2 (β / HUMANO)</span>
             ${metrics.extraStrand > 0.08 ? `<span class="kj-dna-legend-strand s3"><i class="legend-dot"></i> FITA 3 (γ / ALIEN)</span>` : ""}
           </div>

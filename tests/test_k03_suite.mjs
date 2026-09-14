@@ -178,15 +178,34 @@ const testRenderer = new KaijuGenomeRenderer(mockCanvas, dynamicCarrier);
 console.assert(testRenderer.metrics.mutationLoad === 0, "Initial mutationLoad must be 0");
 console.assert(testRenderer.metrics.branchCount === 0, "Initial branchCount must be 0");
 
-// Dynamic update via .update()
+// Verify branch_spicule generation when pure human (must be 0)
+testRenderer._poolIndex = 0;
+const proj = testRenderer._projector(300, 80);
+testRenderer._pushBranchRenderables(proj, 300, 80, 50, 900);
+const zeroSpicules = testRenderer._renderables.slice(0, testRenderer._poolIndex).filter(item => item.type === "branch_spicule");
+console.assert(zeroSpicules.length === 0, "Must have 0 branch_spicule at 0% Fera");
+
+// Dynamic update via .update() with high Fera
 testRenderer.update({ ...dynamicCarrier, values: { vontade: 85, comunhao: 30, humanidade: 15 } });
 console.assert(testRenderer.metrics.mutationLoad > 50, "Updated mutationLoad must be > 50");
 console.assert(testRenderer.metrics.branchCount >= 5, "Updated branchCount must be >= 5");
+
+testRenderer._poolIndex = 0;
+testRenderer._pushBranchRenderables(proj, 300, 80, 50, 900);
+const highSpicules = testRenderer._renderables.slice(0, testRenderer._poolIndex).filter(item => item.type === "branch_spicule");
+console.assert(highSpicules.length >= 5, `Expected >= 5 branch_spicule at 85% Fera, got ${highSpicules.length}`);
 
 // Dynamic regression via .update() back to pure human
 testRenderer.update({ ...dynamicCarrier, values: { vontade: 0, comunhao: 0, humanidade: 100 } });
 console.assert(testRenderer.metrics.mutationLoad === 0, "Regressed mutationLoad must be 0");
 console.assert(testRenderer.metrics.branchCount === 0, "Regressed branchCount must be 0");
+
+testRenderer._poolIndex = 0;
+testRenderer._pushBranchRenderables(proj, 300, 80, 50, 900);
+const regressedSpicules = testRenderer._renderables.slice(0, testRenderer._poolIndex).filter(item => item.type === "branch_spicule");
+console.assert(regressedSpicules.length === 0, "Regressed Fera to 0% must collapse all branch_spicule to 0");
+
+import fs from "node:fs";
 
 // 4. QoL & STORAGE OPERATIONS
 async function runQoL() {
@@ -230,10 +249,23 @@ async function runQoL() {
   console.assert(detailHTML.includes("HUMANO"), "HUMANO vital tag present");
   console.assert(detailHTML.includes("MÉDIA"), "MÉDIA vital tag present");
 
-  console.log("TODAS AS 16 VERIFICAÇÕES PROFUNDAS PASSARAM COM SUCESSO (100%)!");
+  // 6. CSS & TEMPLATE INTEGRITY VERIFICATION
+  const cssContent = fs.readFileSync(new URL("../styles/k03-console.css", import.meta.url), "utf8");
+  console.assert(!cssContent.includes("210px minmax(0, 1fr)"), "CSS must NOT override main-frame to 210px in media queries");
+  console.assert(!cssContent.includes("190px minmax(0, 1fr)"), "CSS must NOT override main-frame to 190px in media queries");
+  console.assert(!cssContent.includes(".kj-memory-grid"), "CSS must NOT contain dead .kj-memory-grid styles");
+  console.assert(!cssContent.includes(".kj-dna-pill"), "CSS must NOT contain dead .kj-dna-pill styles");
+  console.assert(cssContent.includes("grid-template-columns: 104px minmax(0, 1fr)"), "CSS must lock main-frame to 104px vertical rail");
+
+  const hbsContent = fs.readFileSync(new URL("../templates/editor.hbs", import.meta.url), "utf8");
+  console.assert(!hbsContent.includes("memória genética"), "editor.hbs must NOT mention memória genética");
+  console.assert(hbsContent.includes("Re-sincronizar genoma procedural"), "editor.hbs must use procedural re-sync label");
+
+  console.log("TODAS AS 22 VERIFICAÇÕES PROFUNDAS PASSARAM COM SUCESSO (100%)!");
 }
 
 runQoL().catch(err => {
   console.error("FALHA:", err);
   process.exit(1);
 });
+

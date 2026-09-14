@@ -1,4 +1,6 @@
-import { getGenomeMetrics, hashString } from "./genome.js";
+import { getGenomeMetrics, hashString, lerpColor } from "./genome.js";
+
+export { lerpColor };
 
 const COLORS = Object.freeze({
   void: "#011316",
@@ -57,21 +59,6 @@ function rgba(hex, alpha = 1) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-export function lerpColor(hexA, hexB, factor) {
-  const t = Math.max(0, Math.min(1, Number(factor) || 0));
-  const parseHex = (hex) => {
-    const clean = String(hex).replace("#", "");
-    const parsed = Number.parseInt(clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean, 16);
-    return [(parsed >> 16) & 255, (parsed >> 8) & 255, parsed & 255];
-  };
-  const [rA, gA, bA] = parseHex(hexA);
-  const [rB, gB, bB] = parseHex(hexB);
-  const r = Math.round(rA + (rB - rA) * t);
-  const g = Math.round(gA + (gB - gA) * t);
-  const b = Math.round(bA + (bB - bA) * t);
-  return `rgb(${r}, ${g}, ${b})`;
-}
-
 function chooseSlots(rng, count, min = 0.08, max = 0.92, minGap = 0.055) {
   const result = [];
   let guard = 0;
@@ -89,9 +76,9 @@ function valueSignature(metrics) {
 
 /**
  * KaijuGenomeRenderer — Renderizador Biomolecular 3D de Alta Precisão Clínica
- * Visual moderno, limpo e cinematográfico de HUD Médico Futurista.
- * Estrutura de B-DNA com ordenação em profundidade (z-sorting), iluminação holográfica,
- * scanner óptico, marcação clínica de loci mutados e zero acúmulo de lixo visual.
+ * Visual moderno, limpo e cinematográfico de HUD Médico Futurista (Behance 001/005).
+ * Estrutura de B-DNA procedural com ordenação em profundidade (z-sorting), iluminação holográfica,
+ * scanner óptico, ramificações predatórias visíveis e viewport 100% livre de obstruções de texto.
  */
 export class KaijuGenomeRenderer {
   constructor(canvas, carrier) {
@@ -127,17 +114,39 @@ export class KaijuGenomeRenderer {
     this._poolIndex = 0;
     this._lastSignature = valueSignature(this.metrics);
 
+    this._initPlexusParticles();
     this._buildStaticGenome();
     this._boundMouseMove = (event) => this._onMouseMove(event);
     this._boundMouseLeave = () => { this.targetTiltX = 0; this.targetTiltY = 0; this.hoverPoint = null; };
     this._boundClick = (event) => this._onClick(event);
   }
 
+  _initPlexusParticles() {
+    this.plexusParticles = [];
+    const prng = mulberry32(this.seed ^ 0x992211);
+    for (let i = 0; i < 32; i += 1) {
+      this.plexusParticles.push({
+        t: prng(),
+        strand: prng() > 0.5 ? 1 : 2,
+        radialOffset: (prng() - 0.5) * 58,
+        yDrift: (prng() - 0.5) * 38,
+        phase: prng() * Math.PI * 2,
+        speed: 0.3 + prng() * 0.7,
+        size: 0.9 + prng() * 1.4,
+        hue: prng() > 0.7 ? COLORS.goldSoft : (prng() > 0.4 ? COLORS.cyanBright : COLORS.humanity)
+      });
+    }
+  }
+
   update(carrier) {
     if (!carrier) return;
     this.carrier = carrier;
     this.metrics = getGenomeMetrics(carrier);
-    this.seed = this.metrics.genome.seed >>> 0;
+    const newSeed = this.metrics.genome.seed >>> 0;
+    if (newSeed !== this.seed) {
+      this.seed = newSeed;
+      this._initPlexusParticles();
+    }
     this.rng = mulberry32(this.seed ^ 0x4B303344);
     this._lastSignature = valueSignature(this.metrics);
     this._buildStaticGenome();
@@ -254,22 +263,6 @@ export class KaijuGenomeRenderer {
       }
     }
     this.persistentMarks = this.dynamicLoci;
-
-    // Partículas ambientais de plexus/constelação (Estilo Behance 001/005)
-    this.plexusParticles = [];
-    const prng = mulberry32(this.seed ^ 0x992211);
-    for (let i = 0; i < 28; i += 1) {
-      this.plexusParticles.push({
-        t: prng(),
-        strand: prng() > 0.5 ? 1 : 2,
-        radialOffset: (prng() - 0.5) * 54,
-        yDrift: (prng() - 0.5) * 36,
-        phase: prng() * Math.PI * 2,
-        speed: 0.3 + prng() * 0.7,
-        size: 0.9 + prng() * 1.3,
-        hue: prng() > 0.7 ? COLORS.goldSoft : (prng() > 0.4 ? COLORS.cyanBright : COLORS.humanity)
-      });
-    }
   }
 
   start() {
@@ -391,13 +384,15 @@ export class KaijuGenomeRenderer {
     const fields = this._hotspotFields(t);
     const xBase = startX + t * (endX - startX);
 
-    // Sulco Maior (~224°) e Sulco Menor (~136°) da geometria canônica do B-DNA
-    const strandPhase = strand === 2 ? (Math.PI - 0.42) : 0;
-    const baseTheta = t * Math.PI * 4 + this.angle + strandPhase;
-
+    // Passo de hélice dinâmico: 3.4 a 3.8 voltas (estética canônica Behance 001/005)
     const willMorph = m.willMorph || 0;
     const communionMorph = m.communionMorph || 0;
     const lossMorph = m.identityLossMorph || 0;
+    const pitch = 3.4 + willMorph * 0.4;
+
+    // Sulco Maior (~224°) e Sulco Menor (~136°) da geometria canônica do B-DNA
+    const strandPhase = strand === 2 ? (Math.PI - 0.42) : 0;
+    const baseTheta = t * Math.PI * 2 * pitch + this.angle + strandPhase;
     const sign = strand === 1 ? 1 : -1;
 
     const seedPhase = (this.seed % 997) * 0.0061;
@@ -409,10 +404,10 @@ export class KaijuGenomeRenderer {
     );
     const theta = baseTheta + phaseShear;
 
-    // Hipertrofia suave da fita 1 (FERA) em estágios avançados
+    // Hipertrofia suave da fita 1 (FERA) em estágios avançados de avanço predatório
     let strandRadial = 1.0;
     if (strand === 1) {
-      strandRadial += willMorph * 0.22 + fields.will * willMorph * 0.12;
+      strandRadial += willMorph * 0.28 + fields.will * willMorph * 0.16;
     } else {
       strandRadial += lossMorph * 0.12 * Math.sin(t * Math.PI * 5 + seedPhase);
     }
@@ -481,6 +476,25 @@ export class KaijuGenomeRenderer {
         t: branch.t,
         persistent: branch.persistent
       });
+
+      // Espículas predatórias divergentes visíveis (estilo Behance sci-fi)
+      if (strength > 0.04) {
+        const branchLen = (22 + branch.length * 28) * strength;
+        const angle = source.theta + branch.sign * (0.85 + branch.curl * 0.4);
+        const bx = source.x + (branch.curl * 12) * strength;
+        const by = centerY + (radius * source.radial + branchLen) * Math.sin(angle);
+        const bz = (radius * source.radial + branchLen) * Math.cos(angle);
+        const pTip = project(bx, by, bz);
+        this._pushRenderable({
+          type: "branch_spicule",
+          p1: p,
+          p2: pTip,
+          z: Math.max(p.z, pTip.z) + 1.5,
+          strength,
+          strand: branch.strand,
+          t: branch.t
+        });
+      }
     });
   }
 
@@ -792,7 +806,7 @@ export class KaijuGenomeRenderer {
       return;
     }
 
-    // Degraus Watson-Crick (Pares de Bases)
+    // Degraus Watson-Crick (Pares de Bases Moleculares com Grânulos Atômicos Behance 001)
     if (item.type === "rung") {
       const isFront = z > 0.48;
       const alpha = isFront ? (0.65 + z * 0.35) : (0.20 + z * 0.25);
@@ -815,35 +829,75 @@ export class KaijuGenomeRenderer {
       }
       ctx.stroke();
 
-      // Ponto focal central de ligação de hidrogênio
-      const midX = (item.p1.px + item.p2.px) * 0.5;
-      const midY = (item.p1.py + item.p2.py) * 0.5;
-      ctx.beginPath();
-      ctx.arc(midX, midY, isFront ? 2.0 : 1.2, 0, Math.PI * 2);
-      ctx.fillStyle = hit.hit ? COLORS.white : rgba(COLORS.white, alpha);
-      ctx.fill();
+      // Grânulos atômicos ao longo do degrau (Behance 001)
+      if (isFront) {
+        const beadCount = 3;
+        for (let b = 1; b <= beadCount; b += 1) {
+          const bt = b / (beadCount + 1);
+          const bx = item.p1.px + (item.p2.px - item.p1.px) * bt;
+          const by = item.p1.py + (item.p2.py - item.p1.py) * bt;
+          const br = (b === 2 ? 2.3 : 1.6) * (item.p1.scale || 1);
+          const bColor = b === 2 ? COLORS.white : (b === 1 ? s1Color : s2Color);
+
+          ctx.beginPath();
+          ctx.arc(bx, by, br, 0, Math.PI * 2);
+          ctx.fillStyle = hit.hit ? COLORS.white : rgba(bColor, alpha * 0.95);
+          ctx.shadowColor = bColor;
+          ctx.shadowBlur = b === 2 ? 6 : 3;
+          ctx.fill();
+
+          if (b === 2) {
+            ctx.beginPath();
+            ctx.arc(bx - br * 0.3, by - br * 0.3, br * 0.35, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+            ctx.fill();
+          }
+        }
+      } else {
+        const midX = (item.p1.px + item.p2.px) * 0.5;
+        const midY = (item.p1.py + item.p2.py) * 0.5;
+        ctx.beginPath();
+        ctx.arc(midX, midY, 1.2, 0, Math.PI * 2);
+        ctx.fillStyle = hit.hit ? COLORS.white : rgba(COLORS.white, alpha);
+        ctx.fill();
+      }
       ctx.restore();
       return;
     }
 
-    // Degrau em ruptura sob estresse de mutação
+    // Degrau em ruptura sob estresse de mutação kaiju
     if (item.type === "torn_rung") {
       ctx.save();
       const midX = (item.p1.px + item.p2.px) * 0.5;
       const midY = (item.p1.py + item.p2.py) * 0.5;
       ctx.beginPath();
       ctx.moveTo(item.p1.px, item.p1.py);
-      ctx.lineTo(midX - 4, midY - 2);
+      ctx.lineTo(midX - 5, midY - 3);
       ctx.strokeStyle = rgba(s1Color, 0.9);
       ctx.lineWidth = 2.0;
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.moveTo(midX + 4, midY + 2);
+      ctx.moveTo(midX + 5, midY + 3);
       ctx.lineTo(item.p2.px, item.p2.py);
       ctx.strokeStyle = rgba(s2Color, 0.9);
       ctx.lineWidth = 2.0;
       ctx.stroke();
+
+      // Ponto de ruptura instável com brilho predatório
+      ctx.beginPath();
+      ctx.arc(midX - 5, midY - 3, 2.0, 0, Math.PI * 2);
+      ctx.fillStyle = rgba(COLORS.will, 0.95);
+      ctx.shadowColor = COLORS.will;
+      ctx.shadowBlur = 6;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(midX + 5, midY + 3, 2.0, 0, Math.PI * 2);
+      ctx.fillStyle = rgba(COLORS.cyanBright, 0.95);
+      ctx.shadowColor = COLORS.cyanBright;
+      ctx.shadowBlur = 6;
+      ctx.fill();
       ctx.restore();
       return;
     }
@@ -894,6 +948,43 @@ export class KaijuGenomeRenderer {
       ctx.lineWidth = 1.0;
       ctx.setLineDash([2, 3]);
       ctx.stroke();
+      ctx.restore();
+      return;
+    }
+
+    // Espículas predatórias de ramificação da Fera (visíveis e dinâmicas)
+    if (item.type === "branch_spicule") {
+      const str = item.strength || 0.5;
+      const isFront = z > 0.45;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(item.p1.px, item.p1.py);
+      const cpx = (item.p1.px + item.p2.px) * 0.5;
+      const cpy = (item.p1.py + item.p2.py) * 0.5 - 6 * str;
+      ctx.quadraticCurveTo(cpx, cpy, item.p2.px, item.p2.py);
+      ctx.strokeStyle = hit.hit ? rgba(COLORS.white, 0.95) : rgba(COLORS.will, isFront ? 0.85 * str : 0.40 * str);
+      ctx.lineWidth = isFront ? (1.6 + str * 1.2) : 1.0;
+      if (isFront) {
+        ctx.shadowColor = COLORS.will;
+        ctx.shadowBlur = 6 * str;
+      }
+      ctx.stroke();
+
+      // Nó esférico terminal (ponta da espícula)
+      const tipR = (2.2 + str * 1.6) * (item.p2.scale || 1);
+      ctx.beginPath();
+      ctx.arc(item.p2.px, item.p2.py, tipR, 0, Math.PI * 2);
+      ctx.fillStyle = hit.hit ? COLORS.white : rgba(COLORS.willCore, 0.95);
+      ctx.shadowColor = COLORS.will;
+      ctx.shadowBlur = 8;
+      ctx.fill();
+
+      if (isFront && tipR > 2.5) {
+        ctx.beginPath();
+        ctx.arc(item.p2.px - tipR * 0.28, item.p2.py - tipR * 0.28, tipR * 0.35, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.fill();
+      }
       ctx.restore();
       return;
     }
@@ -1042,9 +1133,9 @@ export class KaijuGenomeRenderer {
     ctx.save();
 
     // 1. Retículos Ópticos Médicos de Precisão nos 4 Cantos (Behance HUD)
-    const reticleSize = 12;
+    const reticleSize = 14;
     const margin = 10;
-    ctx.strokeStyle = "rgba(0, 240, 208, 0.35)";
+    ctx.strokeStyle = "rgba(0, 240, 208, 0.40)";
     ctx.lineWidth = 1.2;
 
     ctx.beginPath();
@@ -1054,29 +1145,18 @@ export class KaijuGenomeRenderer {
     ctx.moveTo(width - margin - reticleSize, height - margin); ctx.lineTo(width - margin, height - margin); ctx.lineTo(width - margin, height - margin - reticleSize);
     ctx.stroke();
 
-    // 2. Legenda de Polaridade e Identificação Médica
-    ctx.font = "bold 10px monospace";
-    ctx.textAlign = "left";
-    ctx.fillStyle = "rgba(0, 240, 208, 0.85)";
-    ctx.fillText("K-03 // MONITOR XENOGENÔMICO 3D", margin + 8, margin + 14);
-
-    const stab = this.metrics.stability ?? 50;
-    const stabLabel = stab >= 75 ? "HOMEOSTASE ESTÁVEL" : stab >= 45 ? "HOMEOSTASE COMPENSADA" : "HOMEOSTASE CRÍTICA";
-    const stabColor = stab >= 75 ? COLORS.humanity : stab >= 45 ? COLORS.gold : COLORS.will;
-
-    ctx.textAlign = "right";
-    ctx.fillStyle = stabColor;
-    ctx.fillText(`${stabLabel} [${stab}%]`, width - margin - 8, margin + 14);
-
-    const willMorph = this.metrics.willMorph || 0;
-    const s1Color = this._s1Color || lerpColor(COLORS.cyan, COLORS.will, willMorph);
-    ctx.textAlign = "left";
-    ctx.fillStyle = rgba(s1Color, 0.90);
-    ctx.fillText("5' α-STRAND [FERA]", startX, height - margin - 8);
-
-    ctx.textAlign = "right";
-    ctx.fillStyle = "rgba(0, 240, 208, 0.85)";
-    ctx.fillText("3' β-STRAND [HUMANO] · B-DNA HÍBRIDO", endX, height - margin - 8);
+    // 2. Ticks de calibração médica sutil nas margens (estilo Behance 001/005)
+    ctx.strokeStyle = "rgba(0, 240, 208, 0.15)";
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    const count = 16;
+    const dx = (endX - startX) / count;
+    for (let i = 0; i <= count; i += 1) {
+      const tx = startX + i * dx;
+      ctx.moveTo(tx, margin); ctx.lineTo(tx, margin + 4);
+      ctx.moveTo(tx, height - margin); ctx.lineTo(tx, height - margin - 4);
+    }
+    ctx.stroke();
 
     ctx.restore();
   }
@@ -1157,7 +1237,7 @@ export class KaijuGenomeRenderer {
     const { x: hx, y: hy } = this.hoverPoint;
 
     let closest = null;
-    let minDist = 32;
+    let minDist = 24;
     for (let i = 0; i < this._poolIndex; i += 1) {
       const item = this._renderables[i];
       if (item.type !== "mutation_cyst" || !item.p) continue;
@@ -1177,7 +1257,7 @@ export class KaijuGenomeRenderer {
     const color = axis === "vontade" ? (willMorph > 0.1 ? COLORS.will : COLORS.cyan) : axis === "comunhao" ? COLORS.cyanBright : COLORS.humanity;
 
     ctx.save();
-    // Brackets de mira discretos em torno do ponto (sem bloquear visão)
+    // Brackets de mira discretos em torno do ponto (sem bloquear visão do DNA)
     const s = 10;
     ctx.strokeStyle = color;
     ctx.lineWidth = 1.2;
@@ -1190,24 +1270,6 @@ export class KaijuGenomeRenderer {
     ctx.moveTo(px - s, py + s - 3); ctx.lineTo(px - s, py + s); ctx.lineTo(px - s + 3, py + s);
     ctx.moveTo(px + s, py + s - 3); ctx.lineTo(px + s, py + s); ctx.lineTo(px - s + 3, py + s);
     ctx.stroke();
-
-    // Telemetria clínica acoplada na borda inferior (jamais cobre a hélice)
-    const hudX = Math.min(this.width - 180, Math.max(16, px - 80));
-    const hudY = this.height - 38;
-    ctx.fillStyle = "rgba(2, 20, 24, 0.92)";
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.0;
-    ctx.shadowBlur = 0;
-    ctx.fillRect(hudX, hudY, 170, 28);
-    ctx.strokeRect(hudX, hudY, 170, 28);
-
-    ctx.fillStyle = COLORS.white;
-    ctx.font = "bold 9.5px monospace";
-    ctx.textAlign = "left";
-    ctx.fillText((closest.name || "LOCUS DINÂMICO").toUpperCase().slice(0, 20), hudX + 6, hudY + 12);
-    ctx.fillStyle = color;
-    ctx.font = "8.5px monospace";
-    ctx.fillText(`TELEMETRIA: ${axis.toUpperCase()} · VALOR: ${closest.threshold || 0}%`, hudX + 6, hudY + 23);
     ctx.restore();
   }
 }
