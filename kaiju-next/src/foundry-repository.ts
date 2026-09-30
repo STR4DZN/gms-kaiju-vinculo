@@ -31,7 +31,7 @@ export class FoundryRepository implements Repository {
     const next=applyPatch(current,patch,baseline);
     const updates: Record<string,unknown>={[`flags.${MODULE_ID}.carrier.updatedAt`]:next.updatedAt};
     for(const key of AXIS_KEYS)if(patch.values?.[key]!==undefined)updates[`flags.${MODULE_ID}.carrier.values.${key}`]=next.values[key];
-    for(const key of ["name","designation","notes","shared"] as const)if(patch[key]!==undefined)updates[`flags.${MODULE_ID}.carrier.${key}`]=next[key];
+    for(const key of ["name","designation","notes","portrait","shared"] as const)if(patch[key]!==undefined)updates[`flags.${MODULE_ID}.carrier.${key}`]=next[key];
     if(patch.name!==undefined)updates.name=next.name;
     if(patch.shared!==undefined)updates["ownership.default"]=next.shared?CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER:CONST.DOCUMENT_OWNERSHIP_LEVELS.NONE;
     await journal.update(updates);return this.list().find(carrier=>carrier.id===id)??next;

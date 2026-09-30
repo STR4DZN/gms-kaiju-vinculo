@@ -1,136 +1,173 @@
 .kaiju-app {
-  --kaiju-bg:#0b131b; --kaiju-surface:#101c25; --kaiju-hover:#182832;
-  --kaiju-line:#263743; --kaiju-text:#edf2ef; --kaiju-muted:#a5b5b7;
-  --kaiju-v:#e85d48; --kaiju-c:#4ac8b7; --kaiju-h:#78abe1;
-  --kaiju-radius:8px; color-scheme:dark;
-  box-sizing:border-box; position:relative; container-type:inline-size;
-  display:grid; grid-template-columns:208px minmax(0,1fr);
-  width:100%; height:100%; min-height:0; overflow:hidden;
-  background:var(--kaiju-bg); color:var(--kaiju-text);
-  font:14px/1.5 Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --kaiju-bg:#0b1117;--kaiju-surface:#121e27;--kaiju-hover:#1b2d35;
+  --kaiju-line:#30464f;--kaiju-text:#ebf1ed;--kaiju-muted:#a4b7bc;
+  --kaiju-v:#f08072;--kaiju-c:#71cbb6;--kaiju-h:#8ab7e8;--kaiju-amber:#e7c47e;
+  --kaiju-ease:cubic-bezier(.22,1,.36,1);color-scheme:dark;
+  box-sizing:border-box;position:relative;container-type:inline-size;
+  display:grid;grid-template-columns:200px minmax(0,1fr);width:100%;height:100%;min-height:0;overflow:hidden;
+  background:var(--kaiju-bg);color:var(--kaiju-text);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
 }
-.kaiju-app *, .kaiju-app *::before, .kaiju-app *::after {box-sizing:border-box}
-.kaiju-app [hidden] {display:none}
+.kaiju-app *,.kaiju-app *::before,.kaiju-app *::after {box-sizing:border-box}
+.kaiju-app [hidden] {display:none!important}
 .kaiju-app .kaiju-sr-only {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
-.kaiju-app :is(h1,h2,h3,p,ol) {margin:0; padding:0}
-.kaiju-app h1 {font-size:28px;line-height:1.15;letter-spacing:-.8px;border:0;color:var(--kaiju-text);font-weight:650;text-shadow:none}
-.kaiju-app h2 {font-size:15px;font-weight:600;border:0;color:var(--kaiju-text)}
-.kaiju-app h3 {font-size:14px;font-weight:600;color:var(--kaiju-text);border:0}
-.kaiju-app button {font:inherit; width:auto; height:auto; min-height:36px; margin:0; cursor:pointer; border:0; border-radius:6px; box-shadow:none; background:transparent; color:inherit; text-shadow:none; transition:background-color 140ms,color 140ms;}
+.kaiju-app :is(h1,h2,h3,p,ol) {margin:0;padding:0;border:0;text-shadow:none}
+.kaiju-app h1 {font-size:25px;line-height:1.2;letter-spacing:-.5px;color:var(--kaiju-text);font-weight:650}
+.kaiju-app h2 {font-size:17px;font-weight:600;color:var(--kaiju-text)}
+.kaiju-app h3 {font-size:15px;font-weight:600;color:var(--kaiju-text)}
+.kaiju-app button {font:inherit;width:auto;height:auto;min-height:36px;margin:0;cursor:pointer;border:1px solid transparent;border-radius:4px;box-shadow:none;background:transparent;color:inherit;text-shadow:none;transition:transform 180ms var(--kaiju-ease),opacity 140ms ease}
 .kaiju-app button:hover {background:var(--kaiju-hover);box-shadow:none}
+.kaiju-app button:active:not(:disabled) {transform:translateY(1px) scale(.98)}
 .kaiju-app button:disabled {opacity:.45;cursor:default}
-.kaiju-app :is(button,input,textarea):focus-visible {outline:2px solid var(--kaiju-c);outline-offset:3px;box-shadow:none}
-.kaiju-app :is(input,textarea) {font:inherit;color:var(--kaiju-text);box-shadow:none;background:var(--kaiju-surface);border:1px solid var(--kaiju-line);border-radius:6px;margin:0;width:100%;padding:10px 12px;height:auto;min-width:0}
+.kaiju-app :is(button,input,textarea,select,[tabindex]):focus-visible {outline:2px solid var(--kaiju-c);outline-offset:3px;box-shadow:none}
+.kaiju-app :is(input,textarea,select) {font:inherit;color:var(--kaiju-text);box-shadow:none;background:var(--kaiju-surface);border:1px solid var(--kaiju-line);border-radius:4px;margin:0;width:100%;padding:10px 12px;height:auto;min-width:0}
 .kaiju-app input:disabled {opacity:1;cursor:default}
-.kaiju-app input::placeholder,.kaiju-app textarea::placeholder {color:#8da0a8;opacity:1}
+.kaiju-app input::placeholder,.kaiju-app textarea::placeholder {color:#95aab0;opacity:1}
 .kaiju-app label {margin:0;font-weight:400}
 .kaiju-app i {line-height:1}
-.kaiju-sidebar {display:flex;flex-direction:column;min-height:0;background:#0e1922;border-right:1px solid var(--kaiju-line);padding:26px 14px 18px;gap:16px}
-.kaiju-brand {display:flex;align-items:center;gap:12px;padding:0 8px 18px}
-.kaiju-brand>i {color:var(--kaiju-c);font-size:28px}
-.kaiju-brand strong {display:block;font-size:21px;letter-spacing:4px;line-height:1.1}
-.kaiju-brand small {font-size:9px;letter-spacing:1.6px;color:var(--kaiju-muted);white-space:nowrap}
-.kaiju-list-heading {display:flex;justify-content:space-between;padding:0 8px;color:var(--kaiju-muted);font-size:12px}
+.kaiju-sidebar {display:flex;flex-direction:column;min-height:0;background:#101c24;border-right:1px solid var(--kaiju-line);padding:23px 12px 16px;gap:16px}
+.kaiju-brand {display:flex;align-items:center;gap:10px;padding:0 5px 20px;border-bottom:1px solid var(--kaiju-line)}
+.kaiju-brand>i {color:var(--kaiju-c);font-size:25px}
+.kaiju-brand strong {display:block;font-size:21px;letter-spacing:3px;line-height:1.1}
+.kaiju-brand small {font:9px/1.5 ui-monospace,monospace;letter-spacing:.6px;color:var(--kaiju-muted);white-space:nowrap}
+.kaiju-list-heading {display:flex;justify-content:space-between;padding:0 5px;color:var(--kaiju-muted);font:11px/1.5 ui-monospace,monospace;text-transform:uppercase;letter-spacing:.8px}
 .kaiju-list-heading>span:last-child {font-variant-numeric:tabular-nums}
 .kaiju-search {position:relative;display:block}
 .kaiju-search i {position:absolute;left:11px;top:13px;color:var(--kaiju-muted);font-size:12px}
-.kaiju-search input {padding:9px 9px 9px 31px;font-size:12px;background:transparent}
-.kaiju-carriers {min-height:0;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
-.kaiju-carrier {display:flex;align-items:center;gap:10px;width:100%;padding:12px 9px;text-align:left;border-left:2px solid transparent;border-radius:4px}
-.kaiju-carrier.is-selected {background:#1c3037;border-left:2px solid var(--kaiju-c)}
+.kaiju-search input {padding:9px 9px 9px 31px;font-size:12px;background:#0d171e}
+.kaiju-carriers {min-height:0;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;scrollbar-width:thin;scrollbar-color:var(--kaiju-line) transparent}
+.kaiju-app .kaiju-carrier {display:flex;align-items:center;gap:8px;width:100%;padding:12px 8px;text-align:left;border-left:3px solid transparent;border-radius:3px}
+.kaiju-app .kaiju-carrier.is-selected {background:#1a3037;border-color:#345b5f;border-left-color:var(--kaiju-c)}
 .kaiju-carrier>span:nth-child(2) {min-width:0;flex:1}
 .kaiju-carrier strong,.kaiju-carrier small {display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kaiju-carrier strong {font-size:13px;font-weight:550}
+.kaiju-carrier strong {font-size:13px;font-weight:600}
 .kaiju-carrier small {font-size:10px;color:var(--kaiju-muted);margin-top:3px}
 .kaiju-carrier>i {font-size:10px;color:var(--kaiju-muted)}
-.kaiju-avatar {display:grid;place-items:center;width:30px;height:34px;flex-shrink:0;font-size:10px;letter-spacing:.6px;background:#22333e;border:1px solid #344854;border-radius:6px;color:#c3d4d7}
-.kaiju-new {border:1px solid var(--kaiju-line);width:100%;gap:9px}
-.kaiju-sidebar-footer {display:flex;flex-wrap:wrap;align-items:center;gap:7px;color:var(--kaiju-muted);font-size:10px;padding:0 8px}
-.kaiju-sidebar-footer small {display:block;width:100%;padding-left:12px;color:#869aa1;font-size:9px;letter-spacing:1px}
+.kaiju-avatar {display:grid;place-items:center;width:28px;height:34px;flex-shrink:0;font:10px ui-monospace,monospace;background:#12232d;border:1px solid #40565f;border-radius:3px;color:#c5d7db}
+.kaiju-draft-marker {width:5px;height:5px;border-radius:50%;background:var(--kaiju-amber);flex-shrink:0}
+.kaiju-app .kaiju-new {border-color:var(--kaiju-line);width:100%;gap:9px}
+.kaiju-sidebar-footer {display:flex;flex-wrap:wrap;align-items:center;gap:7px;color:var(--kaiju-muted);font-size:11px;padding:0 5px}
+.kaiju-sidebar-footer small {display:block;width:100%;font:8px/1.5 ui-monospace,monospace;letter-spacing:.3px;padding-top:3px}
 .kaiju-dot {width:5px;height:5px;border-radius:50%;background:var(--kaiju-c)}
 .kaiju-main {min-width:0;min-height:0;display:flex;flex-direction:column}
 .kaiju-compact-picker {display:none}
-.kaiju-record-header {display:flex;gap:16px;justify-content:space-between;align-items:start;padding:28px 30px 20px;flex-shrink:0}
+.kaiju-record-header {display:flex;gap:16px;justify-content:space-between;align-items:center;padding:21px 25px 17px;flex-shrink:0;background:#0e1820}
 .kaiju-record-header>div {min-width:0}
 .kaiju-record-header h1 {overflow-wrap:anywhere}
-.kaiju-eyebrow {color:var(--kaiju-muted);font:10px/1.5 ui-monospace,monospace;letter-spacing:1.6px;margin-bottom:10px}
-.kaiju-eyebrow span {margin:0 5px;color:#647980}
-.kaiju-record-header p {color:var(--kaiju-muted);font-size:12px;min-height:18px;margin-top:6px;overflow-wrap:anywhere}
-.kaiju-access {display:flex;gap:6px;align-items:center;flex-shrink:0;font-size:10px;color:var(--kaiju-muted);border:1px solid var(--kaiju-line);border-radius:4px;padding:5px 8px;margin-top:25px}
-.kaiju-tabs {display:flex;gap:4px;padding:0 30px 14px;border-bottom:1px solid var(--kaiju-line);flex-shrink:0}
-.kaiju-tabs button {display:flex;align-items:center;gap:8px;min-height:34px;padding:8px 14px;font-size:12px;color:var(--kaiju-muted)}
-.kaiju-tabs button[aria-selected=true] {background:#20333a;color:#b0f0e4}
-.kaiju-body {flex:1;min-height:0;overflow:auto;padding:25px 30px 24px;scrollbar-width:thin;scrollbar-color:#344854 transparent}
-.kaiju-overview {display:flex;flex-direction:column;gap:22px}
-.kaiju-section-heading {display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
-.kaiju-section-heading>span {font-size:10px;letter-spacing:.5px;color:var(--kaiju-muted);font-variant-numeric:tabular-nums}
-.kaiju-vectors {min-width:0;display:grid;grid-template-columns:minmax(0,1fr)}
-.kaiju-axis {padding:20px 0;border-bottom:1px solid var(--kaiju-line);min-width:0}
-.kaiju-axis:last-child {border-bottom:0;padding-bottom:0}
-.kaiju-axis-heading {display:flex;gap:9px;align-items:center}
+.kaiju-eyebrow {color:var(--kaiju-muted);font:9px/1.5 ui-monospace,monospace;letter-spacing:1.4px;margin-bottom:7px}
+.kaiju-eyebrow span {margin:0 5px;color:var(--kaiju-muted)}
+.kaiju-record-header p {color:var(--kaiju-muted);font-size:12px;margin-top:5px;overflow-wrap:anywhere}
+.kaiju-access {display:flex;gap:7px;align-items:center;flex-shrink:0;font-size:11px;color:var(--kaiju-muted);border:1px solid var(--kaiju-line);border-radius:3px;padding:6px 9px}
+.kaiju-tabs {display:flex;position:relative;isolation:isolate;gap:4px;padding:6px 25px;border-block:1px solid var(--kaiju-line);flex-shrink:0;background:#0e1820}
+.kaiju-tabs button {position:relative;z-index:1;display:flex;align-items:center;gap:8px;min-height:36px;padding:8px 15px;font-size:12px;color:var(--kaiju-muted)}
+.kaiju-app .kaiju-tabs button[aria-selected=true] {color:#a9e8d7;background:transparent}
+.kaiju-tab-indicator {position:absolute;top:6px;bottom:6px;z-index:0;border:1px solid #365a5d;border-bottom:2px solid var(--kaiju-c);background:#1a3037;border-radius:3px;transform-origin:left center;pointer-events:none}
+.kaiju-body {flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:20px 25px 24px;scrollbar-width:thin;scrollbar-color:#405c65 transparent}
+.kaiju-readout,.kaiju-vinculo-card {width:100%;min-width:0}
+.kaiju-channels {display:grid;gap:12px}
+.kaiju-channel {position:relative;min-width:0;padding:14px 18px 12px;border:1px solid color-mix(in srgb,var(--axis-color) 30%,var(--kaiju-line));border-left:3px solid var(--axis-color);border-radius:3px;background:linear-gradient(110deg,color-mix(in srgb,var(--axis-color) 7%,#121e27),#111c24 65%);overflow:hidden}
+.kaiju-channel-top {display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+.kaiju-channel-code {color:var(--axis-color);font:9px/1.4 ui-monospace,monospace;letter-spacing:1px;text-transform:uppercase}
+.kaiju-channel-code>span {color:var(--kaiju-muted);margin:0 4px}
+.kaiju-channel-signature {width:110px;height:16px;flex-shrink:0;color:var(--axis-color);opacity:.48}
+.kaiju-channel-signature path {fill:none;stroke:currentColor;stroke-width:1.6}
+.kaiju-channel-heading {display:flex;align-items:center;gap:12px}
+.kaiju-channel-icon {display:grid;place-items:center;flex-shrink:0;width:42px;height:46px;color:var(--axis-color);border:1px solid color-mix(in srgb,var(--axis-color) 40%,transparent);background:#0c151c;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);font-size:20px}
+.kaiju-channel-heading>div:nth-child(2) {flex:1;min-width:0}
+.kaiju-channel-heading h2 {font-size:18px;letter-spacing:-.25px}
+.kaiju-channel-heading p {font-size:12px;color:var(--kaiju-muted);margin-top:3px}
+.kaiju-channel-value {display:flex;align-items:baseline;gap:4px;color:var(--axis-color);font-family:ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.kaiju-channel-value strong {font-size:32px;font-weight:550;line-height:1}
+.kaiju-channel-value>span {font-size:13px}
+.kaiju-channel-progress {position:relative;height:5px;margin:15px 0 9px;background:#30444d;border-radius:1px;overflow:hidden}
+.kaiju-channel-progress>span {display:block;width:100%;height:100%;background:var(--axis-color);transform-origin:left}
+.kaiju-channel-progress>div {position:absolute;inset:0;display:flex;justify-content:space-evenly;pointer-events:none}
+.kaiju-channel-progress b {display:block;width:1px;height:100%;background:#0b1117}
+.kaiju-channel-caption {display:flex;justify-content:space-between;align-items:start;gap:12px;font-size:11px;color:var(--kaiju-muted)}
+.kaiju-channel-caption>span {font:9px/1.5 ui-monospace,monospace;letter-spacing:.8px;white-space:nowrap}
+.kaiju-channel-caption b {color:var(--axis-color);font-weight:600}
+.kaiju-channel-caption>strong {color:var(--axis-color);font-size:12px;font-weight:500;text-align:right}
+.kaiju-channel-divider {letter-spacing:0;margin-left:4px}
+.kaiju-channel-bottom {display:flex;align-items:center;gap:18px;margin-top:11px}
+.kaiju-channel-rail {display:flex;gap:4px;flex:1;max-width:300px}
+.kaiju-channel-rail>span {display:flex;gap:5px;justify-content:center;align-items:center;flex:1;min-width:0;padding:4px 0;color:var(--kaiju-muted);border:1px solid #30434c;background:#0c161e;border-radius:2px}
+.kaiju-channel-rail small {font:9px/1 ui-monospace,monospace}
+.kaiju-channel-rail i {font-size:9px}
+.kaiju-channel-rail .is-current {color:var(--axis-color);border-color:var(--axis-color);background:color-mix(in srgb,var(--axis-color) 10%,#0c161e)}
+.kaiju-channel-rail .is-passed {color:var(--axis-color)}
+.kaiju-channel-actions {display:flex;gap:6px;margin-left:auto}
+.kaiju-app .kaiju-channel-actions button {display:flex;align-items:center;justify-content:center;gap:7px;min-height:28px;padding:4px 7px;font-size:11px;color:var(--kaiju-muted)}
+.kaiju-channel-actions button:hover {color:var(--axis-color)}
+.kaiju-channel-actions i {font-size:9px;transition:transform 180ms var(--kaiju-ease)}
+.kaiju-channel-actions button:hover .fa-arrow-right {transform:translateX(3px)}
+.kaiju-diagnosis {padding:15px 3px 0}
+.kaiju-diagnosis>span {display:flex;align-items:center;gap:7px;font:9px/1.5 ui-monospace,monospace;color:var(--kaiju-muted);letter-spacing:1px}
+.kaiju-diagnosis p {font-size:13px;margin-top:6px;color:#c8d6d5;line-height:1.6}
+.kaiju-overview {display:flex;flex-direction:column;gap:18px}
+.kaiju-vectors {min-width:0;display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.kaiju-axis {padding:19px;min-width:0;border:1px solid color-mix(in srgb,var(--axis-color) 30%,var(--kaiju-line));border-left:3px solid var(--axis-color);border-radius:3px;background:linear-gradient(110deg,color-mix(in srgb,var(--axis-color) 7%,#121e27),#111c24 65%)}
+.kaiju-axis-heading {display:flex;gap:12px;align-items:center}
 .kaiju-axis-heading>div:nth-child(2) {flex:1;min-width:0}
-.kaiju-axis-heading p {font-size:12px;color:var(--kaiju-muted);margin-top:3px}
-.kaiju-axis-heading h3 {font-size:15px}
-.kaiju-stage-icon {display:grid;place-items:center;color:var(--axis-color);width:36px;height:40px;flex-shrink:0;border:1px solid color-mix(in srgb,var(--axis-color) 28%,transparent);border-radius:8px;background:color-mix(in srgb,var(--axis-color) 8%,transparent);font-size:18px}
-.kaiju-stage-icon i {animation:kaiju-icon-enter 180ms ease-out}
+.kaiju-axis-heading p {font-size:12px;color:var(--kaiju-muted);margin-top:4px}
+.kaiju-axis-heading h3 {font-size:17px}
+.kaiju-stage-icon {display:grid;place-items:center;color:var(--axis-color);width:38px;height:42px;flex-shrink:0;border:1px solid color-mix(in srgb,var(--axis-color) 35%,transparent);border-radius:3px;background:#0c151c;font-size:19px}
 .kaiju-number {display:flex;align-items:baseline;flex-shrink:0;color:var(--axis-color);font-variant-numeric:tabular-nums}
-.kaiju-number input {width:51px;height:40px;font:500 23px/1 ui-monospace,monospace;color:var(--axis-color);padding:0;text-align:right;background:transparent;border:1px solid transparent;appearance:textfield;border-radius:4px}
+.kaiju-number input {width:64px;height:42px;font:500 27px/1 ui-monospace,monospace;color:var(--axis-color);padding:0 3px;text-align:right;background:#0c151c;border:1px solid var(--kaiju-line);appearance:textfield;border-radius:3px}
 .kaiju-number input::-webkit-inner-spin-button,.kaiju-number input::-webkit-outer-spin-button {appearance:none;margin:0}
-.kaiju-number input:hover:not(:disabled) {border-color:var(--kaiju-line)}
-.kaiju-number>span {font-size:12px;margin-left:4px}
-.kaiju-value {display:block;min-width:51px;text-align:right;font:500 23px/40px ui-monospace,monospace;color:var(--axis-color)}
-.kaiju-axis-meter {height:5px;margin:18px 0 14px;border-radius:4px;background:linear-gradient(to right,var(--axis-color) var(--fill),#293944 var(--fill))}
-.kaiju-app .kaiju-range {appearance:none;display:block;width:100%;height:5px;min-height:5px;border:0;border-radius:4px;padding:0;margin:18px 0 14px;background:linear-gradient(to right,var(--axis-color) var(--fill),#293944 var(--fill));cursor:pointer;box-shadow:none}
-.kaiju-range::-webkit-slider-runnable-track {height:5px;background:transparent;border:0;border-radius:4px}
-.kaiju-range::-moz-range-track {height:5px;background:transparent;border:0;border-radius:4px}
-.kaiju-range::-webkit-slider-thumb {appearance:none;width:14px;height:14px;margin-top:-4.5px;background:var(--axis-color);border:3px solid var(--kaiju-bg);border-radius:50%;box-shadow:0 0 0 1px var(--axis-color)}
-.kaiju-range::-moz-range-thumb {width:9px;height:9px;background:var(--axis-color);border:3px solid var(--kaiju-bg);border-radius:50%;box-shadow:0 0 0 1px var(--axis-color)}
-.kaiju-stage-caption {display:flex;align-items:start;gap:8px;justify-content:space-between;min-height:26px}
-.kaiju-stage-caption>span {font-size:9px;letter-spacing:1px;white-space:nowrap;color:var(--kaiju-muted)}
+.kaiju-number>span {font-size:12px;margin-left:5px}
+.kaiju-value {display:block;min-width:51px;text-align:right;font:500 25px/40px ui-monospace,monospace;color:var(--axis-color)}
+.kaiju-app .kaiju-range {appearance:none;display:block;width:100%;height:24px;min-height:24px;border:0;padding:0;margin:12px 0 8px;background:transparent;cursor:pointer;box-shadow:none}
+.kaiju-range::-webkit-slider-runnable-track {height:5px;background:linear-gradient(to right,var(--axis-color) var(--fill),#30444d var(--fill));border:0;border-radius:2px}
+.kaiju-range::-moz-range-track {height:5px;background:linear-gradient(to right,var(--axis-color) var(--fill),#30444d var(--fill));border:0;border-radius:2px}
+.kaiju-range::-webkit-slider-thumb {appearance:none;width:16px;height:16px;margin-top:-5.5px;background:var(--axis-color);border:3px solid var(--kaiju-bg);border-radius:50%;box-shadow:0 0 0 1px var(--axis-color);transition:transform 150ms var(--kaiju-ease)}
+.kaiju-range:hover::-webkit-slider-thumb {transform:scale(1.12)}
+.kaiju-range::-moz-range-thumb {width:10px;height:10px;background:var(--axis-color);border:3px solid var(--kaiju-bg);border-radius:50%;box-shadow:0 0 0 1px var(--axis-color)}
+.kaiju-stage-caption {display:flex;align-items:start;gap:8px;justify-content:space-between}
+.kaiju-stage-caption>span {font:10px/1.5 ui-monospace,monospace;letter-spacing:1px;white-space:nowrap;color:var(--kaiju-muted)}
 .kaiju-stage-caption b {font-weight:500;color:var(--axis-color);margin-left:4px}
-.kaiju-stage-caption>strong {font-size:11px;font-weight:500;color:var(--axis-color);text-align:right}
-.kaiju-stage-markers {display:flex;justify-content:space-between;margin-top:12px;font:9px ui-monospace,monospace;color:#8da0a8}
-.kaiju-stage-markers span {width:20px;text-align:center;padding:2px;border-radius:3px}
+.kaiju-stage-caption>strong {font-size:12px;font-weight:500;color:var(--axis-color);text-align:right}
+.kaiju-stage-markers {display:flex;justify-content:space-between;margin-top:12px;font:10px ui-monospace,monospace;color:var(--kaiju-muted)}
+.kaiju-stage-markers span {width:24px;text-align:center;padding:3px;border-radius:2px}
 .kaiju-stage-markers .is-current {color:var(--axis-color);background:color-mix(in srgb,var(--axis-color) 10%,transparent)}
-.kaiju-savebar {display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--kaiju-line);padding:14px 30px;background:var(--kaiju-bg);flex-shrink:0}
+.kaiju-savebar {display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--kaiju-line);padding:12px 25px;background:#0e1820;flex-shrink:0}
 .kaiju-status {font-size:11px;color:var(--kaiju-muted)}
-.kaiju-status.is-dirty {color:#e7c47e}.kaiju-status.is-error {color:#ffb4a8}
+.kaiju-status.is-dirty {color:var(--kaiju-amber)}.kaiju-status.is-error {color:#ffb4a8}
 .kaiju-savebar>div {display:flex;gap:8px}
-.kaiju-app .kaiju-button {display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 14px;font-size:12px;white-space:nowrap}
-.kaiju-app .kaiju-button-primary {background:#4ac8b7;color:#071c19;font-weight:650}
-.kaiju-app .kaiju-button-primary:hover:not(:disabled) {background:#72ddcd}
-.kaiju-app .kaiju-button-quiet {color:var(--kaiju-muted)}
-.kaiju-stage-intro p,.kaiju-record-form>p {font-size:12px;color:var(--kaiju-muted);margin:6px 0 16px}
-.kaiju-stage-columns {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.kaiju-app .kaiju-button {display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 13px;font-size:12px;white-space:nowrap}
+.kaiju-app .kaiju-button-primary {background:var(--kaiju-c);color:#0a211e;font-weight:650}
+.kaiju-app .kaiju-button-primary:hover:not(:disabled) {background:#91dcc8}
+.kaiju-app .kaiju-button-quiet {color:var(--kaiju-muted);border-color:var(--kaiju-line)}
+.kaiju-stage-intro p,.kaiju-record-form>p,.kaiju-editor-intro p {font-size:12px;color:var(--kaiju-muted);margin:7px 0 20px}
+.kaiju-stage-columns {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.kaiju-stage-column {padding:18px 14px;border:1px solid var(--kaiju-line);border-top:2px solid var(--axis-color);border-radius:3px;background:var(--kaiju-surface)}
 .kaiju-stage-column h3 {margin-bottom:14px;color:var(--axis-color)}
 .kaiju-stage-column ol {list-style:none}
-.kaiju-stage-column li {display:flex;align-items:center;gap:10px;position:relative;padding:8px 0;min-height:62px}
-.kaiju-stage-column li:not(:last-child)::after {content:"";width:1px;height:22px;background:var(--kaiju-line);position:absolute;left:17px;bottom:-11px}
-.kaiju-stage-node {display:grid;place-items:center;flex-shrink:0;width:34px;height:38px;border:1px solid var(--kaiju-line);border-radius:6px;color:var(--kaiju-muted);background:var(--kaiju-bg)}
-.kaiju-stage-column li.is-current .kaiju-stage-node {color:var(--axis-color);border-color:var(--axis-color);background:color-mix(in srgb,var(--axis-color) 8%,transparent)}
+.kaiju-stage-column li {display:flex;align-items:center;gap:10px;position:relative;padding:9px 0;min-height:70px}
+.kaiju-stage-column li:not(:last-child)::after {content:"";width:1px;height:22px;background:var(--kaiju-line);position:absolute;left:16px;bottom:-11px}
+.kaiju-stage-node {display:grid;place-items:center;flex-shrink:0;width:33px;height:38px;border:1px solid #425860;border-radius:3px;color:var(--kaiju-muted);background:var(--kaiju-bg)}
+.kaiju-stage-column li.is-current .kaiju-stage-node {color:var(--axis-color);border-color:var(--axis-color);background:color-mix(in srgb,var(--axis-color) 8%,var(--kaiju-bg))}
 .kaiju-stage-column li.is-passed .kaiju-stage-node {color:var(--axis-color)}
 .kaiju-stage-column li>div {min-width:0}
-.kaiju-stage-column small {font:9px/1.5 ui-monospace,monospace;color:var(--kaiju-muted)}
-.kaiju-stage-column strong {display:block;font-size:11px;font-weight:500;margin-top:3px}
-.kaiju-current-label {display:block;font-size:9px;color:var(--axis-color);margin-top:3px}
-.kaiju-record-form {max-width:620px}
-.kaiju-record-form>label {display:block;font-size:12px;color:var(--kaiju-muted);margin:16px 0}
-.kaiju-record-form :is(input,textarea) {margin-top:6px;font-size:13px}
-.kaiju-record-form textarea {resize:vertical;min-height:120px}
+.kaiju-stage-column small {font:10px/1.5 ui-monospace,monospace;color:var(--kaiju-muted)}
+.kaiju-stage-column strong {display:block;font-size:12px;font-weight:500;margin-top:3px}
+.kaiju-current-label {display:block;font-size:10px;color:var(--axis-color);margin-top:3px}
+.kaiju-record-form {max-width:640px}
+.kaiju-record-form>label {display:block;font-size:12px;color:var(--kaiju-muted);margin:17px 0}
+.kaiju-record-form :is(input,textarea) {margin-top:6px;font-size:14px}
+.kaiju-record-form textarea {resize:vertical;min-height:130px}
 .kaiju-record-details {margin:20px 0 0}
 .kaiju-record-details>div {padding:16px 0;border-bottom:1px solid var(--kaiju-line)}
 .kaiju-record-details dt {font-size:11px;color:var(--kaiju-muted);margin-bottom:6px}
 .kaiju-record-details dd {margin:0;color:var(--kaiju-text);overflow-wrap:anywhere}
 .kaiju-notes-text {white-space:pre-wrap}
 .kaiju-record-form .kaiju-share {display:flex;gap:12px;align-items:start;margin-top:24px}
-.kaiju-share input[type=checkbox] {width:16px;height:16px;padding:0;accent-color:var(--kaiju-c);flex-shrink:0;margin-top:4px}
+.kaiju-share input[type=checkbox] {width:17px;height:17px;padding:0;accent-color:var(--kaiju-c);flex-shrink:0;margin-top:4px}
 .kaiju-share strong {font-size:12px;color:var(--kaiju-text);font-weight:500}
 .kaiju-share small {display:block;font-size:11px;margin-top:3px}
 .kaiju-empty {display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;gap:16px}
-.kaiju-empty>i {font-size:46px;color:var(--kaiju-c);margin-bottom:4px}
+.kaiju-empty>i {font-size:46px;color:var(--kaiju-c)}
 .kaiju-empty p {color:var(--kaiju-muted);max-width:360px;font-size:13px}
-.kaiju-dialog-backdrop {position:absolute;inset:0;z-index:5;background:#071018d9;display:grid;place-items:center;padding:24px}
-.kaiju-create-form {width:100%;max-width:400px;padding:28px;background:#15232c;border:1px solid #3b505b;border-radius:12px;box-shadow:0 24px 60px #0006}
+.kaiju-dialog-backdrop {position:absolute;inset:0;z-index:5;background:#071018e8;display:grid;place-items:center;padding:20px;overflow-y:auto}
+.kaiju-create-form {width:100%;max-width:420px;padding:28px;background:#14232b;border:1px solid #4a666e;border-top:2px solid var(--kaiju-c);border-radius:5px;box-shadow:0 18px 40px #0006}
 .kaiju-create-form h2 {font-size:23px;margin-bottom:22px}
 .kaiju-create-form label {display:block;font-size:12px;color:var(--kaiju-muted)}
 .kaiju-create-form input {margin-top:6px}
@@ -138,101 +175,230 @@
 .kaiju-create-form>div {display:flex;justify-content:end;gap:8px}
 .kaiju-create-form [role=alert] {display:block;font-size:12px;color:#ffb4a8;margin-top:12px}
 .kaiju-no-results {padding:18px 8px;font-size:12px;color:var(--kaiju-muted)}
-/* Host integration stays scoped; native frame and drag behavior remain Foundry-owned. */
-.kaiju-window {min-width:360px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);border:1px solid #344854}
-.kaiju-window .window-content {padding:0;overflow:hidden;background:#0b131b}
-.kaiju-window .window-header {background:#0e1922;border-bottom:1px solid #263743}
+/* Foundry owns window dragging and sizing. */
+.kaiju-window {min-width:360px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);border:1px solid #405c65}
+.kaiju-window .window-content {padding:0;overflow:hidden;background:#0b1117}
+.kaiju-window .window-header {background:#101c24;border-bottom:1px solid #30464f}
 .kaiju-directory-button {width:auto;margin:6px;flex:1}
-@keyframes kaiju-icon-enter {from {opacity:.4;transform:scale(.86)} to {opacity:1;transform:scale(1)}}
-@container (max-width:970px) {
-  .kaiju-overview {gap:20px}
-  .kaiju-vectors {gap:0 16px}
-  .kaiju-record-header,.kaiju-body {padding-left:22px;padding-right:22px}
-  .kaiju-tabs {padding-left:22px;padding-right:22px}
-  .kaiju-axis-heading p {display:none}
-  .kaiju-number input {width:47px;font-size:22px}
-  .kaiju-stage-icon {width:36px;height:40px;font-size:18px}
+@container (max-width:950px) {
+  .kaiju-record-header {padding:18px 20px 14px}.kaiju-tabs {padding-inline:20px}.kaiju-body {padding:18px 20px}.kaiju-savebar {padding-inline:20px}
+  .kaiju-access {display:none}.kaiju-channel-signature {width:70px}.kaiju-channel-code {letter-spacing:.5px}
+  .kaiju-stage-columns {grid-template-columns:1fr}.kaiju-stage-column ol {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}.kaiju-stage-column li::after {display:none}
 }
-@container (max-width:810px) {
-  .kaiju-sidebar {padding:20px 10px 14px;gap:12px}
-  .kaiju-app .kaiju-brand small {font-size:8px;letter-spacing:1px}
-  .kaiju-vectors {grid-template-columns:minmax(0,1fr)}
-  .kaiju-axis {padding:12px 0 16px;border-bottom:1px solid var(--kaiju-line)}
-  .kaiju-stage-caption {min-height:0}
-  .kaiju-stage-columns {grid-template-columns:minmax(0,1fr)}
-  .kaiju-stage-column ol {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}
-  .kaiju-stage-column li::after {display:none}
-  .kaiju-access {display:none}
-}
-@container (max-width:590px) {
-  .kaiju-sidebar {display:none}
-  .kaiju-main {grid-column:1/-1}
-  .kaiju-compact-picker {display:flex;align-items:center;gap:10px;padding:12px 20px 0}
+@container (max-width:720px) {
+  .kaiju-sidebar {display:none}.kaiju-main {grid-column:1/-1}
+  .kaiju-compact-picker {display:flex;align-items:center;gap:10px;padding:10px 18px;background:#101c24;border-bottom:1px solid var(--kaiju-line)}
   .kaiju-compact-picker label {display:flex;align-items:center;gap:10px;flex:1;min-width:0;font-size:11px;color:var(--kaiju-muted)}
-  .kaiju-compact-picker select {min-width:0;flex:1;background:var(--kaiju-surface);color:var(--kaiju-text);border:1px solid var(--kaiju-line);border-radius:6px;padding:7px;font:inherit;height:auto}
-  .kaiju-compact-picker button {width:36px;flex-shrink:0;border:1px solid var(--kaiju-line)}
-  .kaiju-record-header {padding-top:22px;padding-bottom:14px}
-  .kaiju-record-header h1 {font-size:24px}
-  .kaiju-body {padding:20px}
-  .kaiju-savebar {padding:12px 16px;flex-wrap:wrap}
-  .kaiju-savebar>div {margin-left:auto}
-  .kaiju-stage-column ol {grid-template-columns:1fr}
+  .kaiju-compact-picker select {min-width:0;flex:1;padding:7px;font:inherit}
+  .kaiju-compact-picker button {width:36px;flex-shrink:0;border-color:var(--kaiju-line)}
+  .kaiju-record-header {padding:14px 18px}.kaiju-record-header h1 {font-size:23px}
 }
-@media (prefers-reduced-motion:reduce) {
-  .kaiju-app *, .kaiju-app *::before, .kaiju-app *::after {animation:none;transition:none;scroll-behavior:auto}
+@container (max-width:440px) {
+  .kaiju-record-header {padding:12px 14px}.kaiju-record-header h1 {font-size:21px}.kaiju-tabs {padding:6px 10px;gap:0}.kaiju-tabs button {padding:8px 9px;font-size:11px;gap:5px}
+  .kaiju-body {padding:14px 12px}.kaiju-channel {padding:12px}.kaiju-channel-heading {gap:9px}.kaiju-channel-heading h2 {font-size:16px}.kaiju-channel-heading p {font-size:11px}
+  .kaiju-channel-signature {display:none}.kaiju-channel-code {font-size:8px}.kaiju-channel-value strong {font-size:28px}.kaiju-channel-icon {width:33px;height:38px;font-size:17px}
+  .kaiju-channel-bottom {gap:7px;flex-wrap:wrap}.kaiju-channel-rail {max-width:none;flex-basis:100%}.kaiju-channel-actions {margin-top:1px}.kaiju-savebar {padding:10px 12px;flex-wrap:wrap;gap:8px}.kaiju-savebar>div {margin-left:auto}
+  .kaiju-stage-column ol {grid-template-columns:1fr}.kaiju-axis {padding:14px}.kaiju-axis-heading h3 {font-size:15px}.kaiju-axis-heading p {font-size:11px}.kaiju-number input {font-size:25px;width:55px}.kaiju-stage-icon {width:31px;height:38px;font-size:17px}
 }
-/* K-03 shell follows the actual v5.1 macro: square frames, compact terminal rhythm.
-   The readout retains the original source renderer and its vector assets. */
-.kaiju-app {--kaiju-bg:#060c10;--kaiju-surface:#0d1a20;--kaiju-hover:#142a31;--kaiju-line:#35525a;--kaiju-muted:#a0b5b8;--kaiju-radius:0px;grid-template-columns:180px minmax(0,1fr);font-family:'Arial Narrow',Arial,sans-serif;font-size:13px}
-.kaiju-app button,.kaiju-app :is(input,textarea),.kaiju-avatar,.kaiju-access,.kaiju-stage-node,.kaiju-create-form {border-radius:0}
-.kaiju-sidebar {padding:17px 10px 12px;gap:13px;background:linear-gradient(155deg,#122229,#060d11);border-right-color:#416168}
-.kaiju-brand {padding:0 5px 15px;gap:9px;border-bottom:1px solid #35525a}
-.kaiju-brand strong {font-size:19px;letter-spacing:2px}
-.kaiju-brand small {font:8px/1.5 Consolas,monospace;letter-spacing:.7px}
-.kaiju-brand>i {font-size:23px}
-.kaiju-list-heading {font:10px/1.5 Consolas,monospace;text-transform:uppercase;letter-spacing:.7px;padding:0 3px}
-.kaiju-carrier {padding:10px 6px;gap:7px;border:1px solid transparent;border-left-width:3px}
-.kaiju-carrier.is-selected {background:linear-gradient(100deg,#1c3a40,#0c1b21);border:1px solid #456e73;border-left:3px solid #4ac8b7}
-.kaiju-carrier strong {font-size:12px;font-weight:700}
-.kaiju-carrier small {font-size:9px}
-.kaiju-avatar {width:25px;height:30px;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);background:#11252d}
-.kaiju-record-header {padding:12px 15px 9px;align-items:center;border-bottom:1px solid #223a42;background:#0a151b}
-.kaiju-record-header h1 {font-size:20px;font-weight:800;letter-spacing:.4px}
-.kaiju-eyebrow {font:8px/1.4 Consolas,monospace;letter-spacing:1.3px;margin-bottom:4px}
-.kaiju-record-header p {font-size:10px;margin-top:3px;min-height:0}
-.kaiju-access {margin:0;font:9px Consolas,monospace;letter-spacing:.3px}
-.kaiju-tabs {padding:0 15px;gap:0;background:#081218}
-.kaiju-tabs button {min-height:34px;padding:7px 13px;font:10px/1.4 Consolas,monospace;letter-spacing:.5px;border-bottom:2px solid transparent}
-.kaiju-tabs button[aria-selected=true] {background:#14272e;border-bottom-color:#4ac8b7;color:#b0f0e4}
-.kaiju-body {padding:12px 14px 16px;scrollbar-color:#496970 #081218}
-.kaiju-savebar {padding:8px 15px;background:#081218}
-.kaiju-savebar .kaiju-button {min-height:32px;padding:7px 12px;font:10px/1.4 Consolas,monospace}
-.kaiju-status {font:10px/1.4 Consolas,monospace}
-.kaiju-readout {width:100%;min-width:0}
-.kaiju-vinculo-card :is(div,span) {overflow-wrap:anywhere}
-.kaiju-editor-intro p {color:var(--kaiju-muted);font-size:12px;margin:7px 0 18px}
-.kaiju-axis {border:1px solid color-mix(in srgb,var(--axis-color) 40%,transparent);border-left:4px solid var(--axis-color);padding:16px!important;background:linear-gradient(125deg,color-mix(in srgb,var(--axis-color) 10%,#071015),#060c10);margin-bottom:10px}
-.kaiju-stage-icon {border-radius:0;clip-path:polygon(50% 0,100% 20%,90% 78%,50% 100%,10% 78%,0 20%)}
-.kaiju-axis-heading p {display:block}
-.kaiju-stage-column {padding:15px;border:1px solid color-mix(in srgb,var(--axis-color) 45%,transparent);border-top:3px solid var(--axis-color);background:#0a141a}
-.kaiju-stage-columns {gap:10px}
-.kaiju-new {border:1px solid #35525a!important}
-.kaiju-create-form {background:#0f2028;border-top:3px solid #4ac8b7}
-@container (max-width:810px) {
-  .kaiju-sidebar {padding:14px 8px}
-  .kaiju-stage-columns {grid-template-columns:1fr}
-  .kaiju-record-header,.kaiju-body {padding-left:12px;padding-right:12px}
-  .kaiju-tabs {padding-left:12px;padding-right:12px}
-}
-@container (max-width:590px) {
-  .kaiju-compact-picker {padding:8px 12px; background:#122229;border-bottom:1px solid #35525a}
-  .kaiju-compact-picker select {border-radius:0}
-  .kaiju-record-header {padding-top:10px;padding-bottom:10px}
-  .kaiju-record-header h1 {font-size:18px}
-  .kaiju-tabs {padding:0 8px}
-  .kaiju-tabs button {padding:7px 9px;font-size:9px;gap:5px}
-  .kaiju-body {padding:9px}
-  .kaiju-savebar {padding:8px 10px}
-}
-/* Prevent the application shell's 1.5 line-height from inflating macro panels. */
-.kaiju-vinculo-card {font-size:16px;line-height:normal}
+@media (prefers-reduced-motion:reduce) {.kaiju-app *,.kaiju-app *::before,.kaiju-app *::after {animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+[data-motion=off] .kaiju-app *,[data-motion=off] .kaiju-app *::before,[data-motion=off] .kaiju-app *::after {animation:none!important;transition:none!important;scroll-behavior:auto!important}
+/* Revision 2: restore the K-03 chromatic instruments and their visible ambient life. */
+.kaiju-app {--kaiju-bg:#071016;--kaiju-surface:#10212a;--kaiju-line:#3c6068;--kaiju-v:#e85d48;--kaiju-c:#4ac8b7;--kaiju-h:#78abe1;background:radial-gradient(ellipse at 92% 0%,#12313966,transparent 48%),linear-gradient(155deg,#101e27,#050b10 75%)}
+.kaiju-sidebar {background:radial-gradient(ellipse at 15% 0%,#1d4f5166,transparent 52%),linear-gradient(165deg,#152932,#070e14 80%);border-right-color:#466b71}
+.kaiju-brand {border-image:linear-gradient(90deg,#4ac8b7,#345b61,transparent) 1}
+.kaiju-brand>i {padding:10px 8px;font-size:23px;background:radial-gradient(circle,#33877e38,#08131c 78%);border:1px solid #4d8e86;border-radius:4px;text-shadow:0 0 12px #4ac8b738}
+.kaiju-brand strong {letter-spacing:2.5px}.kaiju-brand small {font-size:8px}
+.kaiju-app .kaiju-carrier.is-selected {background:linear-gradient(110deg,#255d5d99,#132c3599);border-color:#56898b;border-left-color:#8de4d2;box-shadow:inset 0 1px #b9ead812}
+.kaiju-avatar {border-color:#557b83;background:linear-gradient(145deg,#2e596466,#11222c);color:#d3e6e7}
+.kaiju-record-header {border-top:2px solid #427c7a;background:radial-gradient(ellipse at 5% 0%,#6b2c3635,transparent 45%),radial-gradient(ellipse at 85% 0%,#1a645e32,transparent 55%),linear-gradient(135deg,#162934,#0a161d)}
+.kaiju-record-header h1 {color:#eff3ea;text-shadow:0 1px #0006}
+.kaiju-access {border-color:#518087;background:linear-gradient(135deg,#1c414977,#0a1923);color:#c2d7d7}
+.kaiju-tabs {background:linear-gradient(90deg,#10222a,#09151d);border-block-color:#3c6068}
+.kaiju-tab-indicator {background:linear-gradient(120deg,#28676088,#16323c);border-color:#6ab6ad;border-bottom-color:#9ee2cf;box-shadow:inset 0 1px #baf2dd12}
+.kaiju-channel,.kaiju-axis,.kaiju-stage-column {--axis-bright:#a7edda;--axis-deep:#125860;--channel-wash:#16666466;--icon-shape:circle(50% at 50% 50%)}
+:is(.kaiju-channel[data-kaiju-meter=vontade],.kaiju-axis[data-axis=vontade],.kaiju-stage-column[data-stage-axis=vontade]) {--axis-bright:#ffc17c;--axis-deep:#7f202a;--channel-wash:#81352a65;--icon-shape:polygon(50% 0%,90% 20%,100% 68%,50% 100%,0% 68%,10% 20%)}
+:is(.kaiju-channel[data-kaiju-meter=humanidade],.kaiju-axis[data-axis=humanidade],.kaiju-stage-column[data-stage-axis=humanidade]) {--axis-bright:#d4e9ff;--axis-deep:#244a7b;--channel-wash:#294f815f;--icon-shape:polygon(50% 0%,94% 15%,88% 68%,50% 100%,12% 68%,6% 15%)}
+.kaiju-channel,.kaiju-axis {border:1px solid color-mix(in srgb,var(--axis-color) 70%,#30464f);border-left:4px solid var(--axis-color);border-radius:1px;background:repeating-linear-gradient(135deg,#c7dfe904 0 1px,transparent 1px 10px),radial-gradient(ellipse at 0% 45%,var(--channel-wash),transparent 65%),linear-gradient(145deg,#15232c,#060e15 85%);box-shadow:inset 0 0 24px #0003,0 4px 10px #0002}
+.kaiju-channel::before {content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,var(--axis-color),var(--axis-bright) 35%,transparent 80%);pointer-events:none}
+.kaiju-channel::after {content:"";position:absolute;right:0;top:0;width:28px;height:16px;border-top:2px solid var(--axis-bright);border-right:2px solid var(--axis-color);opacity:.8;pointer-events:none}
+.kaiju-channel-top {margin-bottom:8px}.kaiju-channel-code {color:color-mix(in srgb,var(--axis-color) 75%,#fff);font-size:9px}
+.kaiju-channel-signature {--signal-span:150px;display:block;position:relative;width:var(--signal-span);height:23px;overflow:hidden;flex-shrink:0;border:1px solid color-mix(in srgb,var(--axis-color) 36%,transparent);background:#030a1080;color:var(--axis-color);opacity:1;pointer-events:none;contain:paint}
+.kaiju-signal-strip {display:flex;width:calc(var(--signal-span)*2);height:100%;animation:kaiju-signal-flow var(--ambient-period) linear infinite;animation-play-state:paused}
+.kaiju-signal-strip svg {display:block;width:var(--signal-span);height:100%;flex-shrink:0}
+.kaiju-signal-strip path {stroke-width:2.2;opacity:.8}
+.kaiju-icon-instrument {position:relative;display:grid;place-items:center;width:60px;height:64px;flex-shrink:0;isolation:isolate}
+.kaiju-icon-aura {position:absolute;inset:0;width:60px;height:64px;fill:none;stroke:var(--axis-color);stroke-width:1.1;opacity:.4;animation:kaiju-feral-aura 5.8s ease-in-out infinite;animation-play-state:paused;pointer-events:none;transform-origin:center}
+.kaiju-icon-aura path {stroke-linejoin:round}
+[data-kaiju-meter=comunhao] .kaiju-icon-aura {stroke-dasharray:25 10 4 8;animation-name:kaiju-phase-orbit;animation-duration:18s;animation-timing-function:linear;opacity:.65}
+[data-kaiju-meter=humanidade] .kaiju-icon-aura {animation-name:kaiju-identity-field;animation-duration:8s;opacity:.5}
+.kaiju-channel-icon {position:relative;display:block;width:46px;height:48px;border:0;background:linear-gradient(145deg,var(--axis-bright),var(--axis-deep) 48%,var(--axis-color));clip-path:var(--icon-shape);font-size:21px;color:var(--axis-bright)}
+.kaiju-icon-core {position:absolute;inset:2px;display:grid;place-items:center;clip-path:var(--icon-shape);background:radial-gradient(circle,color-mix(in srgb,var(--axis-color) 20%,#080e15),#080e15 80%)}
+.kaiju-icon-core i {text-shadow:0 0 11px color-mix(in srgb,var(--axis-color) 42%,transparent)}
+.kaiju-channel-heading h2 {color:#f1f3ee;font-weight:680}.kaiju-channel-heading p {color:#b4c4cb}
+.kaiju-channel-value {padding:8px 10px;background:linear-gradient(135deg,#06101ceb,#0b1824e8);border:1px solid color-mix(in srgb,var(--axis-color) 62%,#355161);border-top:2px solid var(--axis-color);color:color-mix(in srgb,var(--axis-color) 72%,#fff);box-shadow:inset 0 0 18px color-mix(in srgb,var(--axis-color) 8%,transparent)}
+.kaiju-channel-value strong {font-size:33px;text-shadow:0 0 12px color-mix(in srgb,var(--axis-color) 20%,transparent)}
+.kaiju-channel-progress {height:11px;padding:2px;margin:12px 0 9px;background:#03090e;border:1px solid color-mix(in srgb,var(--axis-color) 44%,#34545d);border-radius:0}
+.kaiju-channel-progress>span {height:100%;background:linear-gradient(90deg,var(--axis-deep),var(--axis-color) 57%,var(--axis-bright));transform-origin:left;box-shadow:0 0 8px color-mix(in srgb,var(--axis-color) 22%,transparent)}
+.kaiju-channel-progress>div {inset:2px}.kaiju-channel-progress b {background:#e2ebf542}
+.kaiju-meter-current {position:absolute;top:2px;bottom:2px;width:42px;left:-44px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--axis-bright) 62%,transparent),transparent);animation:kaiju-meter-pass 9s linear infinite;animation-play-state:paused;opacity:.7;pointer-events:none}
+[data-kaiju-meter=comunhao] .kaiju-meter-current {animation-duration:9s;animation-delay:-2s}
+[data-kaiju-meter=humanidade] .kaiju-meter-current {animation-duration:12s;animation-delay:-4s}
+.kaiju-channel-progress[aria-valuenow="0"] .kaiju-meter-current {display:none}
+.kaiju-channel-caption>strong {display:flex;align-items:center;gap:6px;color:color-mix(in srgb,var(--axis-color) 75%,#fff)}
+.kaiju-stage-beacon {width:5px;height:5px;background:var(--axis-color);border:1px solid var(--axis-bright);flex-shrink:0}
+.kaiju-channel-rail {max-width:340px}.kaiju-channel-rail>span {padding:5px 0;background:linear-gradient(135deg,color-mix(in srgb,var(--axis-color) 5%,#08131b),#071018);border-color:color-mix(in srgb,var(--axis-color) 30%,#34505b);border-radius:0}
+.kaiju-channel-rail .is-current {color:var(--axis-bright);background:linear-gradient(145deg,color-mix(in srgb,var(--axis-color) 25%,#101a21),#0b1922);border-color:var(--axis-color);box-shadow:inset 0 -2px var(--axis-color)}
+.kaiju-channel-rail .is-passed {color:color-mix(in srgb,var(--axis-color) 78%,#fff)}
+.kaiju-channel-actions button {border-color:color-mix(in srgb,var(--axis-color) 35%,#22343e)!important;background:#0a182099!important;color:#bed0d3!important;border-radius:0!important}
+.kaiju-channel-actions button:hover {border-color:var(--axis-color)!important;color:var(--axis-bright)!important;background:color-mix(in srgb,var(--axis-color) 12%,#0a1820)!important}
+.kaiju-diagnosis {padding:14px 16px;margin-top:14px;border:1px solid #557577;border-left:3px solid #8ec7a7;background:radial-gradient(ellipse at 0% 50%,#2554454f,transparent 70%),linear-gradient(135deg,#14232b,#08121b);box-shadow:inset 0 1px #b8dac110}
+.kaiju-diagnosis>span {color:#9dd3b5}.kaiju-diagnosis p {color:#dce7df}
+.kaiju-stage-icon {position:relative;width:43px;height:46px;border:0;border-radius:0;background:linear-gradient(145deg,var(--axis-bright),var(--axis-deep) 48%,var(--axis-color));clip-path:var(--icon-shape)}
+.kaiju-stage-icon::before {content:"";position:absolute;inset:2px;clip-path:var(--icon-shape);background:radial-gradient(circle,color-mix(in srgb,var(--axis-color) 20%,#080e15),#080e15 80%)}
+.kaiju-stage-icon i {position:relative;z-index:1;color:var(--axis-bright);text-shadow:0 0 10px color-mix(in srgb,var(--axis-color) 30%,transparent)}
+.kaiju-stage-caption>strong,.kaiju-number input {color:color-mix(in srgb,var(--axis-color) 75%,#fff)}
+.kaiju-number input {border-color:color-mix(in srgb,var(--axis-color) 50%,#355161);background:linear-gradient(135deg,#06101c,#0d1b27)}
+.kaiju-stage-column {border-color:color-mix(in srgb,var(--axis-color) 57%,#3c6068);background:repeating-linear-gradient(135deg,#c7dfe904 0 1px,transparent 1px 10px),radial-gradient(ellipse at 0% 0%,var(--channel-wash),transparent 68%),linear-gradient(145deg,#14232c,#071019);box-shadow:inset 0 1px var(--axis-color)}
+.kaiju-stage-column h3 {color:color-mix(in srgb,var(--axis-color) 75%,#fff)}
+.kaiju-stage-node {background:linear-gradient(145deg,#1e3540,#07101a);border-color:color-mix(in srgb,var(--axis-color) 35%,#49626c);border-radius:0}
+.kaiju-stage-column li.is-current .kaiju-stage-node {border:1px solid var(--axis-bright);background:linear-gradient(135deg,var(--axis-deep),#0a1721);color:var(--axis-bright);box-shadow:inset 0 0 0 2px #08131ba8}
+.kaiju-current-label {color:var(--axis-bright)}
+.kaiju-savebar {background:linear-gradient(100deg,#12252d,#09151d);border-top-color:#4c7279}
+.kaiju-app .kaiju-button-primary {background:linear-gradient(125deg,#2f9e94,#73d3ba);color:#061a17;border:1px solid #85d9c4;box-shadow:inset 0 1px #c6f2df40}
+.kaiju-app .kaiju-button-primary:hover:not(:disabled) {background:linear-gradient(125deg,#55c0ac,#a1e4c9);border-color:#bdebd7}
+.kaiju-app .kaiju-new {background:linear-gradient(120deg,#285b5b60,#102530);border-color:#59858b}
+.kaiju-create-form {background:radial-gradient(ellipse at 0% 0%,#1c68614f,transparent 70%),linear-gradient(145deg,#18313b,#0b1821);border-color:#6a9b9e}
+.kaiju-record-form :is(input,textarea) {background:linear-gradient(135deg,#162d38,#0c1d27);border-color:#507680}
+.is-ambient-active :is(.kaiju-signal-strip,.kaiju-icon-aura,.kaiju-meter-current) {animation-play-state:running}
+@keyframes kaiju-signal-flow {from{transform:translateX(0)}to{transform:translateX(calc(var(--signal-span)*-1))}}
+@keyframes kaiju-feral-aura {0%,100%{opacity:.28;transform:scale(1)}50%{opacity:.58;transform:scale(1.035)}}
+@keyframes kaiju-phase-orbit {from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes kaiju-identity-field {0%,100%{opacity:.28;transform:scale(.98)}50%{opacity:.76;transform:scale(1.04)}}
+@keyframes kaiju-meter-pass {0%{transform:translateX(0);opacity:0}8%{opacity:.42}85%{transform:translateX(var(--meter-travel,400px));opacity:.42}86%,100%{transform:translateX(var(--meter-travel,400px));opacity:0}}
+[data-motion=calm] :is(.kaiju-signal-strip,.kaiju-icon-aura,.kaiju-meter-current) {animation-play-state:paused!important}
+@container (max-width:950px) {.kaiju-channel-signature{--signal-span:95px}.kaiju-channel-bottom{gap:9px}.kaiju-icon-instrument{width:53px;height:58px}.kaiju-icon-aura{width:53px;height:58px}.kaiju-channel-value{padding:7px}.kaiju-channel-value strong{font-size:30px}}
+@container (max-width:440px) {.kaiju-channel{padding:12px}.kaiju-channel-signature{display:block;--signal-span:74px;height:20px}.kaiju-channel-code{font-size:7px;letter-spacing:.3px}.kaiju-channel-heading{gap:8px}.kaiju-icon-instrument{width:44px;height:48px}.kaiju-icon-aura{width:44px;height:48px}.kaiju-channel-icon{width:34px;height:38px;font-size:17px}.kaiju-channel-value{padding:6px}.kaiju-channel-value strong{font-size:27px}.kaiju-channel-heading p{font-size:10px}.kaiju-channel-value>span{font-size:10px}.kaiju-channel-rail>span{padding:5px 0}.kaiju-channel-actions button{min-height:28px}.kaiju-stage-icon{width:35px;height:40px}}
+.kaiju-channel-progress>.kaiju-meter-route {position:absolute;left:2px;top:2px;bottom:2px;height:auto;overflow:hidden;background:none;box-shadow:none;transform:none;pointer-events:none}
+.kaiju-meter-route>.kaiju-meter-current {top:0;bottom:0}
+.kaiju-range::-webkit-slider-runnable-track {height:6px;background:linear-gradient(90deg,transparent var(--fill),#2a414c var(--fill)),linear-gradient(90deg,var(--axis-deep),var(--axis-color) 57%,var(--axis-bright));border:1px solid color-mix(in srgb,var(--axis-color) 28%,#2a414c);border-radius:0}
+.kaiju-range::-moz-range-track {height:6px;background:linear-gradient(90deg,transparent var(--fill),#2a414c var(--fill)),linear-gradient(90deg,var(--axis-deep),var(--axis-color) 57%,var(--axis-bright));border:1px solid color-mix(in srgb,var(--axis-color) 28%,#2a414c);border-radius:0}
+.kaiju-channel[data-kaiju-stage="5"] .kaiju-channel-icon {background:linear-gradient(135deg,var(--axis-bright),var(--axis-color) 50%,var(--axis-bright));color:var(--axis-bright)}
+.kaiju-channel[data-kaiju-stage="5"] .kaiju-icon-aura {stroke:var(--axis-bright);stroke-width:1.4}
+.kaiju-channel[data-kaiju-stage="5"] .kaiju-channel-value {border-color:var(--axis-bright);color:var(--axis-bright)}
+.kaiju-channel[data-kaiju-meter=vontade][data-kaiju-stage="5"] {--icon-shape:polygon(50% 0%,63% 13%,84% 8%,82% 28%,100% 43%,88% 60%,92% 83%,67% 82%,50% 100%,33% 82%,8% 83%,12% 60%,0% 43%,18% 28%,16% 8%,37% 13%)}
+@container (max-width:440px) {.kaiju-channel-code{font-size:8px}}
+/* K-03 classified dossier: chromatic telemetry follows each stored percentage. */
+.kaiju-app {grid-template-columns:188px minmax(0,1fr);--kaiju-text:#eef5f5;--kaiju-muted:#a2b8c6;--kaiju-line:#2e5365;background:radial-gradient(ellipse at 85% 0%,#17385460,transparent 55%),#070e16}
+.kaiju-sidebar {padding:22px 10px 16px;background:linear-gradient(155deg,#102534,#070e17 72%);border-right:1px solid #416677}
+.kaiju-brand {align-items:center;gap:8px;border-image:linear-gradient(90deg,#ff526a,#558b9d,transparent) 1}
+.kaiju-brand>i {color:#ff6c7f;border-color:#cf5063;border-radius:0;background:linear-gradient(140deg,#572b3940,#0c1723)}
+.kaiju-brand strong {font-size:21px}.kaiju-brand small {font-size:7px;letter-spacing:.9px}
+.kaiju-avatar {width:31px;height:39px;border-radius:0;overflow:hidden}.kaiju-avatar img {width:100%;height:100%;object-fit:cover;object-position:center 30%}
+.kaiju-app .kaiju-carrier {padding:11px 6px;border:1px solid #294553;border-left:3px solid #294553;border-radius:0;background:#0c1b2640}
+.kaiju-app .kaiju-carrier.is-selected {border-color:#42697e;border-left-color:#ff627c;background:linear-gradient(115deg,#ad3f632b,#152d3a)}
+.kaiju-program-bar {display:flex;justify-content:space-between;gap:12px;align-items:center;flex-shrink:0;padding:9px 20px;border-bottom:1px solid #406277;background:#122533;font:9px/1.3 ui-monospace,monospace;letter-spacing:1.2px;color:#b9d8e3}
+.kaiju-program-bar>span {display:flex;align-items:center;gap:7px}.kaiju-program-bar b {color:#ff6e84}.kaiju-program-bar>span:last-child {color:#ff9b9e;letter-spacing:.7px}.kaiju-program-bar i {color:#ff6e84}
+.kaiju-record-header {padding:16px 20px 15px;border-top:0;background:linear-gradient(110deg,#63283c20,#172c3c60 55%,#102130);position:relative}
+.kaiju-record-header::after {content:"";position:absolute;left:20px;right:20px;bottom:0;height:1px;background:linear-gradient(90deg,#ff5672 0 15%,#497389 15% 96%,#ff5672 96%)}
+.kaiju-record-header h1 {font-size:29px;font-weight:650;letter-spacing:.2px}.kaiju-record-header .kaiju-eyebrow {color:#83c7d7;font-size:8px;margin-bottom:5px}.kaiju-record-header p {font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.7px}
+.kaiju-access {border:1px solid #674455;border-left:3px solid #ff6e84;border-radius:0;color:#e3bac7;background:#301c2940;font:9px ui-monospace,monospace;padding:8px 10px}
+.kaiju-tabs {padding:7px 20px;background:#101e2b;border-top:0;border-bottom:1px solid #42667a;gap:2px}.kaiju-tabs button {font-size:11px;letter-spacing:.4px;border-radius:0}
+.kaiju-tab-indicator {background:linear-gradient(120deg,#245c7255,#173145);border-radius:0;border-color:#528a9b;border-bottom-color:#66e4ec}
+.kaiju-body {padding:15px 20px 20px;background-image:linear-gradient(#35627a0a 1px,transparent 1px),linear-gradient(90deg,#35627a0a 1px,transparent 1px);background-size:28px 28px}
+.kaiju-dossier {display:grid;grid-template-columns:minmax(190px,.37fr) minmax(0,1fr);gap:16px;align-items:start;min-width:0}
+.kaiju-section-title {display:flex;align-items:center;justify-content:space-between;gap:7px;color:#8fd6df;font:8px/1.5 ui-monospace,monospace;letter-spacing:.7px;margin-bottom:9px;padding:6px 0;border-bottom:1px solid #355d70}
+.kaiju-section-title>span {display:flex;align-items:center;gap:6px}.kaiju-section-title b {font-size:7px;color:#f798a4;font-weight:400;white-space:nowrap}
+.kaiju-subject {min-width:0}.kaiju-photo {position:relative;isolation:isolate;width:100%;aspect-ratio:2/3;max-height:390px;overflow:hidden;border:1px solid #4f8796;border-top:2px solid #79d9df;background:#081721;contain:paint;--scan-travel:440px}
+.kaiju-photo>img {position:absolute;width:100%;height:100%;object-fit:cover;object-position:center 35%;z-index:1}
+.kaiju-photo-placeholder {position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:16px;flex-direction:column;background:radial-gradient(ellipse,#174255,#09151f 70%);color:#649bab;z-index:0}
+.kaiju-photo-placeholder>i {font-size:85px;opacity:.5}.kaiju-photo-placeholder>span {font:8px ui-monospace,monospace;letter-spacing:1px;max-width:90%;text-align:center}
+.kaiju-photo-corners {position:absolute;inset:7px;z-index:4;pointer-events:none;background:linear-gradient(#8ff4ed,#8ff4ed) top left/20px 2px no-repeat,linear-gradient(#8ff4ed,#8ff4ed) top left/2px 20px no-repeat,linear-gradient(#8ff4ed,#8ff4ed) top right/20px 2px no-repeat,linear-gradient(#8ff4ed,#8ff4ed) top right/2px 20px no-repeat,linear-gradient(#ff6d92,#ff6d92) bottom left/20px 2px no-repeat,linear-gradient(#ff6d92,#ff6d92) bottom left/2px 20px no-repeat,linear-gradient(#ff6d92,#ff6d92) bottom right/20px 2px no-repeat,linear-gradient(#ff6d92,#ff6d92) bottom right/2px 20px no-repeat}
+.kaiju-photo-caption {position:relative;padding:10px 12px;background:#0b1d2a;border:1px solid #4f8796;border-top:0}
+.kaiju-photo-caption>span {display:block;font:7px ui-monospace,monospace;letter-spacing:1.8px;color:#77e4e0;margin-bottom:5px}.kaiju-photo-caption strong {display:block;font-size:18px;font-weight:600;color:#f1fcff;overflow-wrap:anywhere}.kaiju-photo-caption small {display:block;font:9px ui-monospace,monospace;margin-top:4px;color:#c1d8e6;overflow-wrap:anywhere}
+.kaiju-subject-data {display:grid;border:1px solid #31566d;margin-top:10px;background:#10233166}.kaiju-subject-data>div {padding:8px 10px;border-bottom:1px solid #31566d}.kaiju-subject-data>div:last-child {border-bottom:0}.kaiju-subject-data span {display:block;font:7px ui-monospace,monospace;letter-spacing:.8px;color:#9dbece;margin-bottom:4px}.kaiju-subject-data strong {display:block;font-size:10px;font-weight:500;color:#d5e7ef}.kaiju-subject-data i {font-size:9px;color:#ff819b;margin-right:4px}
+.kaiju-subject-ranks {display:grid;gap:5px;margin-top:10px}.kaiju-subject-ranks>div {display:flex;gap:8px;align-items:center;border:1px solid color-mix(in srgb,var(--axis-color) 44%,#1b364b);border-left:3px solid var(--axis-color);padding:7px 9px;background:linear-gradient(100deg,var(--channel-wash),#10203066)}
+.kaiju-subject-ranks i {width:18px;color:var(--axis-bright);font-size:13px}.kaiju-subject-ranks span {flex:1;color:#d9e7ef;font-size:10px}.kaiju-subject-ranks span small {display:block;color:var(--axis-bright);font:7px ui-monospace,monospace;margin-top:2px}.kaiju-subject-ranks b {font:18px ui-monospace,monospace;color:var(--axis-bright);font-weight:400}.kaiju-subject-ranks b small {font-size:8px;margin-left:2px}
+.kaiju-app .kaiju-image-shortcut {display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;margin-top:8px;font:9px ui-monospace,monospace;border:1px solid #41667c;color:#a5dce5;border-radius:0;background:#102c3b66;padding:8px}
+.kaiju-channel {padding:10px 13px 11px;border-left-width:3px;background:radial-gradient(ellipse at 0% 50%,var(--channel-wash),transparent 78%),linear-gradient(135deg,#122130,#070f1c);border-color:color-mix(in srgb,var(--axis-color) 64%,#2a465b)}
+.kaiju-channels {gap:10px}.kaiju-channel-top {margin-bottom:5px;gap:7px}.kaiju-channel-code {font-size:7px;letter-spacing:.7px;color:var(--axis-bright)}.kaiju-channel-signature {--signal-span:86px;height:18px}
+.kaiju-channel-heading {gap:9px}.kaiju-channel-heading h2 {font-size:16px;letter-spacing:.1px}.kaiju-channel-heading p {font-size:10px;color:#b4cad5;line-height:1.4;margin-top:3px}
+.kaiju-icon-instrument {width:48px;height:51px}.kaiju-icon-aura {width:48px;height:51px}.kaiju-channel-icon {width:37px;height:41px;font-size:18px}.kaiju-channel-value {padding:7px 8px;gap:3px}.kaiju-channel-value strong {font-size:29px;color:var(--axis-bright)}.kaiju-channel-value>span {font-size:10px;color:var(--axis-bright)}
+.kaiju-channel-progress {height:13px;margin:9px 0 7px;background:#030912}.kaiju-channel-progress>[data-meter-fill] {background:linear-gradient(90deg,var(--axis-deep),var(--axis-color) 48%,var(--axis-bright));box-shadow:0 0 12px color-mix(in srgb,var(--axis-color) 36%,transparent)}
+.kaiju-channel-caption {gap:8px}.kaiju-channel-caption>span {font-size:8px}.kaiju-channel-caption>strong {font-size:10px;color:var(--axis-bright)}
+.kaiju-channel-bottom {margin-top:8px;gap:9px}.kaiju-channel-rail {gap:4px;max-width:none;flex:1;min-width:0}.kaiju-channel-rail>span {padding:3px 0}.kaiju-channel-rail i {font-size:10px}.kaiju-channel-rail small {font-size:6px;margin-top:2px}.kaiju-channel-actions {gap:4px}.kaiju-channel-actions button {font-size:8px;min-height:28px;padding:5px 7px!important}
+.kaiju-diagnosis {margin-top:11px;padding:10px 12px;border:1px solid #4a7587;border-left:3px solid #73dce1;background:linear-gradient(110deg,#18495746,#102131);box-shadow:none}.kaiju-diagnosis>span {font-size:8px;color:#9bdce0}.kaiju-diagnosis p {font-size:11px;margin-top:5px;color:#dbeaf0;line-height:1.5}
+.kaiju-stage-column li {border-color:color-mix(in srgb,var(--axis-color) 35%,#2f495c)}.kaiju-stage-column li strong {color:var(--axis-bright)}
+.kaiju-savebar {padding:10px 20px;background:#102332;border-top:1px solid #45697b}.kaiju-savebar .kaiju-status {font:10px ui-monospace,monospace}.kaiju-app .kaiju-button {border-radius:0;font-size:11px}.kaiju-app .kaiju-button-primary {background:linear-gradient(110deg,#377f98,#83d6dc);border-color:#87dce5;color:#081622}
+.kaiju-portrait-config {border:1px solid #496e81;padding:14px;margin:20px 0;color:#b7d5e1;min-width:0}.kaiju-portrait-config legend {font:11px ui-monospace,monospace;color:#93e5e5;padding:0 7px}.kaiju-portrait-config>p,.kaiju-upload-label>small {font-size:10px!important;color:#a5bdc9!important}.kaiju-portrait-config .kaiju-button {margin-top:10px;border:1px solid #4b7587;background:#183547}.kaiju-upload-label {display:block;margin-top:12px!important}.kaiju-upload-label input {font-size:10px;margin-top:7px}.kaiju-upload-label small {display:block;margin-top:6px}
+.is-ambient-active .kaiju-scanner {animation-play-state:running}
+[data-motion=calm] .kaiju-scanner {animation-play-state:paused!important}
+.has-no-photo .kaiju-scanner,.image-unavailable .kaiju-scanner {display:none}
+@container (max-width:1080px) {.kaiju-dossier{grid-template-columns:200px minmax(0,1fr);gap:12px}.kaiju-channel-heading h2{font-size:15px}.kaiju-channel-heading p{font-size:9px}.kaiju-channel-actions button{padding:4px!important}.kaiju-channel-code{font-size:7px;letter-spacing:.3px}.kaiju-channel-signature{--signal-span:64px}.kaiju-channel-value strong{font-size:25px}.kaiju-icon-instrument{width:41px;height:47px}.kaiju-icon-aura{width:41px;height:47px}.kaiju-channel-icon{width:32px;height:37px;font-size:16px}.kaiju-channel-bottom{flex-wrap:wrap}.kaiju-channel-rail{flex-basis:65%}.kaiju-photo{max-height:330px}}
+@container (max-width:950px) {.kaiju-dossier{grid-template-columns:1fr}.kaiju-subject{display:grid;grid-template-columns:180px minmax(0,1fr);gap:10px 14px}.kaiju-subject>.kaiju-section-title{grid-column:1/-1}.kaiju-portrait{grid-row:2/6}.kaiju-photo{max-height:225px}.kaiju-subject-data,.kaiju-subject-ranks{margin-top:0;align-self:start}.kaiju-subject-data{grid-column:2}.kaiju-subject-ranks{grid-column:2}.kaiju-app .kaiju-image-shortcut{grid-column:2;margin:0;align-self:start}.kaiju-channel-heading h2{font-size:17px}.kaiju-channel-heading p{font-size:11px}.kaiju-channel-code{font-size:8px}.kaiju-channel-signature{--signal-span:94px}.kaiju-channel-bottom{flex-wrap:nowrap}.kaiju-channel-rail{flex-basis:0}.kaiju-channel-value strong{font-size:30px}}
+@container (max-width:720px) {.kaiju-main{grid-column:1/-1}.kaiju-program-bar{font-size:8px;padding:8px 14px;letter-spacing:.3px}.kaiju-program-bar>span:last-child{font-size:7px}.kaiju-body{padding:14px 16px}.kaiju-record-header{padding:13px 16px}.kaiju-record-header h1{font-size:25px}.kaiju-tabs{padding-inline:12px}.kaiju-section-title{font-size:8px}}
+@container (max-width:440px) {.kaiju-program-bar{flex-wrap:wrap;gap:5px}.kaiju-record-header h1{font-size:23px}.kaiju-body{padding:12px}.kaiju-subject{grid-template-columns:136px minmax(0,1fr);gap:8px 10px}.kaiju-photo{max-height:240px;aspect-ratio:2/3}.kaiju-photo-caption{padding:24px 9px 10px}.kaiju-photo-caption strong{font-size:13px}.kaiju-photo-caption small{font-size:7px}.kaiju-subject-data>div{padding:7px}.kaiju-subject-data span{font-size:6px;letter-spacing:.1px}.kaiju-subject-data strong{font-size:8px}.kaiju-subject-ranks>div{padding:5px 6px;gap:4px}.kaiju-subject-ranks i{width:12px;font-size:10px}.kaiju-subject-ranks span{font-size:8px}.kaiju-subject-ranks b{font-size:16px}.kaiju-subject-ranks span small{font-size:6px}.kaiju-app .kaiju-image-shortcut{font-size:7px;padding:6px;min-height:31px}.kaiju-image-shortcut i:last-child{display:none}.kaiju-channel-heading h2{font-size:15px}.kaiju-channel-heading p{font-size:9px}.kaiju-channel-value strong{font-size:25px}.kaiju-channel-code{font-size:7px;letter-spacing:.3px}.kaiju-channel-signature{--signal-span:63px}.kaiju-channel-bottom{flex-wrap:wrap}.kaiju-channel-rail{flex-basis:100%}.kaiju-channel-caption>strong{font-size:10px}.kaiju-savebar{padding:10px 12px}.kaiju-tabs button{padding:8px 9px}.kaiju-section-title b{font-size:6px}}
+@container (min-width:951px) {.kaiju-photo{max-height:270px}.kaiju-subject-data>div{padding:6px 9px}.kaiju-subject-ranks>div{padding:5px 8px}.kaiju-channel-heading p{line-height:1.3}.kaiju-channel{padding-block:9px}.kaiju-icon-instrument{height:47px}.kaiju-icon-aura{height:47px}.kaiju-channel-heading{min-height:47px}.kaiju-channel-bottom{margin-top:6px}.kaiju-channel-progress{margin-block:7px}.kaiju-diagnosis{padding:8px 11px}}
+@container (max-width:440px) {.kaiju-tabs{padding:6px 8px;gap:0}.kaiju-tabs button{font-size:10px;gap:5px;padding:8px 8px;letter-spacing:0}}
+@container (min-width:951px) {.kaiju-channel{padding-block:8px}.kaiju-icon-instrument,.kaiju-icon-aura{height:43px}.kaiju-channel-heading{min-height:43px}.kaiju-channel-progress{margin-block:6px}.kaiju-channel-bottom{margin-top:5px}}
+/* Stable color families and a full-track gradient revealed by the stored percentage. */
+.kaiju-channel-progress>[data-meter-fill] {background-repeat:no-repeat;background-position:left center}
+.kaiju-channel-progress::after {content:"";position:absolute;inset:2px;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 calc(5% - 1px),#03101f55 calc(5% - 1px) 5%)}
+.kaiju-photo-corners {inset:6px;opacity:.65}
+.kaiju-portrait {min-width:0}
+.kaiju-photo-caption>span {font-size:7px;letter-spacing:1.2px;margin-bottom:4px;color:#a0d4df}
+.kaiju-photo-caption strong {font-size:16px;line-height:1.3}
+.kaiju-photo-caption small {font-size:9px;line-height:1.5;color:#c7dae4}
+.kaiju-photo {border-color:#426b7a;border-top-width:1px}
+@container (max-width:440px) {.kaiju-photo-caption{padding:8px}.kaiju-photo-caption strong{font-size:13px}.kaiju-photo-caption small{font-size:8px}.kaiju-photo{max-height:210px}.kaiju-photo-caption>span{font-size:6px}}
+/* Local reveal curtains keep the gradient aligned while the readout opens. */
+.kaiju-channel-progress>[data-meter-fill] {position:relative;overflow:hidden}
+.kaiju-meter-reveal {position:absolute;inset:0;display:block;background:#07101b;transform:translateX(100%);pointer-events:none}
+.kaiju-channel-actions button {position:relative;overflow:hidden}
+.kaiju-channel-actions button::after {content:"";position:absolute;bottom:0;left:0;right:0;height:1px;background:var(--axis-bright);transform:scaleX(0);transform-origin:left;transition:transform 180ms var(--kaiju-ease)}
+.kaiju-channel-actions button:is(:hover,:focus-visible)::after {transform:scaleX(1)}
+.kaiju-channel-rail>.is-current {position:relative}
+.kaiju-channel-rail>.is-current::after {content:"";position:absolute;right:2px;top:2px;width:3px;height:3px;background:var(--axis-bright)}
+/* v5: percentage-driven chromatic fields and a staged optical acquisition system. */
+.kaiju-channel,.kaiju-axis {background:var(--channel-gradient),linear-gradient(145deg,#182631,#07121d);box-shadow:inset 0 1px #ffffff10,inset 0 -1px #0005,0 4px 12px #0003}
+.kaiju-channel::before {height:2px;background:var(--axis-gradient)}
+.kaiju-channel-progress {height:16px}
+.kaiju-channel-progress>[data-meter-fill] {background:var(--axis-gradient);background-size:100% 100%;box-shadow:0 0 10px color-mix(in srgb,var(--axis-color) 45%,transparent)}
+.kaiju-channel-icon,.kaiju-stage-icon {background:var(--axis-gradient)}
+.kaiju-channel[data-kaiju-stage="5"] .kaiju-channel-icon {background:var(--axis-gradient)}
+.kaiju-subject-ranks>div {background:var(--channel-gradient)}
+.kaiju-range::-webkit-slider-runnable-track {background:linear-gradient(90deg,transparent var(--fill),#253b48 var(--fill)),var(--axis-gradient)}
+.kaiju-range::-moz-range-track {background:linear-gradient(90deg,transparent var(--fill),#253b48 var(--fill)),var(--axis-gradient)}
+.kaiju-stage-column {background:var(--channel-gradient)}
+.kaiju-channel-value {background:linear-gradient(130deg,color-mix(in srgb,var(--axis-deep) 48%,#06101b),#081522 80%)}
+.kaiju-channel-rail>.is-current::before {content:"";position:absolute;inset:2px;border:1px solid var(--axis-bright);opacity:0;animation:kaiju-stage-lock 4.8s ease-out infinite paused;pointer-events:none}
+@keyframes kaiju-stage-lock {0%,65%,100%{opacity:0;transform:scale(1.08)}12%,42%{opacity:.55;transform:scale(1)}}
+.is-ambient-active .kaiju-channel-rail>.is-current::before {animation-play-state:running}
+[data-motion=calm] .kaiju-channel-rail>.is-current::before {animation-play-state:paused!important}
+.kaiju-icon-aura {stroke-width:1.4}
+@keyframes kaiju-feral-aura {0%,100%{opacity:.4;transform:scale(.94) rotate(-4deg)}40%{opacity:.85;transform:scale(1.04) rotate(2deg)}60%{opacity:.6;transform:scale(1) rotate(0deg)}}
+@keyframes kaiju-identity-field {0%,100%{opacity:.4;transform:scale(.94)}30%,60%{opacity:.85;transform:scale(1.04)}}
+.kaiju-meter-current {animation-duration:5.8s}
+[data-kaiju-meter=comunhao] .kaiju-meter-current {animation-duration:6.4s}
+[data-kaiju-meter=humanidade] .kaiju-meter-current {animation-duration:7.2s}
+.kaiju-scanner {position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden;--scan-cycle:6.4s;contain:paint}
+.kaiju-scan-pass {position:absolute;left:0;right:0;top:-70px;height:70px;background:linear-gradient(0deg,#61ffe32c,transparent 90%);animation:kaiju-optical-pass var(--scan-cycle) linear infinite paused;opacity:0}
+.kaiju-scan-mesh {position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:#8fffea;stroke-width:.7;opacity:.24;mask-image:linear-gradient(0deg,#000,transparent)}
+.kaiju-scan-beam {position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#56d6c1,#cefff4 18%,#83ffe9 50%,#cefff4 82%,#56d6c1);box-shadow:0 -2px 8px #75ffe56b,0 1px 3px #e3fff5a0}
+.kaiju-scan-tip {position:absolute;bottom:-4px;width:10px;height:10px;background:#b9fff0;clip-path:polygon(0 0,100% 50%,0 100%)}
+.kaiju-scan-tip.left {left:3px}.kaiju-scan-tip.right {right:3px;transform:rotate(180deg)}
+.kaiju-scan-acquisition {position:absolute;inset:18px;opacity:0;background:linear-gradient(#bdfff0,#bdfff0) top left/15px 1px no-repeat,linear-gradient(#bdfff0,#bdfff0) top left/1px 15px no-repeat,linear-gradient(#bdfff0,#bdfff0) top right/15px 1px no-repeat,linear-gradient(#bdfff0,#bdfff0) top right/1px 15px no-repeat,linear-gradient(#bdfff0,#bdfff0) bottom left/15px 1px no-repeat,linear-gradient(#bdfff0,#bdfff0) bottom left/1px 15px no-repeat,linear-gradient(#bdfff0,#bdfff0) bottom right/15px 1px no-repeat,linear-gradient(#bdfff0,#bdfff0) bottom right/1px 15px no-repeat;animation:kaiju-optical-lock var(--scan-cycle) ease-in-out infinite paused}
+.kaiju-scan-orbit {position:absolute;left:12px;bottom:17px;width:46px;height:46px;background:radial-gradient(circle,#051a2380,transparent 72%)}
+.kaiju-scan-orbit svg {position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:#adf5e6;stroke-width:1;transform-origin:center;opacity:.75}
+.kaiju-scan-orbit-outer {stroke-dasharray:29 9 3 7;animation:kaiju-phase-orbit 12.8s linear infinite paused}
+.kaiju-scan-orbit-inner {stroke:#ffb6a4!important;stroke-dasharray:17 6;animation:kaiju-phase-orbit 6.4s linear infinite reverse paused}
+.kaiju-scan-orbit-inner path {stroke-dasharray:none;stroke-width:1.8}
+.kaiju-scan-samples {position:absolute;right:7px;top:28%;width:8px;display:grid;gap:5px;animation:kaiju-optical-samples var(--scan-cycle) ease-in-out infinite paused;opacity:.8}
+.kaiju-scan-samples i {height:2px;width:8px;background:#94ffe4}.kaiju-scan-samples i:nth-child(3n) {width:4px;margin-left:4px;background:#ffd1b8}.kaiju-scan-samples i:nth-child(2n) {width:6px;margin-left:2px}
+.kaiju-scan-confirm {position:absolute;bottom:8px;left:40px;right:17px;height:3px;background:repeating-linear-gradient(90deg,#a0ffe6 0 7px,transparent 7px 10px);transform-origin:left;opacity:0;animation:kaiju-optical-confirm var(--scan-cycle) ease-out infinite paused}
+@keyframes kaiju-optical-pass {0%{transform:translateY(0);opacity:0}5%{transform:translateY(0);opacity:0}8%{opacity:.9}72%{transform:translateY(var(--scan-travel));opacity:.9}73%,100%{transform:translateY(var(--scan-travel));opacity:0}}
+@keyframes kaiju-optical-lock {0%,5%{opacity:0;transform:scale(1.12)}14%,65%{opacity:.45;transform:scale(1.04)}76%,88%{opacity:.95;transform:scale(1)}96%,100%{opacity:0;transform:scale(1)}}
+@keyframes kaiju-optical-samples {0%,100%{opacity:.35;transform:translateY(0)}20%{opacity:.9}70%{opacity:.9;transform:translateY(38px)}90%{opacity:.35;transform:translateY(0)}}
+@keyframes kaiju-optical-confirm {0%,70%{opacity:0;transform:scaleX(0)}80%,89%{opacity:.95;transform:scaleX(1)}98%,100%{opacity:0;transform:scaleX(1)}}
+.is-ambient-active :is(.kaiju-scan-pass,.kaiju-scan-acquisition,.kaiju-scan-orbit-outer,.kaiju-scan-orbit-inner,.kaiju-scan-samples,.kaiju-scan-confirm) {animation-play-state:running}
+[data-motion=calm] :is(.kaiju-scan-pass,.kaiju-scan-acquisition,.kaiju-scan-orbit-outer,.kaiju-scan-orbit-inner,.kaiju-scan-samples,.kaiju-scan-confirm) {animation-play-state:paused!important}
+@container (max-width:440px) {.kaiju-scan-orbit{width:36px;height:36px;left:10px;bottom:16px}.kaiju-scan-acquisition{inset:14px}}

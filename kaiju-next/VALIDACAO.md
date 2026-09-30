@@ -1,3 +1,9 @@
+# Validação atual — degradês dinâmicos e scanner v5
+
+TypeScript, build, 13 testes de dados/adaptação e 64 verificações de interface no Chromium passaram. Foram inspecionadas as fases de aquisição, passagem e confirmação, a composição compacta e a comparação dos degradês de 0 a 100%. Um vídeo de um ciclo foi gerado a partir dos relógios CSS reais. Veja `HUD_REVIEW.md` para pesquisa, escopo e limites. Execução e desempenho na mesa real de Foundry permanecem pendentes.
+
+Os registros abaixo documentam a versão anterior e não descrevem a interface atual.
+
 # Validação — 0.1.0
 
 Verificações executadas em 30/09/2026:

@@ -1,15 +1,15 @@
-/* Preview only, never shipped to Foundry. */
-html,body {height:100%;margin:0;background:#050b10;color:#edf2ef;font-family:system-ui,sans-serif}
-body {display:flex;justify-content:center;align-items:center;padding:28px;box-sizing:border-box}
-.preview-shell {width:min(1200px,100%);height:min(810px,100%);display:flex;flex-direction:column;border:1px solid #344854;border-radius:12px;overflow:hidden;box-shadow:0 30px 100px #0007}
-.preview-header {display:flex;justify-content:space-between;align-items:center;gap:12px;flex-shrink:0;padding:10px 18px;background:#121e28;border-bottom:1px solid #344854;font-size:12px}
-.preview-header>span {letter-spacing:2px;font-weight:650}
-.preview-header>div {display:flex;gap:12px}
-.preview-shell[data-size=medium] {width:850px;max-width:100%}
-.preview-shell[data-size=compact] {width:520px;max-width:100%}
-.preview-shell[data-size=compact] .preview-header small {display:none}
-.preview-header small {font-size:9px;letter-spacing:1px;color:#9caeb5;font-weight:400;margin-left:12px}
-.preview-header label {font-size:11px;color:#a5b5b7}
-.preview-header select {margin-left:6px;background:#1a2c37;color:#edf2ef;border:1px solid #415661;border-radius:4px;padding:4px 8px;font-size:11px}
+/* Preview controls never ship to Foundry. */
+html,body {height:100%;margin:0;background:#060b10;color:#ebf1ed;font-family:system-ui,sans-serif}
+body {display:flex;justify-content:center;align-items:center;padding:24px;box-sizing:border-box}
+.preview-shell {width:min(1280px,100%);height:min(940px,100%);display:flex;flex-direction:column;border:1px solid #354d56;border-radius:7px;overflow:hidden;box-shadow:0 20px 70px #0006}
+.preview-header {display:flex;justify-content:space-between;align-items:center;gap:12px;flex-shrink:0;padding:13px 19px;background:#0c171e;border-bottom:1px solid #354d56;font-size:12px;flex-wrap:wrap}
+.preview-title>strong {font-size:12px;letter-spacing:1.8px;font-weight:650}.preview-title strong span {color:#a4b7bc;font-weight:400;letter-spacing:.7px}
+.preview-title>small {display:block;font:8px/1.5 ui-monospace,monospace;letter-spacing:1px;color:#a4b7bc;margin-top:4px}
+.preview-controls {display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.preview-shell[data-size=medium] {width:850px;max-width:100%}.preview-shell[data-size=compact] {width:430px;max-width:100%}
+.preview-header label {display:flex;align-items:center;gap:6px;font-size:10px;color:#a4b7bc}
+.preview-header select,.preview-header button {background:#152730;color:#ebf1ed;border:1px solid #425e67;border-radius:3px;padding:6px 8px;font-size:11px;cursor:pointer}
+.preview-header button {background:transparent;font-size:10px;color:#a4b7bc}.preview-header :focus-visible {outline:2px solid #71cbb6;outline-offset:2px}
+.preview-footer {display:flex;justify-content:space-between;gap:8px;flex-shrink:0;padding:7px 16px;border-top:1px solid #30464f;background:#0c171e;font:9px/1.5 ui-monospace,monospace;color:#a4b7bc;flex-wrap:wrap}
 #app {flex:1;min-height:0}
-@media(max-width:650px) {body{padding:8px}.preview-header small{display:none}}
+@media(max-width:650px) {body{padding:8px}.preview-header{padding:10px 12px}.preview-controls{gap:7px}.preview-footer{font-size:8px}}

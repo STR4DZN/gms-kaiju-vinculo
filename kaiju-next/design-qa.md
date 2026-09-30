@@ -1,3 +1,7 @@
+# Revisão visual atual
+
+A revisão viva v2 de 30/09/2026, solicitada pelo usuário, substitui a exigência anterior de preservar o radar e o resumo. Veja `MOTION_REVIEW.md` para pesquisa, mudanças, cores e validação.
+
 # Comparação visual — K-03 / Kaiju
 
 final result: passed

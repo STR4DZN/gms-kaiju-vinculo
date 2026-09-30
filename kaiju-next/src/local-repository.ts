@@ -1,17 +1,18 @@
 import {applyPatch,createCarrier,randomId,validateCarrier,type Carrier,type CarrierPatch,type Repository} from "./domain.ts";
-const KEY="kaiju-preview-v1-schema1";
+const KEY="kaiju-hud-preview-v3-schema1";
 const EVENT="kaiju-preview-updated";
 export class LocalRepository implements Repository {
   constructor(readonly isGM:boolean) {
     if(!localStorage.getItem(KEY)) {
       const samples=[
-        {...createCarrier("k03-mika","Mika Shiro"),designation:"Piloto / Unidade 03",shared:true,values:{vontade:48,comunhao:62,humanidade:75},notes:"Primeiro contato registrado. Os três eixos podem ser ajustados independentemente."},
-        {...createCarrier("k03-ren","Ren Akagi"),designation:"Piloto / Unidade 07"},
-        {...createCarrier("k03-aoi","Aoi Kuroda"),designation:"Piloto / Unidade 11",shared:true,values:{vontade:100,comunhao:100,humanidade:100}}
+        {...createCarrier("k03-mika","Mika Shiro"),designation:"Lancer / Unidade 03",portrait:"demo/mika.png",shared:true,values:{vontade:48,comunhao:62,humanidade:75},notes:"Primeiro contato registrado. Os três eixos podem ser ajustados independentemente."},
+        {...createCarrier("k03-ren","Ren Akagi"),designation:"Lancer / Unidade 07",values:{vontade:86,comunhao:24,humanidade:42}},
+        {...createCarrier("k03-aoi","Aoi Kuroda"),designation:"Lancer / Unidade 11",shared:true,values:{vontade:100,comunhao:100,humanidade:100}}
       ];
       localStorage.setItem(KEY,JSON.stringify(samples));
     }
   }
+  static reset():void {localStorage.removeItem(KEY)}
   private all():Carrier[] {
     const parsed:unknown=JSON.parse(localStorage.getItem(KEY)??"[]");
     if(!Array.isArray(parsed))throw new Error("Os dados da prévia estão em formato inválido.");

@@ -36,7 +36,10 @@ test("adaptador Foundry: consulta, permissão e atualização apenas dos campos 
   const saved=await repo.save("public",{values:{vontade:40}},baseline);
   assert.equal(saved.values.vontade,40);
   assert.deepEqual(Object.keys(publicRecord.lastUpdate).sort(),["flags.kaiju-vinculo.carrier.updatedAt","flags.kaiju-vinculo.carrier.values.vontade"]);
-  await repo.save("public",{shared:false},saved);assert.equal(publicRecord.ownership.default,0);
+  const withPortrait=await repo.save("public",{portrait:"worlds/mesa/mika.webp"},saved);
+  assert.equal(withPortrait.portrait,"worlds/mesa/mika.webp");
+  assert.deepEqual(Object.keys(publicRecord.lastUpdate).sort(),["flags.kaiju-vinculo.carrier.portrait","flags.kaiju-vinculo.carrier.updatedAt"]);
+  await repo.save("public",{shared:false},withPortrait);assert.equal(publicRecord.ownership.default,0);
   const created=await repo.create("Aoi");assert.equal(created.shared,false);assert.equal(created.id,"created");
   publicRecord.ownership.default=2;
   user.isGM=false;

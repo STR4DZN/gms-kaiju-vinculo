@@ -1,4 +1,4 @@
-# Kaiju // Vínculo — 0.1.2
+# Kaiju // Vínculo — 0.1.3
 
 Primeira base da reconstrução do Módulo Kaiju, em TypeScript com modo estrito, compilada para JavaScript ES2022. Interface em Handlebars e CSS. Sem React ou serviço externo em tempo de execução.
 
@@ -7,10 +7,11 @@ Primeira base da reconstrução do Módulo Kaiju, em TypeScript com modo estrito
 - Criar portadores e selecionar registros.
 - Ajustar os três eixos em inteiros de 0 a 100, com slider ou entrada numérica.
 - Trocar ícone e rótulo conforme os seis estágios, com títulos e ícones revisados para a temática Kaiju.
-- Consultar o radar de contenção, a telemetria de cada eixo e o mapa completo de estágios.
-- Visual do terminal K-03 recuperado do script v5.1.0 fornecido pelo usuário: molduras angulares, seis ícones por canal, cores e vetores originais.
+- Consultar o dossiê visual do portador, a telemetria de cada eixo e o mapa completo de estágios.
+- HUD classificado K-03 inspirado nas referências fornecidas: retrato com scanner, molduras angulares e seis ícones por canal.
+- Degradês em famílias cromáticas estáveis; o preenchimento revela mais da faixa conforme a porcentagem aumenta.
 - Aba Controles exclusiva do mestre; a aba Vínculo usa a mesma leitura visual para mestre e jogador.
-- Editar nome, designação e anotações compartilhadas.
+- Editar nome, designação, retrato e anotações compartilhadas.
 - Salvar, descartar alterações e manter rascunhos ao trocar de portador.
 - Compartilhar consulta com todos os jogadores; somente o mestre recebe campos, sliders e ações de edição. Jogadores veem valores, indicadores, estágios e anotações como texto.
 - Aplicativo Kaiju no HoloSuite Core, quando instalado e ativo, com ícone de Kaiju e abertura do mesmo painel.
@@ -20,11 +21,11 @@ As faixas originais são I: 0–19, II: 20–39, III: 40–59, IV: 60–79, V: 8
 
 ## Instalação manual para teste
 
-Para conhecer a interface antes de instalar, abra `preview/Modulo_Kaiju_Previa.html` no navegador. O arquivo incorpora código, estilos e fontes; não precisa de npm ou internet. Ele contém os dados de demonstração, não os registros do mundo. Os controles do cabeçalho alternam largura da janela e perspectiva de consulta.
+Para conhecer a interface antes de instalar, abra `preview/Modulo_Kaiju_Previa.html` no navegador. O arquivo incorpora código, estilos e fontes; não precisa de npm ou internet. Ele contém os dados de demonstração, não os registros do mundo. Os controles do cabeçalho alternam largura da janela, perspectiva de consulta e motion. Também permitem restaurar os exemplos.
 
 Alvo: Foundry VTT **v13**, com `minimum: 13`, `verified: 13.351` e `maximum: 13` no manifest. A versão 13.351 é a compatibilidade declarada para esta entrega. Os testes automatizados e o build não substituem a validação completa dentro do Foundry. A prévia de navegador utiliza os mesmos template, controlador e renderizador, mas simula a persistência e o usuário.
 
-1. Extraia `instalar/kaiju-vinculo-0.1.2.zip` na pasta `Data/modules/` do Foundry.
+1. Extraia `instalar/kaiju-vinculo-0.1.3.zip` na pasta `Data/modules/` do Foundry.
 2. Confirme a estrutura `Data/modules/kaiju-vinculo/module.json`.
 3. Reinicie o Foundry, abra o mundo e ative **Kaiju // Vínculo** em Gerenciar módulos.
 4. Abra Configurar definições → Definições de módulos → Kaiju // Vínculo → Abrir Módulo Kaiju. Também há um botão no diretório de Atores, quando o sistema usa o cabeçalho padrão.
@@ -47,7 +48,8 @@ src/foundry-repository.ts   adaptação para Documents do Foundry
 src/local-repository.ts     dados de demonstração da prévia
 src/main.ts                 janela nativa ApplicationV2 e entrada do módulo
 src/panel.ts                interação e estado dos rascunhos
-src/readout.ts              leitura visual adaptada do script K-03 v5.1.0
+src/readout.ts              leitura dos três canais
+src/palette.ts              famílias cromáticas estáveis e intensidade da superfície
 src/holosuite.ts            registro opcional do aplicativo no launcher
 templates/panel.hbs         composição da interface
 styles/kaiju.css            estilos limitados ao módulo
@@ -79,11 +81,15 @@ npm run package
 
 ## Direção visual
 
-A referência principal é o resultado real do script K-03 v5.1.0, fornecido como `Texto colado.txt`. O renderizador de leitura e os vetores de radar, telemetria e fundo foram adaptados diretamente desse script para TypeScript. Foram preservados a composição, os espaçamentos internos, as molduras e o vermelho/verde-água/azul dos canais. Não há visualização de DNA.
+O dossiê K-03 combina as referências fornecidas com os três eixos do projeto. O retrato recebe um scanner em camadas: feixe e rastro com malha transitória, enquadramento, anéis periféricos, amostragem lateral e confirmação. Nome e designação ficam abaixo da imagem; a fotografia permanece estática.
 
-O módulo acrescenta seleção de portadores, abas, permissões e persistência nativa. Esses controles usam uma moldura compacta para manter espaço para a leitura original. A aba Controles só existe para o mestre. As métricas de média, convergência, tensão e dispersão são as leituras visuais derivadas do script; não alteram os eixos nem aplicam regras de jogo. Watermelon UI permanece como referência secundária de interação.
+A porcentagem transforma o próprio degradê: quatro tons análogos, pontos de cor e distribuição do fundo evoluem continuamente. Influência mantém vermelho/coral/pêssego; Sincronia, petróleo/turquesa/menta; Identidade, azul/azul gelo. Barras, fundos, molduras e controles refletem o valor atual. Nenhum efeito de jogo foi alterado.
 
-Veja a comparação e os limites de validação em `design-qa.md`; capturas desta revisão acompanham `preview/`.
+A varredura sai inteiramente pela base e confirma a aquisição; o brilho percorre todo o preenchimento e a abertura das barras termina sem cobertura. Molduras, sinais, órbitas, pulsos, estágio e ações usam movimentos locais. Há até dezoito loops, pausados fora da área visível, em diálogo, página oculta e movimento reduzido. São usados CSS e Web Animations API, sem laço JavaScript por frame.
+
+Na aba Registro, o mestre pode escolher uma imagem pelo FilePicker do Foundry ou informar um caminho/URL. Registros anteriores sem retrato continuam válidos. A prévia permite escolher uma imagem do dispositivo, de até 2 MB, e salvar no armazenamento da demonstração. Ela inclui um retrato fictício gerado para Mika, incorporado apenas ao visualizador; o módulo não inclui personagens de demonstração.
+
+Veja a revisão atual em `HUD_REVIEW.md`. `MOTION_REVIEW.md` e `design-qa.md` documentam revisões anteriores.
 
 Ícones: Font Awesome Free, já disponível no Foundry. A prévia utiliza o pacote npm Font Awesome 6.7.2. Licenças e referências estão em `THIRD_PARTY.md`.
 

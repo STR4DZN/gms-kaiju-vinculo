@@ -53,3 +53,13 @@ test("jogador recebe valores e texto, sem nenhum controle de edição ou criaç�
 test("cada estágio usa um ícone existente do Font Awesome Free",()=>{
   for(const axis of Object.values(AXES))for(const stage of axis.stages)assert.ok(existsSync(new URL(`../node_modules/@fortawesome/fontawesome-free/svgs/solid/${stage.icon}.svg`,import.meta.url)),stage.icon);
 });
+
+test("retratos são opcionais em registros antigos e recusam protocolos ativos",()=>{
+  const original=createCarrier("old","Mika"),legacy={...original} as Partial<typeof original>;
+  delete legacy.portrait;assert.equal(validateCarrier(legacy).portrait,"");
+  for(const portrait of ['javascript:alert(1)','data:image/svg+xml,<svg/>','file:///secret','//evil.example/img','x" onerror="alert(1)'])assert.throws(()=>validateCarrier({...original,portrait}));
+  const changed=applyPatch(original,{portrait:"worlds/mesa/mika.webp"},original);
+  assert.equal(changed.portrait,"worlds/mesa/mika.webp");
+  assert.equal(changed.values.vontade,0);
+  assert.throws(()=>applyPatch(changed,{portrait:"worlds/mesa/aoi.webp"},original),/mudou em outra janela/);
+});

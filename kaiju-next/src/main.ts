@@ -17,7 +17,7 @@ export class KaijuApplication extends ApplicationV2 {
   protected override async _onRender():Promise<void> {
     this.panel?.destroy();
     const root=this.element.querySelector<HTMLElement>(".kaiju-mount");
-    if(root)this.panel=new KaijuPanel(root,new FoundryRepository(),Handlebars.compile(templateSource));
+    if(root)this.panel=new KaijuPanel(root,new FoundryRepository(),Handlebars.compile(templateSource),{pickImage:(current,select)=>{void new foundry.applications.apps.FilePicker({type:"image",current,callback:select}).render({force:true})}});
   }
   protected override _onClose():void {this.panel?.destroy();this.panel=undefined}
 }
@@ -44,7 +44,7 @@ Hooks.once("init",()=>{
 });
 Hooks.once("ready",()=>{
   const module=game.modules?.get(MODULE_ID);
-  if(module)module.api=Object.freeze({open:openKaiju,version:"0.1.2"});
+  if(module)module.api=Object.freeze({open:openKaiju,version:"0.1.3"});
   connectHoloSuite();
 });
 Hooks.on("renderActorDirectory",(_app,html)=>{
