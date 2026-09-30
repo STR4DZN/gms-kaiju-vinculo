@@ -1,10 +1,9 @@
-Nova base Kaiju // Vínculo 0.1.1 para Foundry VTT v13, publicada a partir do pacote fornecido.
+Kaiju // Vínculo 0.1.2 — Correção do indicador de compatibilidade.
 
-- Interface K-03, portadores, três eixos, estágios e registros.
-- Integração opcional com HoloSuite Core.
-- Manifest de atualização e ZIP instalável versionados; licenças incluídas.
-- 10 testes automatizados aprovados e verificação TypeScript concluída. Ainda requer smoke test dentro do Foundry.
+- Adicionado compatibility.verified = 13.351 ao manifest, mantendo minimum = 13 e maximum = 13.
+- Versão sincronizada no pacote, lockfile, API e ZIP de instalação.
+- Sem alterações nas regras ou nos registros do mundo.
 
-Instalação: cole https://raw.githubusercontent.com/STR4DZN/gms-kaiju-vinculo/main/kaiju-next/module.json em Instalar módulo.
+Instalação/atualização: https://raw.githubusercontent.com/STR4DZN/gms-kaiju-vinculo/main/kaiju-next/module.json
 
-Esta base usa o identificador kaiju-vinculo. Desative o módulo antigo gms-kaiju-vinculo ao utilizar esta base. Registros antigos não são migrados automaticamente. O manifest antigo e os releases anteriores foram preservados.
+Compatibilidade declarada: Foundry VTT v13.351. A validação completa em uma instância real continua pendente; o campo verified é a declaração de compatibilidade do pacote.

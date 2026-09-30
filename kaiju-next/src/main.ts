@@ -44,7 +44,7 @@ Hooks.once("init",()=>{
 });
 Hooks.once("ready",()=>{
   const module=game.modules?.get(MODULE_ID);
-  if(module)module.api=Object.freeze({open:openKaiju,version:"0.1.1"});
+  if(module)module.api=Object.freeze({open:openKaiju,version:"0.1.2"});
   connectHoloSuite();
 });
 Hooks.on("renderActorDirectory",(_app,html)=>{

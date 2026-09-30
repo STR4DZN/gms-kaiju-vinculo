@@ -1,4 +1,4 @@
-# Kaiju // Vínculo — 0.1.1
+# Kaiju // Vínculo — 0.1.2
 
 Primeira base da reconstrução do Módulo Kaiju, em TypeScript com modo estrito, compilada para JavaScript ES2022. Interface em Handlebars e CSS. Sem React ou serviço externo em tempo de execução.
 
@@ -22,9 +22,9 @@ As faixas originais são I: 0–19, II: 20–39, III: 40–59, IV: 60–79, V: 8
 
 Para conhecer a interface antes de instalar, abra `preview/Modulo_Kaiju_Previa.html` no navegador. O arquivo incorpora código, estilos e fontes; não precisa de npm ou internet. Ele contém os dados de demonstração, não os registros do mundo. Os controles do cabeçalho alternam largura da janela e perspectiva de consulta.
 
-Alvo: Foundry VTT **v13**, confirmado pelo usuário. Não foi declarada versão `verified`, pois ainda não houve execução dentro de uma instância real do Foundry. A prévia de navegador utiliza os mesmos template, controlador e renderizador, mas simula a persistência e o usuário.
+Alvo: Foundry VTT **v13**, com `minimum: 13`, `verified: 13.351` e `maximum: 13` no manifest. A versão 13.351 é a compatibilidade declarada para esta entrega. Os testes automatizados e o build não substituem a validação completa dentro do Foundry. A prévia de navegador utiliza os mesmos template, controlador e renderizador, mas simula a persistência e o usuário.
 
-1. Extraia `instalar/kaiju-vinculo-0.1.1.zip` na pasta `Data/modules/` do Foundry.
+1. Extraia `instalar/kaiju-vinculo-0.1.2.zip` na pasta `Data/modules/` do Foundry.
 2. Confirme a estrutura `Data/modules/kaiju-vinculo/module.json`.
 3. Reinicie o Foundry, abra o mundo e ative **Kaiju // Vínculo** em Gerenciar módulos.
 4. Abra Configurar definições → Definições de módulos → Kaiju // Vínculo → Abrir Módulo Kaiju. Também há um botão no diretório de Atores, quando o sistema usa o cabeçalho padrão.
