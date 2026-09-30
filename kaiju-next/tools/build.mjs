@@ -19,6 +19,7 @@ await mkdir("preview",{recursive:true});
 await mkdir("LICENSES",{recursive:true});
 await cp("node_modules/handlebars/LICENSE","LICENSES/Handlebars.txt");
 await cp("node_modules/@fortawesome/fontawesome-free/LICENSE.txt","LICENSES/FontAwesome.txt");
+await cp("LICENSES","dist/LICENSES",{recursive:true});
 const offline=await build({entryPoints:["src/preview.ts"],outfile:"preview/app.js",bundle:true,write:false,format:"esm",target:"es2022",minify:true,plugins:[rawPlugin],loader:{".woff2":"dataurl",".woff":"dataurl",".ttf":"dataurl"}});
 const js=offline.outputFiles.find(file=>file.path.endsWith(".js")).text;
 const css=offline.outputFiles.find(file=>file.path.endsWith(".css")).text;

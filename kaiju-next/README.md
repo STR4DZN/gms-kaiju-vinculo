@@ -1,4 +1,4 @@
-# Kaiju // Vínculo — 0.1.0
+# Kaiju // Vínculo — 0.1.1
 
 Primeira base da reconstrução do Módulo Kaiju, em TypeScript com modo estrito, compilada para JavaScript ES2022. Interface em Handlebars e CSS. Sem React ou serviço externo em tempo de execução.
 
@@ -24,7 +24,7 @@ Para conhecer a interface antes de instalar, abra `preview/Modulo_Kaiju_Previa.h
 
 Alvo: Foundry VTT **v13**, confirmado pelo usuário. Não foi declarada versão `verified`, pois ainda não houve execução dentro de uma instância real do Foundry. A prévia de navegador utiliza os mesmos template, controlador e renderizador, mas simula a persistência e o usuário.
 
-1. Extraia `instalar/kaiju-vinculo-0.1.0.zip` na pasta `Data/modules/` do Foundry.
+1. Extraia `instalar/kaiju-vinculo-0.1.1.zip` na pasta `Data/modules/` do Foundry.
 2. Confirme a estrutura `Data/modules/kaiju-vinculo/module.json`.
 3. Reinicie o Foundry, abra o mundo e ative **Kaiju // Vínculo** em Gerenciar módulos.
 4. Abra Configurar definições → Definições de módulos → Kaiju // Vínculo → Abrir Módulo Kaiju. Também há um botão no diretório de Atores, quando o sistema usa o cabeçalho padrão.
@@ -37,7 +37,7 @@ Uma macro opcional:
 game.modules.get("kaiju-vinculo").api.open();
 ```
 
-O novo módulo tem identificador diferente de `gms-kaiju-vinculo`. Os arquivos e o banco do módulo antigo não são alterados. Esta etapa não importa os registros antigos automaticamente. O pacote não tem URLs de atualização, pois não foi publicado como release no GitHub.
+O novo módulo tem identificador diferente de `gms-kaiju-vinculo`. Os arquivos e o banco do módulo antigo não são alterados. Esta etapa não importa os registros antigos automaticamente. Instale a nova base com o manifest https://raw.githubusercontent.com/STR4DZN/gms-kaiju-vinculo/main/kaiju-next/module.json. Desative o módulo antigo ao utilizar esta base.
 
 ## Estrutura e persistência
 
