@@ -1,0 +1,46 @@
+<section class="kaiju-app" aria-label="Painel de vínculos Kaiju">
+  <aside class="kaiju-sidebar">
+    <div class="kaiju-brand"><i class="fa-solid fa-dragon" aria-hidden="true"></i><div><strong>KAIJU</strong><small>MATRIZ DE VÍNCULOS</small></div></div>
+    <div class="kaiju-list-heading"><span>Portadores</span><span>{{count}}</span></div>
+    <label class="kaiju-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" data-search placeholder="Buscar portador" aria-label="Buscar portador" value="{{search}}"></label>
+    <nav class="kaiju-carriers" aria-label="Portadores">
+      {{#each carriers}}<button type="button" class="kaiju-carrier {{#if selected}}is-selected{{/if}}" data-record="{{id}}" {{#if selected}}aria-current="true"{{/if}}><span class="kaiju-avatar" aria-hidden="true">{{initials}}</span><span><strong>{{name}}</strong><small>{{subtitle}}</small></span><i class="fa-solid {{#if shared}}fa-eye{{else}}fa-lock{{/if}}" title="{{#if shared}}Compartilhado{{else}}Restrito{{/if}}" aria-label="{{#if shared}}Compartilhado{{else}}Restrito{{/if}}"></i></button>{{/each}}
+      <p class="kaiju-no-results" hidden>Nenhum portador encontrado.</p>
+    </nav>
+    {{#if isGM}}<button type="button" class="kaiju-button kaiju-new" data-command="new"><i class="fa-solid fa-plus" aria-hidden="true"></i>Novo portador</button>{{/if}}
+    <div class="kaiju-sidebar-footer"><span class="kaiju-dot"></span>{{#if isGM}}Visão do mestre{{else}}Visão do jogador{{/if}}<small>K-03 / v0.1</small></div>
+  </aside>
+  <main class="kaiju-main">
+    <div class="kaiju-compact-picker"><label>Portador<select data-record-select>{{#each carriers}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select></label>{{#if isGM}}<button type="button" data-command="new" aria-label="Novo portador"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>{{/if}}</div>
+    {{#if carrier}}
+    <header class="kaiju-record-header"><div><div class="kaiju-eyebrow">VÍNCULO KAIJU <span aria-hidden="true">/</span> {{carrier.code}}</div><h1>{{carrier.name}}</h1><p>{{carrier.designation}}</p></div><span class="kaiju-access"><i class="fa-solid {{#if carrier.shared}}fa-eye{{else}}fa-lock{{/if}}" aria-hidden="true"></i>{{#if carrier.shared}}Compartilhado{{else}}Restrito ao mestre{{/if}}</span></header>
+    <div class="kaiju-tabs" role="tablist" aria-label="Seções do vínculo">{{#each tabs}}<button type="button" role="tab" id="{{../instance}}-tab-{{id}}" aria-controls="{{../instance}}-panel-{{id}}" aria-selected="{{active}}" tabindex="{{#if active}}0{{else}}-1{{/if}}" data-tab="{{id}}"><i class="fa-solid fa-{{icon}}" aria-hidden="true"></i>{{label}}</button>{{/each}}</div>
+    <div class="kaiju-body" role="tabpanel" id="{{instance}}-panel-{{activeTab}}" aria-labelledby="{{instance}}-tab-{{activeTab}}" tabindex="0">
+      {{#if overview}}
+      <div class="kaiju-readout" data-readout>{{{readout}}}</div>
+      {{/if}}
+      {{#if isGM}}{{#if edit}}
+      <div class="kaiju-editor-intro"><h2>Controle do vínculo</h2><p>Ajuste os três canais e salve para atualizar a leitura dos jogadores.</p></div>
+      <div class="kaiju-overview">
+        <section class="kaiju-vectors" aria-labelledby="{{instance}}-axes"><h2 class="kaiju-sr-only" id="{{instance}}-axes">Os três eixos</h2>
+          {{#each axes}}<article class="kaiju-axis" data-axis="{{key}}" style="--axis-color:{{color}}"><div class="kaiju-axis-heading"><span class="kaiju-stage-icon"><i class="fa-solid fa-{{stage.icon}}" data-stage-icon aria-hidden="true"></i></span><div><h3>{{title}}</h3><p>{{description}}</p></div><div class="kaiju-number">{{#if ../isGM}}<input type="number" data-percent="{{key}}" min="0" max="100" step="1" value="{{value}}" aria-label="{{title}} em porcentagem">{{else}}<output class="kaiju-value" aria-label="{{title}}: {{value}}%">{{value}}</output>{{/if}}<span>%</span></div></div>
+            {{#if ../isGM}}<input class="kaiju-range" type="range" data-range="{{key}}" min="0" max="100" step="1" value="{{value}}" aria-label="Ajustar {{title}}" style="--fill:{{value}}%">{{else}}<div class="kaiju-axis-meter" role="meter" aria-label="{{title}}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{value}}" style="--fill:{{value}}%"></div>{{/if}}
+            <div class="kaiju-stage-caption"><span>ESTÁGIO <b data-stage-roman>{{stage.roman}}</b></span><strong data-stage-label>{{stage.label}}</strong></div>
+            <div class="kaiju-stage-markers" aria-hidden="true">{{#each markers}}<span class="{{#if current}}is-current{{/if}}" data-marker="{{index}}">{{roman}}</span>{{/each}}</div>
+          </article>{{/each}}
+        </section>
+
+      </div>
+      {{/if}}{{/if}}
+      {{#if stages}}
+      <div class="kaiju-stage-intro"><h2>Mapa de evolução</h2><p>Os seis estágios de cada eixo. O estágio VI começa em 100%.</p></div><div class="kaiju-stage-columns">{{#each axes}}<section class="kaiju-stage-column" style="--axis-color:{{color}}"><h3>{{title}}</h3><ol>{{#each allStages}}<li class="{{#if current}}is-current{{/if}} {{#if passed}}is-passed{{/if}}"><span class="kaiju-stage-node"><i class="fa-solid fa-{{icon}}" aria-hidden="true"></i></span><div><small>{{roman}} · {{range}}%</small><strong>{{label}}</strong>{{#if current}}<span class="kaiju-current-label">Estágio atual</span>{{/if}}</div></li>{{/each}}</ol></section>{{/each}}</div>
+      {{/if}}
+      {{#if notes}}
+      <section class="kaiju-record-form"><h2>Registro do portador</h2><p>Identidade e anotações visíveis para quem pode acessar este vínculo.</p>{{#if isGM}}<label>Nome<input type="text" data-field="name" maxlength="120" value="{{carrier.name}}"></label><label>Designação<input type="text" data-field="designation" maxlength="120" value="{{carrier.designation}}" placeholder="Ex.: Piloto / Unidade 03"></label><label>Anotações<textarea data-field="notes" maxlength="10000" rows="6" placeholder="Registre os acontecimentos do vínculo...">{{carrier.notes}}</textarea></label><label class="kaiju-share"><input type="checkbox" data-field="shared" {{#if carrier.shared}}checked{{/if}}><span><strong>Compartilhar com todos os jogadores</strong><small>Permite consultar o vínculo. A edição permanece com o mestre.</small></span></label>{{else}}<dl class="kaiju-record-details"><div><dt>Nome</dt><dd>{{carrier.name}}</dd></div><div><dt>Designação</dt><dd>{{#if carrier.designation}}{{carrier.designation}}{{else}}Sem designação.{{/if}}</dd></div><div><dt>Anotações</dt><dd class="kaiju-notes-text">{{#if carrier.notes}}{{carrier.notes}}{{else}}Nenhuma anotação compartilhada.{{/if}}</dd></div></dl>{{/if}}</section>
+      {{/if}}
+    </div>
+    <footer class="kaiju-savebar"><span class="kaiju-status" role="status" aria-live="polite" data-status>{{#if dirty}}Alterações não salvas{{else}}{{#if isGM}}Registro atualizado{{else}}Consulta do vínculo{{/if}}{{/if}}</span>{{#if isGM}}<div><button type="button" class="kaiju-button kaiju-button-quiet" data-command="revert" {{#unless dirty}}disabled{{/unless}}>Descartar</button><button type="button" class="kaiju-button kaiju-button-primary" data-command="save" {{#unless dirty}}disabled{{/unless}}><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar vínculo</button></div>{{/if}}</footer>
+    {{else}}<div class="kaiju-empty"><i class="fa-solid fa-dragon" aria-hidden="true"></i><h1>{{#if isGM}}Seu primeiro vínculo{{else}}Nenhum vínculo disponível{{/if}}</h1><p>{{#if isGM}}Crie um portador para começar a acompanhar os três eixos.{{else}}O mestre pode compartilhar um vínculo para você consultar.{{/if}}</p>{{#if isGM}}<button type="button" class="kaiju-button kaiju-button-primary" data-command="new">Criar portador</button>{{/if}}</div>{{/if}}
+  </main>
+  {{#if isGM}}{{#if creating}}<div class="kaiju-dialog-backdrop"><form class="kaiju-create-form" role="dialog" aria-modal="true" aria-labelledby="{{instance}}-create-title"><span class="kaiju-eyebrow">NOVO VÍNCULO</span><h2 id="{{instance}}-create-title">Quem é o portador?</h2><label>Nome<input type="text" name="name" maxlength="120" required autofocus placeholder="Nome do portador"></label><p>Os três eixos começam em zero. O registro é restrito ao mestre.</p><div><button type="button" class="kaiju-button kaiju-button-quiet" data-command="cancel-create">Cancelar</button><button type="submit" class="kaiju-button kaiju-button-primary">Criar vínculo</button></div><span data-create-error role="alert"></span></form></div>{{/if}}{{/if}}
+</section>

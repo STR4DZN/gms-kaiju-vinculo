@@ -1,0 +1,10 @@
+{
+  "id": "kaiju-vinculo",
+  "title": "Kaiju // Vínculo",
+  "description": "Nova base do Módulo Kaiju: portadores, três eixos, estágios e registros.",
+  "version": "0.1.0",
+  "authors": [{"name": "STR4 DZN"}],
+  "compatibility": {"minimum": "13", "maximum": "13"},
+  "esmodules": ["scripts/main.js"],
+  "styles": ["styles/kaiju.css"]
+}

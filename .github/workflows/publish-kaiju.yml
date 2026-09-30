@@ -1,0 +1,45 @@
+name: Publish Kaiju base
+on:
+  push:
+    branches: [main]
+    paths: ['kaiju-next/**', '.github/workflows/publish-kaiju.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: publish-kaiju
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: kaiju-next/package-lock.json
+      - name: Validate and build
+        working-directory: kaiju-next
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm test
+          npm run package
+      - name: Publish versioned assets and tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "JSON.parse(require('fs').readFileSync('kaiju-next/module.json')).version")
+          TAG="kaiju-vinculo-v${VERSION}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release already exists; refusing to overwrite published assets."
+            exit 0
+          fi
+          gh release create "$TAG" \
+            "kaiju-next/release/kaiju-vinculo-${VERSION}.zip" \
+            "kaiju-next/release/Modulo_Kaiju_${VERSION}_Fonte_e_Instalacao.zip" \
+            kaiju-next/dist/module.json \
+            --target "$GITHUB_SHA" \
+            --title "Kaiju // Vínculo ${VERSION} — Nova base" \
+            --notes-file kaiju-next/RELEASE_NOTES.md \
+            --latest=false
