@@ -8,7 +8,7 @@ export interface HoloSuiteApp {
 interface HoloSuiteAPI {registerApp:(app:HoloSuiteApp)=>unknown}
 export function createHoloSuiteRegistration(open:()=>unknown):(api:unknown)=>boolean {
   const registered=new WeakSet<object>();
-  const app:HoloSuiteApp={id:MODULE_ID,title:"Kaiju",icon:"fa-solid fa-dragon",
+  const app:HoloSuiteApp={id:MODULE_ID,title:"Kaiju",icon:"kaiju-app-glyph",
     description:"Portadores, valores e estágios do vínculo Kaiju.",
     premium:false,playerVisible:true,open};
   return (api:unknown):boolean=>{

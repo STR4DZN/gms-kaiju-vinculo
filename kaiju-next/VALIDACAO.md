@@ -1,3 +1,7 @@
+# Validação do ícone HoloSuite — 0.1.4
+
+Ícone SVG e CSS exclusivos do aplicativo Kaiju conferidos com o renderizador público e as folhas de estilo atuais do HoloSuite Core. Verificados Base/Space Police, carregamento correto da imagem, tamanho de 38 px, ausência de máscara genérica e ícone duplicado, inversão da ordem das folhas de estilo e preservação de outro aplicativo. O ícone não adiciona loops de animação. Os 13 testes e o build passaram. Execução na mesa real permanece pendente.
+
 # Validação atual — degradês dinâmicos e scanner v5
 
 TypeScript, build, 13 testes de dados/adaptação e 64 verificações de interface no Chromium passaram. Foram inspecionadas as fases de aquisição, passagem e confirmação, a composição compacta e a comparação dos degradês de 0 a 100%. Um vídeo de um ciclo foi gerado a partir dos relógios CSS reais. Veja `HUD_REVIEW.md` para pesquisa, escopo e limites. Execução e desempenho na mesa real de Foundry permanecem pendentes.

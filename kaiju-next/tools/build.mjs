@@ -12,6 +12,8 @@ const rawPlugin={
 await build({entryPoints:["src/main.ts"],outfile:"dist/scripts/main.js",bundle:true,format:"esm",target:"es2022",minify:false,plugins:[rawPlugin]});
 await cp("module.json","dist/module.json");
 await cp("styles/kaiju.css","dist/styles/kaiju.css",{recursive:true});
+await cp("styles/holosuite.css","dist/styles/holosuite.css");
+await cp("assets/icons","dist/assets/icons",{recursive:true});
 await cp("README.md","dist/README.md");
 await cp("THIRD_PARTY.md","dist/THIRD_PARTY.md");
 await cp("VALIDACAO.md","dist/VALIDACAO.md");

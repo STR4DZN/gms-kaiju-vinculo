@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="plate" x1="7" y1="4" x2="57" y2="61" gradientUnits="userSpaceOnUse"><stop stop-color="#183443"/><stop offset=".6" stop-color="#091622"/><stop offset="1" stop-color="#071019"/></linearGradient>
+    <linearGradient id="edge" x1="5" y1="5" x2="58" y2="60" gradientUnits="userSpaceOnUse"><stop stop-color="#82e8d5"/><stop offset=".5" stop-color="#356279"/><stop offset="1" stop-color="#eb7563"/></linearGradient>
+    <linearGradient id="crest" x1="18" y1="17" x2="48" y2="52" gradientUnits="userSpaceOnUse"><stop stop-color="#ffd5a5"/><stop offset=".4" stop-color="#ff9471"/><stop offset="1" stop-color="#e25152"/></linearGradient>
+  </defs>
+  <rect x="1" y="1" width="62" height="62" rx="13" fill="url(#plate)" stroke="url(#edge)" stroke-width="2"/>
+  <path d="M8 19V12a4 4 0 0 1 4-4h7M56 45v7a4 4 0 0 1-4 4h-7" stroke="#7ce9d0" stroke-width="2" stroke-linecap="round"/>
+  <path d="m13 13 11 7 8-4 8 4 11-7-4 15 5 7-7 12-7 7H26l-7-7-7-12 5-7-4-15Z" fill="url(#crest)"/>
+  <path d="m32 18-5 11 5 5 5-5-5-11Zm-12 13 9 4-3 5-6-4v-5Zm24 0-9 4 3 5 6-4v-5ZM27 44l5-4 5 4-5 5-5-5Z" fill="#0b1a27"/>
+  <path d="m21 33 6 3m16-3-6 3" stroke="#a2ffe5" stroke-width="2.5" stroke-linecap="square"/>
+  <path d="m23 45 5 6h8l5-6" stroke="#ffd4ac" stroke-width="2" stroke-linejoin="bevel"/>
+</svg>

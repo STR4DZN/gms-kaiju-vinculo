@@ -1,4 +1,4 @@
-# Kaiju // Vínculo — 0.1.3
+# Kaiju // Vínculo — 0.1.4
 
 Primeira base da reconstrução do Módulo Kaiju, em TypeScript com modo estrito, compilada para JavaScript ES2022. Interface em Handlebars e CSS. Sem React ou serviço externo em tempo de execução.
 
@@ -14,7 +14,7 @@ Primeira base da reconstrução do Módulo Kaiju, em TypeScript com modo estrito
 - Editar nome, designação, retrato e anotações compartilhadas.
 - Salvar, descartar alterações e manter rascunhos ao trocar de portador.
 - Compartilhar consulta com todos os jogadores; somente o mestre recebe campos, sliders e ações de edição. Jogadores veem valores, indicadores, estágios e anotações como texto.
-- Aplicativo Kaiju no HoloSuite Core, quando instalado e ativo, com ícone de Kaiju e abertura do mesmo painel.
+- Aplicativo Kaiju no HoloSuite Core, quando instalado e ativo, com emblema vetorial exclusivo de Kaiju em coral/turquesa e abertura do mesmo painel.
 - Prévia independente, com três portadores de exemplo e perspectiva mestre/jogador.
 
 As faixas originais são I: 0–19, II: 20–39, III: 40–59, IV: 60–79, V: 80–99 e VI: 100. As faixas e as chaves salvas continuam iguais. Os títulos visíveis agora são Influência Kaiju (`vontade`), Sincronia (`comunhao`) e Identidade Humana (`humanidade`); rótulos e ícones dos estágios foram revisados. Os indicadores não calculam efeitos de jogo.
@@ -25,7 +25,7 @@ Para conhecer a interface antes de instalar, abra `preview/Modulo_Kaiju_Previa.h
 
 Alvo: Foundry VTT **v13**, com `minimum: 13`, `verified: 13.351` e `maximum: 13` no manifest. A versão 13.351 é a compatibilidade declarada para esta entrega. Os testes automatizados e o build não substituem a validação completa dentro do Foundry. A prévia de navegador utiliza os mesmos template, controlador e renderizador, mas simula a persistência e o usuário.
 
-1. Extraia `instalar/kaiju-vinculo-0.1.3.zip` na pasta `Data/modules/` do Foundry.
+1. Extraia `instalar/kaiju-vinculo-0.1.4.zip` na pasta `Data/modules/` do Foundry.
 2. Confirme a estrutura `Data/modules/kaiju-vinculo/module.json`.
 3. Reinicie o Foundry, abra o mundo e ative **Kaiju // Vínculo** em Gerenciar módulos.
 4. Abra Configurar definições → Definições de módulos → Kaiju // Vínculo → Abrir Módulo Kaiju. Também há um botão no diretório de Atores, quando o sistema usa o cabeçalho padrão.
