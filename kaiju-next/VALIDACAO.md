@@ -1,4 +1,16 @@
-# Validação do ícone HoloSuite — 0.1.4
+# Correção da cascata do ícone — 0.1.5
+
+O diagnóstico da mesa confirmou Kaiju 0.1.4 ativo, HoloSuite Core 1.0.11 ativo e aplicativo `kaiju-vinculo` registrado com `kaiju-app-glyph`. A lista vazia de links do Kaiju não prova ausência dos estilos: o diagnóstico anterior não inspecionava folhas importadas pelo Foundry.
+
+Encontrada a diferença omitida na verificação anterior: o Foundry v13 envolve CSS de módulos em `layer(modules)`, enquanto o Core 1.0.11 usa links sem camada. Regras normais sem camada têm precedência mesmo com menor especificidade. Corrigido apenas o manifest de `styles/holosuite.css`, com `layer: null`.
+
+`qa/holosuite-cascade.cjs` utiliza o CSS público exato do Core 1.0.11 e importa as folhas compiladas conforme o manifest. O Chromium reproduziu o ícone genérico da 0.1.4 em quatro combinações (Base/Space Police e duas ordens de carga). Nas quatro combinações corrigidas: imagem SVG carregada, máscara removida, tamanho de 38 px, fallback e linha decorativa ocultos, outros aplicativos preservados e nenhuma animação adicionada. Os 13 testes de dados/adaptação e TypeScript/build também passaram.
+
+Execução: após `npm run build`, com Playwright disponível e Chromium instalado, execute `KAIJU_QA_BROWSER=/caminho/chromium node qa/holosuite-cascade.cjs`. A folha de referência é obtida do tag público `holosuite-core-v1.0.11`; para usar uma cópia local, informe `KAIJU_HOLO_CORE_CSS=/caminho/holosuite-core.css`.
+
+Ainda falta a confirmação visual da atualização na mesa real do usuário.
+
+# Validação do ícone HoloSuite — 0.1.4 (histórico)
 
 Ícone SVG e CSS exclusivos do aplicativo Kaiju conferidos com o renderizador público e as folhas de estilo atuais do HoloSuite Core. Verificados Base/Space Police, carregamento correto da imagem, tamanho de 38 px, ausência de máscara genérica e ícone duplicado, inversão da ordem das folhas de estilo e preservação de outro aplicativo. O ícone não adiciona loops de animação. Os 13 testes e o build passaram. Execução na mesa real permanece pendente.
 

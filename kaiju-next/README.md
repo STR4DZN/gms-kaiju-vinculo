@@ -1,4 +1,4 @@
-# Kaiju // Vínculo — 0.1.4
+# Kaiju // Vínculo — 0.1.5
 
 Primeira base da reconstrução do Módulo Kaiju, em TypeScript com modo estrito, compilada para JavaScript ES2022. Interface em Handlebars e CSS. Sem React ou serviço externo em tempo de execução.
 
@@ -25,7 +25,7 @@ Para conhecer a interface antes de instalar, abra `preview/Modulo_Kaiju_Previa.h
 
 Alvo: Foundry VTT **v13**, com `minimum: 13`, `verified: 13.351` e `maximum: 13` no manifest. A versão 13.351 é a compatibilidade declarada para esta entrega. Os testes automatizados e o build não substituem a validação completa dentro do Foundry. A prévia de navegador utiliza os mesmos template, controlador e renderizador, mas simula a persistência e o usuário.
 
-1. Extraia `instalar/kaiju-vinculo-0.1.4.zip` na pasta `Data/modules/` do Foundry.
+1. Extraia `instalar/kaiju-vinculo-0.1.5.zip` na pasta `Data/modules/` do Foundry.
 2. Confirme a estrutura `Data/modules/kaiju-vinculo/module.json`.
 3. Reinicie o Foundry, abra o mundo e ative **Kaiju // Vínculo** em Gerenciar módulos.
 4. Abra Configurar definições → Definições de módulos → Kaiju // Vínculo → Abrir Módulo Kaiju. Também há um botão no diretório de Atores, quando o sistema usa o cabeçalho padrão.
@@ -39,6 +39,8 @@ game.modules.get("kaiju-vinculo").api.open();
 ```
 
 O novo módulo tem identificador diferente de `gms-kaiju-vinculo`. Os arquivos e o banco do módulo antigo não são alterados. Esta etapa não importa os registros antigos automaticamente. Instale a nova base com o manifest https://raw.githubusercontent.com/STR4DZN/gms-kaiju-vinculo/main/kaiju-next/module.json. Desative o módulo antigo ao utilizar esta base.
+
+Na 0.1.5, somente `styles/holosuite.css` declara `layer: null` no manifest. O Foundry v13 envolve as outras folhas na camada `modules`; o HoloSuite Core 1.0.11 carrega suas folhas por links sem camada. Essa declaração permite que o CSS específico do Kaiju substitua a máscara genérica sem alterar os outros aplicativos. Consultar apenas links com “kaiju” não detecta as folhas incorporadas por `@import` no Foundry.
 
 ## Estrutura e persistência
 

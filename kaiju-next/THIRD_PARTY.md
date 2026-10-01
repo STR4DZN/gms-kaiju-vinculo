@@ -16,3 +16,5 @@ Os arquivos de licença das dependências são fornecidos nos respectivos pacote
 Integração HoloSuite Core: contrato público `HoloSuiteAppRegistration` em `shared/src/index.ts` e registro/hook de `holosuite-core/src/main.ts`, repositório https://github.com/Thuurvdv/HoloSuite, commit 38b825e836ca837210875958b8afd3aa631a033d. Nenhum código ou recurso visual do Core foi incorporado; adaptador independente opcional.
 
 Ícone `assets/icons/kaiju-app.svg`: desenho vetorial original criado para este módulo. A verificação visual da integração usou o renderizador e CSS públicos atuais do HoloSuite Core em um ambiente local separado; nenhum recurso visual do Core foi incluído no pacote.
+
+Correção 0.1.5: cascata de CSS do Foundry v13 documentada em https://github.com/foundryvtt/foundryvtt/issues/6842. Teste de regressão com a folha pública do tag `holosuite-core-v1.0.11` e inspeção de `holosuite-core/src/core-styles.ts`; essa folha não é redistribuída no módulo.
