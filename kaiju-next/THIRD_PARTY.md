@@ -18,3 +18,10 @@ Integração HoloSuite Core: contrato público `HoloSuiteAppRegistration` em `sh
 Ícone `assets/icons/kaiju-app.svg`: desenho vetorial original criado para este módulo. A verificação visual da integração usou o renderizador e CSS públicos atuais do HoloSuite Core em um ambiente local separado; nenhum recurso visual do Core foi incluído no pacote.
 
 Correção 0.1.5: cascata de CSS do Foundry v13 documentada em https://github.com/foundryvtt/foundryvtt/issues/6842. Teste de regressão com a folha pública do tag `holosuite-core-v1.0.11` e inspeção de `holosuite-core/src/core-styles.ts`; essa folha não é redistribuída no módulo.
+
+## Interface 0.1.6
+
+- GameIcons, via @iconify-json/game-icons 1.2.4: paths dos símbolos intermediários, CC BY 3.0. Fonte e atribuição em LICENSES/GameIcons.md.
+- Oxanium, via @fontsource/oxanium 5.3.0: fonte local, SIL OFL 1.1, texto em LICENSES/Oxanium.txt.
+- Molduras, padrões CSS e os três desenhos máximos: composição própria. Nenhum recurso visual oficial de Lancer foi incorporado.
+- O retrato de demonstração permanece apenas na prévia; não é incluído no módulo instalável.

@@ -1,5 +1,5 @@
 import {applyPatch,createCarrier,randomId,validateCarrier,type Carrier,type CarrierPatch,type Repository} from "./domain.ts";
-const KEY="kaiju-hud-preview-v3-schema1";
+const KEY="kaiju-visualizador-combinado-v1";
 const EVENT="kaiju-preview-updated";
 export class LocalRepository implements Repository {
   constructor(readonly isGM:boolean) {

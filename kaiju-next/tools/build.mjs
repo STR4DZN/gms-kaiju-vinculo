@@ -13,7 +13,10 @@ await build({entryPoints:["src/main.ts"],outfile:"dist/scripts/main.js",bundle:t
 await cp("module.json","dist/module.json");
 await cp("styles/kaiju.css","dist/styles/kaiju.css",{recursive:true});
 await cp("styles/holosuite.css","dist/styles/holosuite.css");
-await cp("assets/icons","dist/assets/icons",{recursive:true});
+for(const file of ["icon-motion.css","surface-detail.css","header-reference.css"])await cp(`styles/${file}`,`dist/styles/${file}`);
+await cp("assets/fonts","dist/assets/fonts",{recursive:true});
+await mkdir("dist/assets/icons",{recursive:true});
+await cp("assets/icons/kaiju-app.svg","dist/assets/icons/kaiju-app.svg");
 await cp("README.md","dist/README.md");
 await cp("THIRD_PARTY.md","dist/THIRD_PARTY.md");
 await cp("VALIDACAO.md","dist/VALIDACAO.md");

@@ -11,7 +11,7 @@ function hue(hex:string):number {
  return (h*60+360)%360;
 }
 const distance=(a:number,b:number)=>Math.min(Math.abs(a-b),360-Math.abs(a-b));
-test("o próprio degradê evolui continuamente sem trocar a família cromática",()=>{
+test("o degradê evolui mantendo a família cromática e a saturação dos estágios altos",()=>{
  for(const key of AXIS_KEYS){
   const initial=axisPalette(key,0);let previous=initial;
   const gradients=new Set<string>();
@@ -23,8 +23,10 @@ test("o próprio degradê evolui continuamente sem trocar a família cromática"
    previous=p;
   }
   assert.equal(gradients.size,101);
-  assert.notEqual(initial.surface,previous.surface);
-  assert.notEqual(initial.bright,previous.bright);
+  for(const field of ['deep','mid','color','bright'] as const)assert.equal(initial[field],previous[field],`${key}: cor base não desbota em 100%`);
+  const chroma=(hex:string)=>{const rgb=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));return Math.max(...rgb)-Math.min(...rgb)};
+  assert.ok(chroma(previous.color)>=140,`${key}: cor saturada no estágio VI`);
+  assert.equal(initial.surface,previous.surface);
  }
 });
 test("o preenchimento conserva os valores e inclui seu degradê dinâmico em 0/25/100",()=>{

@@ -1,9 +1,11 @@
-Kaiju // Vínculo 0.1.5 — Correção do ícone no Foundry v13.
+Kaiju // Vínculo 0.1.6 — Interface aprovada e animações anteriores
 
-- Corrigida a prioridade do CSS do ícone: somente styles/holosuite.css passa a declarar layer: null no manifest, compatível com as folhas sem camada carregadas pelo HoloSuite Core 1.0.11.
-- Reproduzido no Chromium o defeito da 0.1.4 com a importação layer(modules) do Foundry e os estilos reais do Core 1.0.11. Conferidos o novo manifest, Base/Space Police e as duas ordens de carga.
-- Mantidos o SVG coral/turquesa, degradês dinâmicos, scanner e dados da versão anterior.
-- Consulta de links não detecta as folhas carregadas por @import no Foundry v13; uma lista vazia nesse diagnóstico não significa ausência de CSS.
-- Testes e build aprovados. Confirmação visual na mesa real permanece pendente.
+- Aplicado o cabeçalho solicitado: retrato vertical à esquerda, nome centralizado e descrição/anotações à direita.
+- Integrados o visual escuro aprovado, texturas CSS, molduras vetoriais, três colunas e números sem corte.
+- Preservadas as cores saturadas e os desenhos aprovados dos três estágios de 100%.
+- Mantidas somente as animações anteriores de navegação, molduras, contornos e sinais. Removidas as animações articuladas experimentais e o inspetor.
+- Edição exclusiva do mestre, consulta do jogador, dados existentes, limiares e integração HoloSuite preservados.
+- Fontes locais incluídas no pacote instalável; símbolos pausam fora da área visível e respeitam movimento reduzido.
+- TypeScript, 13 testes, compilação e integridade dos recursos do pacote validados. Prévia conferida no navegador; execução no mundo real do Foundry não foi feita nesta rodada.
 
 Instalação/atualização: https://raw.githubusercontent.com/STR4DZN/gms-kaiju-vinculo/main/kaiju-next/module.json

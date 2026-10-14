@@ -19,23 +19,25 @@ export class PanelMotion {
   private sync():void {this.root.dataset.motion=this.enabled?this.mode:"off";if(!this.enabled)this.stop();this.syncAmbient()}
   private syncAmbient():void {
     const allowed=this.enabled && this.mode==="auto" && !this.root.querySelector(".kaiju-dialog-backdrop");
-    for(const card of this.root.querySelectorAll<HTMLElement>(".kaiju-channel,.kaiju-photo"))card.classList.toggle("is-ambient-active",allowed && this.visible.has(card));
+    for(const card of this.root.querySelectorAll<HTMLElement>(".kaiju-channel,.kaiju-photo,.kaiju-sidebar,.kaiju-record-header,.kaiju-tabs,.kaiju-program-bar,.kaiju-savebar,.kaiju-axis,.kaiju-stage-column,.kaiju-record-form,.kaiju-create-form,.kaiju-empty"))card.classList.toggle("is-ambient-active",allowed && this.visible.has(card));
+    for(const emblem of this.root.querySelectorAll<HTMLElement>(".k03-emblem"))emblem.classList.toggle("is-icon-active",allowed && this.visible.has(emblem));
   }
-  clearAmbient():void {this.ambient.disconnect();this.visible.clear();for(const card of this.root.querySelectorAll(".is-ambient-active"))card.classList.remove("is-ambient-active")}
+  clearAmbient():void {this.ambient.disconnect();this.visible.clear();for(const card of this.root.querySelectorAll(".is-ambient-active,.is-icon-active"))card.classList.remove("is-ambient-active","is-icon-active")}
   observeAmbient():void {
     this.clearAmbient();
-    for(const card of this.root.querySelectorAll<HTMLElement>(".kaiju-channel,.kaiju-photo")) {
+    for(const card of this.root.querySelectorAll<HTMLElement>(".kaiju-channel,.kaiju-photo,.kaiju-sidebar,.kaiju-record-header,.kaiju-tabs,.kaiju-program-bar,.kaiju-savebar,.kaiju-axis,.kaiju-stage-column,.kaiju-record-form,.kaiju-create-form,.kaiju-empty")) {
       card.style.setProperty("--scan-travel",`${Math.max(0,card.clientHeight+70)}px`);
       const meter=card.querySelector<HTMLElement>(".kaiju-channel-progress");
       card.style.setProperty("--meter-travel",`${Math.max(0,(meter?.clientWidth??0)-4)*Number(meter?.getAttribute("aria-valuenow")??0)/100+44}px`);
       this.ambient.observe(card);
     }
+    for(const emblem of this.root.querySelectorAll<HTMLElement>(".k03-emblem"))this.ambient.observe(emblem);
     this.syncAmbient();
   }
   get enabled():boolean{return !this.destroyed && this.mode!=="off" && !this.reduced.matches && !document.hidden}
   setMode(mode:"auto"|"calm"|"off"):void {this.mode=mode;this.sync()}
   stop():void {for(const animation of this.animations.values())animation.cancel();this.animations.clear()}
-  destroy():void {this.destroyed=true;this.root.dataset.motion="off";this.stop();this.clearAmbient();this.lifetime.abort()}
+  destroy():void {this.destroyed=true;this.root.dataset.motion="off";this.stop();this.clearAmbient();this.ambient.disconnect();this.lifetime.abort()}
   animate(element:Element|null,frames:Keyframe[],duration=240,delay=0):void {
     if(!element || !this.enabled || typeof element.animate!=="function")return;
     this.animations.get(element)?.cancel();
@@ -64,7 +66,7 @@ export class PanelMotion {
   }
   indicator(oldRect?:DOMRect):void {
     const indicator=this.root.querySelector<HTMLElement>(".kaiju-tab-indicator"),tab=this.root.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]');
-    for(const card of this.root.querySelectorAll<HTMLElement>(".kaiju-channel,.kaiju-photo")) {
+    for(const card of this.root.querySelectorAll<HTMLElement>(".kaiju-channel,.kaiju-photo,.kaiju-sidebar,.kaiju-record-header,.kaiju-tabs,.kaiju-program-bar,.kaiju-savebar,.kaiju-axis,.kaiju-stage-column,.kaiju-record-form,.kaiju-create-form,.kaiju-empty")) {
       card.style.setProperty("--scan-travel",`${Math.max(0,card.clientHeight+70)}px`);
       const meter=card.querySelector<HTMLElement>(".kaiju-channel-progress");
       card.style.setProperty("--meter-travel",`${Math.max(0,(meter?.clientWidth??0)-4)*Number(meter?.getAttribute("aria-valuenow")??0)/100+44}px`);

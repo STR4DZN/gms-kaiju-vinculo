@@ -5,7 +5,10 @@ import "@fortawesome/fontawesome-free/css/fontawesome.min.css";
 import "@fortawesome/fontawesome-free/css/solid.min.css";
 import "../styles/kaiju.css";
 import "../styles/preview.css";
+import "../styles/icon-motion.css";
+import "../styles/surface-detail.css";
 import {KaijuPanel} from "./panel.ts";
+import "../styles/header-reference.css";
 import {LocalRepository} from "./local-repository.ts";
 
 const root=document.querySelector<HTMLElement>("#app")!;

@@ -1,23 +1,25 @@
 {
   "name": "kaiju-vinculo",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "typecheck": "tsc --noEmit",
+    "dev": "node node_modules/vite/bin/vite.js",
+    "typecheck": "node node_modules/typescript/bin/tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "build": "npm run typecheck && node tools/build.mjs",
     "package": "npm run build && python3 tools/package.py"
   },
   "dependencies": {
-    "handlebars": "4.7.8",
-    "@fortawesome/fontawesome-free": "6.7.2"
+    "@fortawesome/fontawesome-free": "6.7.2",
+    "handlebars": "4.7.8"
   },
   "devDependencies": {
-    "typescript": "5.9.3",
-    "vite": "7.1.12",
+    "@fontsource/oxanium": "5.3.0",
+    "@iconify-json/game-icons": "1.2.4",
     "esbuild": "0.25.11",
-    "fvtt-types": "npm:@league-of-foundry-developers/foundry-vtt-types@13.345.1"
+    "fvtt-types": "npm:@league-of-foundry-developers/foundry-vtt-types@13.345.1",
+    "typescript": "5.9.3",
+    "vite": "7.1.12"
   }
 }

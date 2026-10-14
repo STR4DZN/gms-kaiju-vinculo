@@ -1,0 +1,47 @@
+/* Small repeatable CSS patterns, designed as interface materials rather than imagery. */
+.kaiju-app{
+ --surface-fiber:repeating-linear-gradient(115deg,#f2ede806 0 1px,transparent 1px 9px);
+ --surface-dots:radial-gradient(circle at 1px 1px,#f2ede80a .65px,transparent .85px);
+ --surface-grid:linear-gradient(#f2ede807 1px,transparent 1px),linear-gradient(90deg,#f2ede807 1px,transparent 1px);
+}
+.kaiju-body{background-image:var(--surface-dots),var(--surface-grid);background-size:12px 12px,72px 72px,72px 72px;background-position:6px 6px,0 0,0 0}
+.kaiju-sidebar{background-image:var(--surface-fiber);box-shadow:inset -1px 0 #f2ede80a}
+.kaiju-record-header{background-image:var(--surface-fiber),linear-gradient(90deg,#ff355406,transparent 65%);border-bottom:1px solid #4c3b47;box-shadow:inset 0 1px #f2ede808;position:relative}
+.kaiju-program-bar{background-image:repeating-linear-gradient(115deg,#19151f08 0 1px,transparent 1px 8px);box-shadow:inset 0 -1px #19151f14}
+.kaiju-tabs,.kaiju-savebar,.kaiju-readout-foot,.kaiju-compact-picker{background-image:var(--surface-fiber);box-shadow:inset 0 1px #f2ede808}
+.kaiju-vinculo-card{border-color:#55404f;box-shadow:inset 0 1px #f2ede80b,inset 0 -1px #0007}
+.kaiju-channel{background-image:var(--surface-dots);background-size:15px 15px;background-position:3px 3px;border-top-width:2px}
+.kaiju-channel+.kaiju-channel{border-left-color:#453444}
+.kaiju-channel::after{content:'';position:absolute;top:8px;left:8px;right:8px;height:13px;pointer-events:none;background:linear-gradient(var(--axis-color),var(--axis-color)) left top/13px 1px no-repeat,linear-gradient(var(--axis-color),var(--axis-color)) left top/1px 13px no-repeat,linear-gradient(var(--axis-color),var(--axis-color)) right top/13px 1px no-repeat,linear-gradient(var(--axis-color),var(--axis-color)) right top/1px 13px no-repeat;opacity:.45}
+.kaiju-channel-progress{box-shadow:inset 0 1px #ffffff0a,inset 0 -1px #0007;background-image:repeating-linear-gradient(115deg,#f2ede807 0 1px,transparent 1px 5px)}
+.kaiju-channel-progress[aria-valuenow="0"]>[data-meter-fill]{border:0;box-shadow:none}
+.kaiju-channel-rail{border-top:1px solid #f2ede807;padding-top:8px;margin-top:6px}
+.kaiju-stage-step .k03-emblem-small{--detail-opacity:.42}
+.emblem-inset{stroke-width:.7;opacity:.23;stroke-dasharray:20 3 1 3}
+.emblem-terminals{stroke-width:1.6;opacity:.52}
+.emblem-shell{stroke-width:1.05;opacity:.48}
+.k03-emblem-small .emblem-inset{opacity:.14;stroke-dasharray:none}
+.k03-emblem-small .emblem-terminals{opacity:.3;stroke-width:1.3}
+.kaiju-axis,.kaiju-stage-column{background-image:var(--surface-dots);background-size:15px 15px;border-color:#5d4259;box-shadow:inset 0 1px #f2ede80a,inset 0 -1px #0005;position:relative}
+.kaiju-axis::after,.kaiju-stage-column::after{content:'';position:absolute;top:8px;right:8px;width:12px;height:12px;border-top:1px solid var(--axis-color);border-right:1px solid var(--axis-color);opacity:.4;pointer-events:none}
+.kaiju-stage-column h3{border-bottom:1px solid color-mix(in srgb,var(--axis-color) 22%,#433346);padding-bottom:10px}
+.kaiju-stage-column li{border-top-color:#403242;padding:12px 0}
+.kaiju-stage-column li.is-current{background:color-mix(in srgb,var(--axis-color) 5%,transparent);box-shadow:inset 2px 0 var(--axis-color);padding-left:8px}
+.kaiju-stage-node{width:60px;height:64px}
+.kaiju-record-form{background-image:var(--surface-dots);background-size:16px 16px;border:1px solid #51414f;border-top:2px solid #f13755;padding:22px;position:relative;box-shadow:inset 0 1px #f2ede809}
+.kaiju-record-form h2,.kaiju-stage-intro h2,.kaiju-editor-intro h2{display:flex;align-items:center;gap:10px}
+.kaiju-record-form h2::before,.kaiju-stage-intro h2::before,.kaiju-editor-intro h2::before{content:'';width:3px;height:18px;background:#f13755;display:block;flex-shrink:0}
+.kaiju-record-details>div{border-bottom-color:#4a364d}
+.kaiju-portrait-config{background-image:var(--surface-fiber);border-color:#62425e;border-left:2px solid #9b627e;box-shadow:inset 0 1px #f2ede808}
+.kaiju-app :is(input:not([type=range]):not([type=checkbox]),textarea,select){box-shadow:inset 0 1px 4px #0003;border-bottom-color:#735269}
+.kaiju-app textarea{background-image:repeating-linear-gradient(0deg,transparent 0 23px,#f2ede805 23px 24px);line-height:24px}
+.kaiju-photo{box-shadow:inset 0 0 0 1px #f2ede80a;outline:1px solid #ff355423;outline-offset:3px}
+.kaiju-create-form{background-color:#19151f;background-image:var(--surface-dots);background-size:14px 14px;border-color:#6a4963;border-top-color:#f13755;box-shadow:inset 0 1px #f2ede80c,0 12px 40px #0005}
+.kaiju-dialog-backdrop{background:#0a0710e8}
+.kaiju-empty{background-image:var(--surface-dots);background-size:14px 14px}
+.kaiju-carrier,.kaiju-button,.kaiju-edit-shortcut{box-shadow:inset 0 1px #f2ede808}
+.kaiju-carrier.is-selected{box-shadow:inset 0 1px #ffffff70,inset 0 -1px #120b1620}
+.kaiju-app .kaiju-button-primary{background-image:repeating-linear-gradient(115deg,#ffffff08 0 1px,transparent 1px 8px)}
+.kaiju-app button:not(.kaiju-stage-step){transition:border-color 180ms,background-color 180ms,transform 180ms,box-shadow 180ms}
+.kaiju-app button:not(.kaiju-stage-step):hover{box-shadow:inset 0 1px #f2ede814,inset 0 -1px #f2ede80c}
+@container(max-width:520px){.kaiju-record-form{padding:17px 13px}.kaiju-stage-node{width:51px;height:57px}.kaiju-stage-column li{padding-block:10px}}

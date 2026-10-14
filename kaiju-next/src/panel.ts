@@ -1,3 +1,4 @@
+import {stageEmblem} from "./stage-icons.ts";
 import {PanelMotion} from "./motion.ts";
 import {paletteStyle} from "./palette.ts";
 import {renderReadout} from "./readout.ts";
@@ -56,9 +57,9 @@ export class KaijuPanel {
     const draft=this.current(),carrier=draft?.record;
     const axes=AXIS_KEYS.map(key=>{
       const value=carrier?.values[key]??0,index=stageAt(key,value).index;
-      return {...AXES[key],key,value,theme:paletteStyle(key,value),stage:stageAt(key,value),
+      return {...AXES[key],key,value,theme:paletteStyle(key,value),stage:stageAt(key,value),stageMarkup:stageEmblem(key,index),
         markers:ROMAN.map((roman,i)=>({roman,index:i,current:i===index})),
-        allStages:AXES[key].stages.map((stage,i)=>({...stage,theme:paletteStyle(key,THRESHOLDS[i]!),roman:ROMAN[i],range:i===5?"100":`${THRESHOLDS[i]}–${THRESHOLDS[i+1]!-1}`,current:i===index,passed:i<index}))};
+        allStages:AXES[key].stages.map((stage,i)=>({...stage,theme:paletteStyle(key,THRESHOLDS[i]!),iconMarkup:stageEmblem(key,i,true),roman:ROMAN[i],range:i===5?"100":`${THRESHOLDS[i]}–${THRESHOLDS[i+1]!-1}`,current:i===index,passed:i<index}))};
     });
     this.root.innerHTML=this.template({instance:this.instance,count:carriers.length,isGM:this.repository.isGM,search:this.search,
       carriers:carriers.map(record=>({...record,displayPortrait:this.imageOptions.resolvePortrait?.(record.portrait)??record.portrait,selected:record.id===this.selected,pending:this.dirty(this.drafts.get(record.id)),subtitle:record.designation||"Portador Kaiju",initials:record.name.split(/\s+/).slice(0,2).map(part=>part.charAt(0)).join("").toUpperCase()})),
@@ -135,7 +136,10 @@ export class KaijuPanel {
     }
     const field=target.dataset.field;
     if(field==="portrait"){try{draft.record.portrait=portraitPath(target.value);target.setCustomValidity("");this.updateStatus()}catch(error){target.setCustomValidity(error instanceof Error?error.message:"Imagem inválida")}}
-    if(field==="name" || field==="designation" || field==="notes") {draft.record[field]=target.value;this.updateStatus()}
+    if(field==="name" || field==="designation" || field==="notes") {draft.record[field]=target.value;
+      const selector=field==='name'?'.kaiju-header-name h1':field==='notes'?'.kaiju-header-notes':'.kaiju-annotation-caption>span:last-child';
+      const header=this.root.querySelector<HTMLElement>(selector);if(header)header.textContent=target.value||(field==='notes'?'Nenhuma anotação registrada.':field==='designation'?'Portador Kaiju':'');
+      this.updateStatus()}
   };
   private readonly change = (event: Event): void => {
     if(event.target instanceof HTMLSelectElement && event.target.hasAttribute("data-record-select") && !this.busy) {this.selected=event.target.value;this.render("record");this.root.querySelector<HTMLElement>("[data-record-select]")?.focus({preventScroll:true});return}
@@ -166,8 +170,7 @@ export class KaijuPanel {
       const numeric=axis.querySelector<HTMLInputElement>("[data-percent]")!;
       numeric.value=String(value);numeric.setCustomValidity("");
       const icon=axis.querySelector<HTMLElement>("[data-stage-icon]")!;
-      const nextClass=`fa-solid fa-${stage.icon}`;
-      if(icon.className!==nextClass) {const replacement=icon.cloneNode() as HTMLElement;replacement.className=nextClass;icon.replaceWith(replacement)}
+      if(stage.index!==oldStage)icon.innerHTML=stageEmblem(key,stage.index);
       axis.querySelector<HTMLElement>("[data-stage-roman]")!.textContent=stage.roman;
       axis.querySelector<HTMLElement>("[data-stage-label]")!.textContent=stage.label;
       if(stage.index!==oldStage)this.motion.feedback(axis.querySelector(".kaiju-stage-icon"));
@@ -175,6 +178,7 @@ export class KaijuPanel {
     }
     const readout=this.root.querySelector<HTMLElement>("[data-readout]");
     if(readout){this.motion.clearAmbient();readout.innerHTML=renderReadout(draft.record.values,this.repository.isGM);this.motion.observeAmbient()}
+    else if(stage.index!==oldStage)this.motion.observeAmbient();
     this.updateStatus();
   }
   private setPortrait(path:string):void {
@@ -191,6 +195,8 @@ export class KaijuPanel {
   private updateStatus(message?:string): void {
     const dirty=this.dirty(),status=this.root.querySelector<HTMLElement>("[data-status]");
     if(status) {status.classList.toggle("is-dirty",dirty);status.classList.remove("is-error");status.textContent=message??(this.busy?"Salvando vínculo…":dirty?"Alterações não salvas":this.repository.isGM?"Registro atualizado":"Consulta do vínculo")}
+    this.root.querySelector<HTMLElement>("[data-save-actions]")?.toggleAttribute("hidden",!dirty);
+    this.root.querySelector(".kaiju-savebar")?.classList.toggle("has-changes",dirty);
     this.root.querySelectorAll<HTMLElement>("[data-record]").forEach(button=>{
       const pending=this.dirty(this.drafts.get(button.dataset.record??""));button.classList.toggle("has-draft",pending);
       const marker=button.querySelector<HTMLElement>(".kaiju-draft-marker");if(marker)marker.hidden=!pending;
